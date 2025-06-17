@@ -112,30 +112,30 @@ const ClarityArmor: React.FC<ClarityArmorProps> = ({ content }) => {
 
   if (loading) {
     return (
-      <div className="bg-rose-100 p-6 rounded-xl border-l-4 border-red-500">
-        <h4 className="font-semibold text-rose-700 mb-2 flex items-center">
+      <div className="bg-indigo-100 p-6 rounded-xl border-l-4 border-indigo-500">
+        <h4 className="font-semibold text-indigo-700 mb-2 flex items-center">
           <Shield className="w-5 h-5 mr-2 animate-pulse" />
           Clarity Armor
         </h4>
-        <div className="text-sm text-rose-600">Scanning for fallacies...</div>
+        <div className="text-sm text-indigo-600">Scanning for fallacies...</div>
       </div>
     );
   }
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'high': return 'bg-rose-300';
-      case 'medium': return 'bg-amber-200';
-      case 'low': return 'bg-emerald-200';
+      case 'high': return 'bg-red-300';
+      case 'medium': return 'bg-yellow-300';
+      case 'low': return 'bg-green-300';
       default: return 'bg-gray-300';
     }
   };
 
   const getSeverityTextColor = (severity: string) => {
     switch (severity) {
-      case 'high': return 'text-rose-700';
-      case 'medium': return 'text-amber-700';
-      case 'low': return 'text-emerald-700';
+      case 'high': return 'text-red-700';
+      case 'medium': return 'text-yellow-700';
+      case 'low': return 'text-green-700';
       default: return 'text-gray-700';
     }
   };
@@ -150,27 +150,27 @@ const ClarityArmor: React.FC<ClarityArmorProps> = ({ content }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-red-500">
-      <h4 className="font-semibold text-red-700 mb-4 flex items-center">
+    <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-indigo-500">
+      <h4 className="font-semibold text-indigo-700 mb-4 flex items-center">
         <Shield className="w-5 h-5 mr-2" />
         Clarity Armor
       </h4>
       
       <div className="space-y-4">
         {fallacies.length === 0 ? (
-          <div className="bg-emerald-100 p-4 rounded-lg border border-emerald-200">
-            <div className="font-semibold text-emerald-700 flex items-center mb-2">
+          <div className="bg-green-100 p-4 rounded-lg border border-green-200">
+            <div className="font-semibold text-green-700 flex items-center mb-2">
               <Eye className="w-4 h-4 mr-2" />
               No Major Fallacies Detected
             </div>
-            <p className="text-sm text-emerald-600">
+            <p className="text-sm text-green-600">
               This content appears to avoid common rhetorical manipulation techniques.
             </p>
           </div>
         ) : (
           <div className="space-y-3">
             {fallacies.map((fallacy, index) => (
-              <div key={index} className="bg-rose-100 p-4 rounded-lg border border-rose-200">
+              <div key={index} className="bg-indigo-100 p-4 rounded-lg border border-indigo-200">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <span className={`w-3 h-3 rounded-full ${getSeverityColor(fallacy.severity)}`}></span>
@@ -182,9 +182,9 @@ const ClarityArmor: React.FC<ClarityArmorProps> = ({ content }) => {
                     {getSeverityLabel(fallacy.severity)}
                   </span>
                 </div>
-                <p className="text-sm text-rose-600 mb-2">{fallacy.description}</p>
+                <p className="text-sm text-indigo-600 mb-2">{fallacy.description}</p>
                 {fallacy.examples.length > 0 && (
-                  <div className="text-xs text-rose-500">
+                  <div className="text-xs text-indigo-500">
                     <strong>Detected patterns:</strong> {fallacy.examples.join(', ')}
                   </div>
                 )}

@@ -19,12 +19,12 @@ const TruthSerumArchitecture = () => {
               and outgoing AI responses for honesty calibration.
             </p>
             <div className="grid md:grid-cols-3 gap-4">
-              <div className="bg-white p-4 rounded border-l-4 border-red-500">
-                <h4 className="font-semibold text-red-700">Clarity Armor (Input Layer)</h4>
+              <div className="bg-white p-4 rounded border-l-4 border-indigo-500">
+                <h4 className="font-semibold text-indigo-700">Clarity Armor (Input Layer)</h4>
                 <p className="text-sm text-gray-600">Detects 60+ rhetorical fallacies and manipulation techniques in user-provided content</p>
               </div>
-              <div className="bg-white p-4 rounded border-l-4 border-green-500">
-                <h4 className="font-semibold text-green-700">Truth Serum (Output Layer)</h4>
+              <div className="bg-white p-4 rounded border-l-4 border-yellow-500">
+                <h4 className="font-semibold text-yellow-700">Truth Serum (Output Layer)</h4>
                 <p className="text-sm text-gray-600">Ensures AI responses include explicit confidence levels and uncertainty flags</p>
               </div>
               <div className="bg-white p-4 rounded border-l-4 border-blue-500">
@@ -104,7 +104,7 @@ const TruthSerumArchitecture = () => {
                 <li>• Dark/light mode support</li>
               </ul>
             </div>
-            <div className="bg-green-50 p-4 rounded-lg">
+            <div className="bg-yellow-50 p-4 rounded-lg">
               <h4 className="font-semibold mb-2">UI/UX Principles</h4>
               <ul className="text-sm space-y-1">
                 <li>• Educational over prescriptive</li>
@@ -128,8 +128,8 @@ const TruthSerumArchitecture = () => {
           <h3 className="text-xl font-bold">Node.js + Express Backend</h3>
           
           <div className="grid md:grid-cols-3 gap-4">
-            <div className="bg-red-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-3 text-red-700">Clarity Armor Engine</h4>
+            <div className="bg-indigo-50 p-4 rounded-lg">
+              <h4 className="font-semibold mb-3 text-indigo-700">Clarity Armor Engine</h4>
               <div className="space-y-2 text-sm">
                 <div className="bg-white p-2 rounded">
                   <strong>Fallacy Detection API</strong>
@@ -146,8 +146,8 @@ const TruthSerumArchitecture = () => {
               </div>
             </div>
 
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-3 text-green-700">Truth Serum Engine</h4>
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <h4 className="font-semibold mb-3 text-yellow-700">Truth Serum Engine</h4>
               <div className="space-y-2 text-sm">
                 <div className="bg-white p-2 rounded">
                   <strong>Confidence Calibration API</strong>
@@ -227,14 +227,14 @@ const TruthSerumArchitecture = () => {
                 <p className="text-sm">Scrape/Parse</p>
               </div>
               <div className="text-2xl">→</div>
-              <div className="bg-red-100 p-4 rounded-lg text-center flex-1">
+              <div className="bg-indigo-100 p-4 rounded-lg text-center flex-1">
                 <h4 className="font-semibold">Clarity Armor</h4>
                 <p className="text-sm">Fallacy Detection</p>
               </div>
             </div>
             
             <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4 mt-4">
-              <div className="bg-green-100 p-4 rounded-lg text-center flex-1">
+              <div className="bg-yellow-100 p-4 rounded-lg text-center flex-1">
                 <h4 className="font-semibold">Truth Serum</h4>
                 <p className="text-sm">AI Analysis</p>
               </div>
@@ -321,32 +321,32 @@ const TruthSerumArchitecture = () => {
               </ul>
             </div>
 
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-3 text-green-700">Educational Features</h4>
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <h4 className="font-semibold mb-3 text-yellow-700">Educational Features</h4>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-start">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-2"></span>
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-2"></span>
                   <div>
                     <strong>Daily Fallacy Challenges</strong>
                     <p className="text-gray-600">Progressive skill-building exercises</p>
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-2"></span>
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-2"></span>
                   <div>
                     <strong>Bias Vulnerability Profiling</strong>
                     <p className="text-gray-600">Personal manipulation susceptibility analysis</p>
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-2"></span>
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-2"></span>
                   <div>
                     <strong>Source Literacy Training</strong>
                     <p className="text-gray-600">Learn to evaluate credibility and bias</p>
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-2"></span>
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-2"></span>
                   <div>
                     <strong>Collaborative Fact-Checking</strong>
                     <p className="text-gray-600">Group analysis and peer learning</p>
@@ -459,7 +459,7 @@ const TruthSerumArchitecture = () => {
                   <h4 className="font-semibold mb-3">Color Legend</h4>
                   <div className="grid md:grid-cols-3 gap-4 text-sm">
                     <div>
-                      <strong className="text-red-700">🛡️ Clarity Armor (Fallacy Detection)</strong>
+                      <strong className="text-indigo-700">🛡️ Clarity Armor (Fallacy Detection)</strong>
                       <div className="mt-1 space-y-1">
                         <div className="flex items-center"><span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span>Critical Risk</div>
                         <div className="flex items-center"><span className="w-3 h-3 bg-yellow-400 rounded-full mr-2"></span>Moderate Risk</div>
@@ -467,7 +467,7 @@ const TruthSerumArchitecture = () => {
                       </div>
                     </div>
                     <div>
-                      <strong className="text-green-700">🎯 Truth Serum (Confidence)</strong>
+                      <strong className="text-yellow-700">🎯 Truth Serum (Confidence)</strong>
                       <div className="mt-1 space-y-1">
                         <div className="flex items-center"><span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>Known Facts</div>
                         <div className="flex items-center"><span className="w-3 h-3 bg-yellow-400 rounded-full mr-2"></span>Speculation</div>
@@ -493,8 +493,8 @@ const TruthSerumArchitecture = () => {
                 </div>
 
                 <div className="grid lg:grid-cols-3 gap-6">
-                  <div className="bg-red-50 p-6 rounded-xl border-l-4 border-red-500">
-                    <h4 className="font-semibold text-red-700 mb-4 flex items-center">
+                  <div className="bg-indigo-50 p-6 rounded-xl border-l-4 border-indigo-500">
+                    <h4 className="font-semibold text-indigo-700 mb-4 flex items-center">
                       <Shield className="w-5 h-5 mr-2" />
                       Clarity Armor Detected:
                     </h4>
@@ -522,8 +522,8 @@ const TruthSerumArchitecture = () => {
                       </li>
                     </ul>
                   </div>
-                  <div className="bg-green-50 p-6 rounded-xl border-l-4 border-green-500">
-                    <h4 className="font-semibold text-green-700 mb-4 flex items-center">
+                  <div className="bg-yellow-50 p-6 rounded-xl border-l-4 border-yellow-500">
+                    <h4 className="font-semibold text-yellow-700 mb-4 flex items-center">
                       <AlertTriangle className="w-5 h-5 mr-2" />
                       Truth Serum Analysis:
                     </h4>
