@@ -1,5 +1,14 @@
+// src/config/config.ts
+
 export const supabaseConfig = {
-  supabaseUrl: 'https://vcjxwlruvtstyvjytnaj.supabase.co',
-  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjanh3bHJ1dnRzdHl2anl0bmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNzk5MzcsImV4cCI6MjA2NTg1NTkzN30.v6oFtLNM1me_LIY_XKyl58Ngt0Fm5qGiJAjBvhDzbgo',
-  tavusApiKey: '7698c5a86bb04015bedc3849cde52438', // New key
+  supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+  supabaseKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+};
+
+export const tavusConfig = {
+  apiKey: import.meta.env.VITE_TAVUS_API_KEY,
+  callbackUrl: import.meta.env.VITE_TAVUS_CALLBACK_URL,
+  replicaId: import.meta.env.VITE_TAVUS_REPLICA_ID,
+  enableRecording: import.meta.env.VITE_TAVUS_ENABLE_RECORDING === 'true',
+  maxDuration: Number(import.meta.env.VITE_TAVUS_MAX_DURATION || 1800),
 };

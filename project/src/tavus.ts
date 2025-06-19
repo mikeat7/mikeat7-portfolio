@@ -1,49 +1,40 @@
-import { tavusConfig } from './config';
+import { tavusConfig } from '../config/config';
 
-// Tavus configuration for API calls
-const tavusApiConfig = {
-  'Authorization': `Bearer ${tavusConfig.apiKey}`,
-  'Content-Type': 'application/json',
-};
-
-// Test Tavus API connection
-export async function testTavus() {
-  try {
-    console.log('🔑 Testing Tavus API connection...');
-    console.log('🔑 Using API key:', tavusConfig.apiKey ? `${tavusConfig.apiKey.substring(0, 8)}...` : 'Not configured');
-    
-    const response = await fetch('https://api.tavus.io/v2/conversations', {
-      method: 'GET',
-      headers: tavusApiConfig,
-    });
-    
-    if (response.ok) {
-      console.log('✅ Tavus API connected successfully:', response.status);
-      const data = await response.json();
-      console.log('📊 Tavus response:', data);
-      return true;
-    } else {
-      const errorText = await response.text();
-      console.log('❌ Tavus API error:', response.status, errorText);
-      return false;
-    }
-  } catch (error) {
-    console.error('❌ Tavus network error:', error.message);
-    return false;
-  }
-}
-
-// Enhanced Tavus CVI Integration with Better Error Handling
+// Tavus CVI Initialization – Proper API call to v1
 export const initTavusCVI = async () => {
   try {
     console.log('🚀 Initializing Tavus CVI...');
-    
-    // Test API connection first
-    const apiConnected = await testTavus();
-    if (!apiConnected) {
-      console.warn('⚠️ Tavus API connection failed, CVI disabled');
+    console.log('🔑 Using Tavus API key:', tavusConfig.apiKey ? `${tavusConfig.apiKey.substring(0, 8)}...` : 'Not configured');
+
+    const response = await fetch('https://api.tavus.io/v1/conversations', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${tavusConfig.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        replica_id: tavusConfig.replicaId || 'r_stock_001',
+        callback_url: tavusConfig.callbackUrl,
+        enable_recording: tavusConfig.enableRecording ?? true,
+        max_duration: tavusConfig.maxDuration ?? 1800,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Tavus API response error:', response.status, errorText);
       return false;
     }
+
+    const data = await response.json();
+    console.log('✅ Tavus conversation initialized:', data);
+    return true;
+
+  } catch (error: any) {
+    console.error('❌ Tavus network error:', error.message || error);
+    return false;
+  }
+};
 
     // Add timeout and better error handling for the fetch request
     const controller = new AbortController();

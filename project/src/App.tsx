@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { initTavusCVI } from './tavus'; // Adjust if different import
+import { initTavusCVI } from './tavus'; // Make sure this file exists
 import { createClient } from '@supabase/supabase-js';
-import { supabaseConfig } from './config';
+import { supabaseUrl, supabaseKey, tavusApiKey } from './config/config';
 
-const supabase = createClient(supabaseConfig.supabaseUrl, supabaseConfig.supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 function App() {
   const [tavusReady, setTavusReady] = useState(false);
@@ -26,7 +26,6 @@ function App() {
       });
   }, []);
 
-  // Simplified portfolio UI (replace with your actual UI)
   return (
     <div>
       {tavusReady ? (
