@@ -1,604 +1,340 @@
-import React, { useState } from 'react';
-import { Shield, Brain, Target, Zap, Users, Trophy, BookOpen, AlertTriangle, Search } from 'lucide-react';
-import AnalysisEngine from './components/AnalysisEngine';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { createClient } from '@supabase/supabase-js';
+import { supabaseConfig, tavusConfig, appConfig } from './config/config';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import LoadingSpinner from './components/LoadingSpinner';
+import './App.css';
 
-const TruthSerumArchitecture = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [analysisDemo, setAnalysisDemo] = useState(false);
+// Lazy load components
+const Hero = lazy(() => import('./components/Hero'));
+const About = lazy(() => import('./components/About'));
+const Portfolio = lazy(() => import('./components/Portfolio'));
+const Contact = lazy(() => import('./components/Contact'));
 
-  const architectureComponents = {
-    overview: {
-      title: "System Overview",
-      icon: <Brain className="w-6 h-6" />,
-      content: (
-        <div className="space-y-6">
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg">
-            <h3 className="text-xl font-bold mb-4">Truth Serum + Clarity Armor Platform</h3>
-            <p className="text-gray-700 mb-4">
-              A dual-layer critical thinking enhancement platform that analyzes both incoming content for manipulation 
-              and outgoing AI responses for honesty calibration.
-            </p>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="bg-white p-4 rounded border-l-4 border-indigo-500">
-                <h4 className="font-semibold text-indigo-700">Clarity Armor (Input Layer)</h4>
-                <p className="text-sm text-gray-600">Detects 60+ rhetorical fallacies and manipulation techniques in user-provided content</p>
-              </div>
-              <div className="bg-white p-4 rounded border-l-4 border-yellow-500">
-                <h4 className="font-semibold text-yellow-700">Truth Serum (Output Layer)</h4>
-                <p className="text-sm text-gray-600">Ensures AI responses include explicit confidence levels and uncertainty flags</p>
-              </div>
-              <div className="bg-white p-4 rounded border-l-4 border-blue-500">
-                <h4 className="font-semibold text-blue-700">Source Analysis (NEW)</h4>
-                <p className="text-sm text-gray-600">Evaluates source credibility, bias, and factual reliability</p>
-              </div>
-            </div>
-          </div>
+// Initialize Supabase client
+export const supabase = createClient(supabaseConfig.supabaseUrl, supabaseConfig.supabaseKey);
 
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="bg-white p-4 rounded-lg shadow border">
-              <Target className="w-8 h-8 text-blue-500 mb-3" />
-              <h4 className="font-semibold mb-2">Core Analysis Engine</h4>
-              <p className="text-sm text-gray-600">Real-time content processing with fallacy detection and confidence calibration</p>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow border">
-              <Users className="w-8 h-8 text-purple-500 mb-3" />
-              <h4 className="font-semibold mb-2">Educational Platform</h4>
-              <p className="text-sm text-gray-600">Interactive training modules and bias awareness development</p>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow border">
-              <Trophy className="w-8 h-8 text-yellow-500 mb-3" />
-              <h4 className="font-semibold mb-2">Gamification Layer</h4>
-              <p className="text-sm text-gray-600">Progress tracking, challenges, and critical thinking skill development</p>
-            </div>
-          </div>
-        </div>
-      )
-    },
-
-    analysis: {
-      title: "Live Analysis",
-      icon: <Search className="w-6 h-6" />,
-      content: <AnalysisEngine />
-    },
-    
-    frontend: {
-      title: "Frontend Architecture",
-      icon: <Target className="w-6 h-6" />,
-      content: (
-        <div className="space-y-6">
-          <h3 className="text-xl font-bold">React + TypeScript Frontend</h3>
-          
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-semibold mb-3">Core Components Structure:</h4>
-            <div className="font-mono text-sm space-y-1 text-gray-700">
-              <div>📁 src/</div>
-              <div className="ml-4">📁 components/</div>
-              <div className="ml-8">📄 AnalysisEngine.tsx - Main analysis interface</div>
-              <div className="ml-8">📄 ClarityArmor.tsx - Fallacy detection display</div>
-              <div className="ml-8">📄 TruthSerum.tsx - AI confidence calibration</div>
-              <div className="ml-8">📄 SourceCredibility.tsx - Source analysis component</div>
-              <div className="ml-8">📄 EducationHub.tsx - Training modules</div>
-              <div className="ml-8">📄 VoiceInterface.tsx - Speech recognition</div>
-              <div className="ml-4">📁 hooks/</div>
-              <div className="ml-8">📄 useAnalysis.ts - Content analysis logic</div>
-              <div className="ml-8">📄 useWebScraper.ts - URL content fetching</div>
-              <div className="ml-8">📄 useProgress.ts - User progress tracking</div>
-              <div className="ml-4">📁 services/</div>
-              <div className="ml-8">📄 fallacyDetection.ts - Manipulation analysis</div>
-              <div className="ml-8">📄 confidenceCalibration.ts - AI honesty scoring</div>
-              <div className="ml-8">📄 sourceCredibility.ts - Source analysis service</div>
-              <div className="ml-8">📄 contentFetcher.ts - Web scraping service</div>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-2">Key Features</h4>
-              <ul className="text-sm space-y-1">
-                <li>• Real-time content analysis</li>
-                <li>• Voice command interface</li>
-                <li>• Interactive fallacy highlighting</li>
-                <li>• Source credibility scoring</li>
-                <li>• Progress visualization</li>
-                <li>• Mobile-responsive design</li>
-                <li>• Dark/light mode support</li>
-              </ul>
-            </div>
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-2">UI/UX Principles</h4>
-              <ul className="text-sm space-y-1">
-                <li>• Educational over prescriptive</li>
-                <li>• Confidence levels color-coded</li>
-                <li>• Gradual complexity increase</li>
-                <li>• Collaborative features</li>
-                <li>• Accessibility first</li>
-                <li>• Performance optimized</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )
-    },
-
-    backend: {
-      title: "Backend Services",
-      icon: <Zap className="w-6 h-6" />,
-      content: (
-        <div className="space-y-6">
-          <h3 className="text-xl font-bold">Node.js + Express Backend</h3>
-          
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="bg-indigo-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-3 text-indigo-700">Clarity Armor Engine</h4>
-              <div className="space-y-2 text-sm">
-                <div className="bg-white p-2 rounded">
-                  <strong>Fallacy Detection API</strong>
-                  <p className="text-gray-600">60+ pattern matchers for rhetorical manipulation</p>
-                </div>
-                <div className="bg-white p-2 rounded">
-                  <strong>Bias Analysis Service</strong>
-                  <p className="text-gray-600">Source credibility and political lean detection</p>
-                </div>
-                <div className="bg-white p-2 rounded">
-                  <strong>Emotional Manipulation Scanner</strong>
-                  <p className="text-gray-600">Fear appeals, false urgency, gaslighting detection</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-3 text-yellow-700">Truth Serum Engine</h4>
-              <div className="space-y-2 text-sm">
-                <div className="bg-white p-2 rounded">
-                  <strong>Confidence Calibration API</strong>
-                  <p className="text-gray-600">AI response certainty scoring and flagging</p>
-                </div>
-                <div className="bg-white p-2 rounded">
-                  <strong>Knowledge Classification</strong>
-                  <p className="text-gray-600">Known/Speculated/Unknown content categorization</p>
-                </div>
-                <div className="bg-white p-2 rounded">
-                  <strong>Uncertainty Detection</strong>
-                  <p className="text-gray-600">Overconfidence and hedging pattern analysis</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-3 text-blue-700">Source Analysis Engine</h4>
-              <div className="space-y-2 text-sm">
-                <div className="bg-white p-2 rounded">
-                  <strong>Credibility Scoring API</strong>
-                  <p className="text-gray-600">Domain reputation and reliability assessment</p>
-                </div>
-                <div className="bg-white p-2 rounded">
-                  <strong>Bias Detection Service</strong>
-                  <p className="text-gray-600">Political lean and editorial stance analysis</p>
-                </div>
-                <div className="bg-white p-2 rounded">
-                  <strong>Factual Rating System</strong>
-                  <p className="text-gray-600">Historical accuracy and fact-checking integration</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-semibold mb-3">Additional Services</h4>
-            <div className="grid md:grid-cols-4 gap-3 text-sm">
-              <div className="bg-white p-3 rounded">
-                <strong>Web Scraping Service</strong>
-                <p className="text-gray-600">Fetch and parse content from URLs</p>
-              </div>
-              <div className="bg-white p-3 rounded">
-                <strong>Progress Tracking</strong>
-                <p className="text-gray-600">User skill development analytics</p>
-              </div>
-              <div className="bg-white p-3 rounded">
-                <strong>Content Database</strong>
-                <p className="text-gray-600">Training examples and quiz materials</p>
-              </div>
-              <div className="bg-white p-3 rounded">
-                <strong>Media Bias API</strong>
-                <p className="text-gray-600">Third-party fact-checking integration</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    },
-
-    data: {
-      title: "Data Flow",
-      icon: <Shield className="w-6 h-6" />,
-      content: (
-        <div className="space-y-6">
-          <h3 className="text-xl font-bold">Analysis Pipeline</h3>
-          
-          <div className="relative">
-            <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
-              <div className="bg-blue-100 p-4 rounded-lg text-center flex-1">
-                <h4 className="font-semibold">Input</h4>
-                <p className="text-sm">Text/URL/Voice</p>
-              </div>
-              <div className="text-2xl">→</div>
-              <div className="bg-yellow-100 p-4 rounded-lg text-center flex-1">
-                <h4 className="font-semibold">Content Fetch</h4>
-                <p className="text-sm">Scrape/Parse</p>
-              </div>
-              <div className="text-2xl">→</div>
-              <div className="bg-indigo-100 p-4 rounded-lg text-center flex-1">
-                <h4 className="font-semibold">Clarity Armor</h4>
-                <p className="text-sm">Fallacy Detection</p>
-              </div>
-            </div>
-            
-            <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4 mt-4">
-              <div className="bg-yellow-100 p-4 rounded-lg text-center flex-1">
-                <h4 className="font-semibold">Truth Serum</h4>
-                <p className="text-sm">AI Analysis</p>
-              </div>
-              <div className="text-2xl">→</div>
-              <div className="bg-blue-100 p-4 rounded-lg text-center flex-1">
-                <h4 className="font-semibold">Source Analysis</h4>
-                <p className="text-sm">Credibility Check</p>
-              </div>
-              <div className="text-2xl">→</div>
-              <div className="bg-purple-100 p-4 rounded-lg text-center flex-1">
-                <h4 className="font-semibold">Education</h4>
-                <p className="text-sm">Learning Prompts</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-semibold mb-3">Data Storage (In-Memory)</h4>
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <strong>Session Data:</strong>
-                <ul className="ml-4 mt-1 space-y-1">
-                  <li>• User progress scores</li>
-                  <li>• Analysis history</li>
-                  <li>• Bias vulnerability profile</li>
-                  <li>• Educational achievements</li>
-                </ul>
-              </div>
-              <div>
-                <strong>Analysis Cache:</strong>
-                <ul className="ml-4 mt-1 space-y-1">
-                  <li>• Fetched content</li>
-                  <li>• Fallacy detection results</li>
-                  <li>• Confidence calibrations</li>
-                  <li>• Source credibility scores</li>
-                  <li>• Educational content</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    },
-
-    features: {
-      title: "Feature Modules",
-      icon: <BookOpen className="w-6 h-6" />,
-      content: (
-        <div className="space-y-6">
-          <h3 className="text-xl font-bold">Core Features Implementation</h3>
-          
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-3 text-blue-700">Analysis Features</h4>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-2"></span>
-                  <div>
-                    <strong>Real-time URL Analysis</strong>
-                    <p className="text-gray-600">Fetch and analyze web content automatically</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-2"></span>
-                  <div>
-                    <strong>Source Credibility Scoring</strong>
-                    <p className="text-gray-600">Evaluate domain reputation and factual reliability</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-2"></span>
-                  <div>
-                    <strong>Voice Command Interface</strong>
-                    <p className="text-gray-600">"Find articles on X and analyze them"</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-2"></span>
-                  <div>
-                    <strong>Batch Content Processing</strong>
-                    <p className="text-gray-600">Analyze multiple sources simultaneously</p>
-                  </div>
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-3 text-yellow-700">Educational Features</h4>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-2"></span>
-                  <div>
-                    <strong>Daily Fallacy Challenges</strong>
-                    <p className="text-gray-600">Progressive skill-building exercises</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-2"></span>
-                  <div>
-                    <strong>Bias Vulnerability Profiling</strong>
-                    <p className="text-gray-600">Personal manipulation susceptibility analysis</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-2"></span>
-                  <div>
-                    <strong>Source Literacy Training</strong>
-                    <p className="text-gray-600">Learn to evaluate credibility and bias</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-2"></span>
-                  <div>
-                    <strong>Collaborative Fact-Checking</strong>
-                    <p className="text-gray-600">Group analysis and peer learning</p>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <h4 className="font-semibold mb-3 text-yellow-700">Democracy Fitness Mode</h4>
-            <div className="grid md:grid-cols-3 gap-3 text-sm">
-              <div className="bg-white p-3 rounded">
-                <strong>Election Analysis</strong>
-                <p className="text-gray-600">Campaign rhetoric vs. actual policy</p>
-              </div>
-              <div className="bg-white p-3 rounded">
-                <strong>Source Diversity Tracking</strong>
-                <p className="text-gray-600">Political bias balance monitoring</p>
-              </div>
-              <div className="bg-white p-3 rounded">
-                <strong>Debate Fact-Checking</strong>
-                <p className="text-gray-600">Real-time political speech analysis</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <h4 className="font-semibold mb-3 text-purple-700">Gamification System</h4>
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <strong>Progress Tracking:</strong>
-                <ul className="ml-4 mt-1 space-y-1">
-                  <li>• Bullshit Detection Rank</li>
-                  <li>• Weekly accuracy scores</li>
-                  <li>• Skill improvement metrics</li>
-                  <li>• Achievement badges</li>
-                </ul>
-              </div>
-              <div>
-                <strong>Social Features:</strong>
-                <ul className="ml-4 mt-1 space-y-1">
-                  <li>• Friend challenge system</li>
-                  <li>• Community leaderboards</li>
-                  <li>• Group analysis projects</li>
-                  <li>• Expert validation events</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
+// Test Supabase connection with proper error handling
+async function testSupabase() {
+  try {
+    // Try a simple query that doesn't depend on specific tables
+    const { data, error } = await supabase.from('_supabase_migrations').select('*').limit(1);
+    if (error && error.code !== 'PGRST116' && error.code !== '42P01') { 
+      // PGRST116 is "table not found", 42P01 is PostgreSQL "relation does not exist" - both are fine
+      console.warn('⚠️ Supabase connection issue:', error.message);
+    } else {
+      console.log('✅ Supabase connected successfully');
     }
-  };
+  } catch (err) {
+    console.warn('⚠️ Supabase connection test failed:', err);
+  }
+}
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-4">
-            <Brain className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Truth Serum + Clarity Armor</h1>
-          <p className="text-xl text-gray-600 mb-4">Technical Architecture for Critical Thinking Platform</p>
-          <div className="inline-flex items-center bg-blue-100 px-4 py-2 rounded-full">
-            <span className="text-sm font-medium text-blue-800">Built on Bolt.new • Now with Source Analysis</span>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex flex-wrap justify-center mb-6 bg-white rounded-xl p-2 shadow-sm border">
-          {Object.entries(architectureComponents).map(([key, component]) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-lg transition-all duration-200 ${
-                activeTab === key 
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md transform scale-105' 
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-              }`}
-            >
-              {component.icon}
-              <span className="font-medium">{component.title}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Content Area */}
-        <div className="bg-white rounded-xl shadow-lg border p-8 mb-8">
-          {architectureComponents[activeTab].content}
-        </div>
-
-        {/* Demo Analysis Button */}
-        {activeTab !== 'analysis' && (
-          <div className="text-center">
-            <button
-              onClick={() => setAnalysisDemo(!analysisDemo)}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg"
-            >
-              {analysisDemo ? 'Hide Demo' : 'Show Analysis Demo'}
-            </button>
-            
-            {analysisDemo && (
-              <div className="mt-8 bg-white rounded-xl shadow-lg border p-8 text-left">
-                <h3 className="text-2xl font-bold mb-6 text-center">Sample Analysis Output</h3>
-                
-                {/* Color Legend */}
-                <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-3">Color Legend</h4>
-                  <div className="grid md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <strong className="text-indigo-700">🛡️ Clarity Armor (Fallacy Detection)</strong>
-                      <div className="mt-1 space-y-1">
-                        <div className="flex items-center"><span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span>Critical Risk</div>
-                        <div className="flex items-center"><span className="w-3 h-3 bg-yellow-400 rounded-full mr-2"></span>Moderate Risk</div>
-                        <div className="flex items-center"><span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>Low Risk</div>
-                      </div>
-                    </div>
-                    <div>
-                      <strong className="text-yellow-700">🎯 Truth Serum (Confidence)</strong>
-                      <div className="mt-1 space-y-1">
-                        <div className="flex items-center"><span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>Known Facts</div>
-                        <div className="flex items-center"><span className="w-3 h-3 bg-yellow-400 rounded-full mr-2"></span>Speculation</div>
-                        <div className="flex items-center"><span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span>Unknown/Uncertain</div>
-                      </div>
-                    </div>
-                    <div>
-                      <strong className="text-blue-700">🔍 Source Analysis</strong>
-                      <div className="mt-1 space-y-2">
-                        <div>
-                          <div className="text-xs font-medium text-gray-600 mb-1">Credibility Score:</div>
-                          <div className="flex items-center"><span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>High Credibility (80%+)</div>
-                          <div className="flex items-center"><span className="w-3 h-3 bg-yellow-400 rounded-full mr-2"></span>Mixed Credibility (50-79%)</div>
-                          <div className="flex items-center"><span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span>{"Low Credibility (<50%)"}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs font-medium text-gray-600 mb-1">Political Bias:</div>
-                          <div className="flex items-center"><span className="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>Bias Indicator (All Types)</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid lg:grid-cols-3 gap-6">
-                  <div className="bg-indigo-50 p-6 rounded-xl border-l-4 border-indigo-500">
-                    <h4 className="font-semibold text-indigo-700 mb-4 flex items-center">
-                      <Shield className="w-5 h-5 mr-2" />
-                      Clarity Armor Detected:
-                    </h4>
-                    <ul className="space-y-3 text-sm">
-                      <li className="flex items-start">
-                        <span className="w-3 h-3 bg-red-500 rounded-full mt-1 mr-3"></span>
-                        <div>
-                          <strong>Appeal to Fear:</strong> "Crisis threatens everything"
-                          <div className="text-xs text-red-600 mt-1">Critical Risk - Bypasses rational thinking</div>
-                        </div>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="w-3 h-3 bg-yellow-400 rounded-full mt-1 mr-3"></span>
-                        <div>
-                          <strong>False Urgency:</strong> "Act now or lose forever"
-                          <div className="text-xs text-yellow-600 mt-1">Moderate Risk - Creates artificial pressure</div>
-                        </div>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="w-3 h-3 bg-green-500 rounded-full mt-1 mr-3"></span>
-                        <div>
-                          <strong>Cherry-Picking:</strong> Selective data presentation
-                          <div className="text-xs text-green-600 mt-1">Low Risk - Missing context</div>
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="bg-yellow-50 p-6 rounded-xl border-l-4 border-yellow-500">
-                    <h4 className="font-semibold text-yellow-700 mb-4 flex items-center">
-                      <AlertTriangle className="w-5 h-5 mr-2" />
-                      Truth Serum Analysis:
-                    </h4>
-                    <ul className="space-y-3 text-sm">
-                      <li className="flex items-start">
-                        <span className="w-3 h-3 bg-green-500 rounded-full mt-1 mr-3"></span>
-                        <div>
-                          <strong>Known:</strong> Policy positions from official sources
-                          <div className="text-xs text-green-600 mt-1">High confidence - Verifiable facts</div>
-                        </div>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="w-3 h-3 bg-yellow-400 rounded-full mt-1 mr-3"></span>
-                        <div>
-                          <strong>Speculating:</strong> Electoral predictions based on polls
-                          <div className="text-xs text-yellow-600 mt-1">Medium confidence - Educated guesses</div>
-                        </div>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="w-3 h-3 bg-red-500 rounded-full mt-1 mr-3"></span>
-                        <div>
-                          <strong>Unknown:</strong> How policies would actually be implemented
-                          <div className="text-xs text-red-600 mt-1">Low confidence - Uncertain outcomes</div>
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="bg-blue-50 p-6 rounded-xl border-l-4 border-blue-500">
-                    <h4 className="font-semibold text-blue-700 mb-4 flex items-center">
-                      <Shield className="w-5 h-5 mr-2" />
-                      Source Analysis:
-                    </h4>
-                    <ul className="space-y-3 text-sm">
-                      <li className="flex items-start">
-                        <span className="w-3 h-3 bg-yellow-400 rounded-full mt-1 mr-3"></span>
-                        <div>
-                          <strong>Credibility:</strong> 72% (Mixed reliability)
-                          <div className="text-xs text-yellow-600 mt-1">Moderate credibility - Cross-reference recommended</div>
-                        </div>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="w-3 h-3 bg-blue-500 rounded-full mt-1 mr-3"></span>
-                        <div>
-                          <strong>Bias:</strong> Center-left editorial stance
-                          <div className="text-xs text-blue-600 mt-1">Political lean detected - Consider multiple perspectives</div>
-                        </div>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="w-3 h-3 bg-green-500 rounded-full mt-1 mr-3"></span>
-                        <div>
-                          <strong>Factual:</strong> Mostly factual reporting
-                          <div className="text-xs text-green-600 mt-1">Good track record - Generally reliable</div>
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-                <div className="mt-6 bg-blue-50 p-6 rounded-xl border-l-4 border-blue-500">
-                  <h4 className="font-semibold text-blue-700 mb-3 flex items-center">
-                    <BookOpen className="w-5 h-5 mr-2" />
-                    Learning Opportunity:
-                  </h4>
-                  <p className="text-sm leading-relaxed">
-                    Notice how this article uses emotional manipulation to bypass critical thinking. 
-                    Try asking: "What specific evidence supports these claims?" and "What alternative explanations exist?"
-                    Always cross-reference with multiple sources and look for primary data.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+// Updated Tavus configuration using the API key from config
+const tavusApiConfig = {
+  'Authorization': `Bearer ${tavusConfig.apiKey}`,
+  'Content-Type': 'application/json',
 };
 
-export default TruthSerumArchitecture;
+// Test Tavus API connection
+async function testTavus() {
+  try {
+    console.log('🔑 Testing Tavus API connection...');
+    console.log('🔑 Using API key:', tavusConfig.apiKey ? `${tavusConfig.apiKey.substring(0, 8)}...` : 'Not configured');
+    
+    const response = await fetch('https://api.tavus.io/v2/conversations', {
+      method: 'GET',
+      headers: tavusApiConfig,
+    });
+    
+    if (response.ok) {
+      console.log('✅ Tavus connected successfully:', response.status);
+      const data = await response.json();
+      console.log('📊 Tavus response:', data);
+      return true;
+    } else {
+      const errorText = await response.text();
+      console.log('❌ Tavus API error:', response.status, errorText);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Tavus network error:', error.message);
+    return false;
+  }
+}
+
+// Enhanced Tavus CVI Integration with Better Error Handling
+const initTavusCVI = async () => {
+  try {
+    console.log('🚀 Initializing Tavus CVI...');
+    
+    // Test API connection first
+    const apiConnected = await testTavus();
+    if (!apiConnected) {
+      console.warn('⚠️ Tavus API connection failed, CVI disabled');
+      return false;
+    }
+
+    // Add timeout and better error handling for the fetch request
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
+    
+    const requestBody = {
+      replica_id: tavusConfig.replicaId,
+      callback_url: tavusConfig.callbackUrl,
+      enable_recording: tavusConfig.enableRecording,
+      conversation_name: 'Mike Portfolio Chat',
+      properties: {
+        max_call_duration: tavusConfig.maxDuration,
+        participant_left_timeout: 300,
+        enable_transcription: true,
+        language: 'en'
+      }
+    };
+
+    console.log('📤 Creating Tavus conversation...');
+    
+    const response = await fetch('https://api.tavus.io/v1/conversations', {
+      method: 'POST',
+      headers: tavusApiConfig,
+      body: JSON.stringify(requestBody),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    console.log('📥 Response status:', response.status, response.statusText);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('❌ API Error Response:', errorData);
+      
+      // Handle specific error cases
+      if (response.status === 401) {
+        throw new Error(`Invalid Tavus API key. Please check your API key configuration.`);
+      } else if (response.status === 403) {
+        throw new Error('Tavus API access forbidden. Please verify your account permissions and API key validity.');
+      } else if (response.status === 429) {
+        throw new Error('Tavus API rate limit exceeded. Please try again later.');
+      } else if (response.status === 400) {
+        throw new Error(`Bad request: ${errorData.message || 'Invalid request parameters'}. Check your callback URL and replica ID.`);
+      } else {
+        throw new Error(`Tavus API request failed: ${response.status} ${response.statusText}. ${errorData.message || 'Unknown error'}`);
+      }
+    }
+
+    const responseData = await response.json();
+    console.log('✅ Tavus API Response:', responseData);
+    
+    const { conversation_url, conversation_id } = responseData;
+    console.log('✅ Tavus conversation created:', conversation_id);
+    console.log('🔗 Conversation URL:', conversation_url);
+    
+    // Load Daily.co and initialize video call
+    await loadDailyAndInitialize(conversation_url);
+    
+    return true;
+    
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.error('❌ Tavus API request timed out after 30 seconds. Please check your internet connection.');
+    } else if (error.message.includes('Failed to fetch')) {
+      console.error('❌ Network error connecting to Tavus API. Please check your internet connection and try again.');
+      
+      if (appConfig.isDevelopment) {
+        console.info(`
+🔧 Network Error Troubleshooting:
+1. Check your internet connection
+2. Verify your API key is correct in the environment variables
+3. Check browser network tab for detailed error info
+
+Tavus CVI is temporarily disabled.
+        `);
+      }
+    } else {
+      console.error('❌ Tavus CVI initialization failed:', error.message);
+      
+      if (appConfig.isDevelopment) {
+        console.info(`
+🔧 Error Details: ${error.message}
+
+Please verify:
+1. Your API key is valid in the environment variables
+2. Your account has proper permissions
+3. The callback URL is accessible: ${tavusConfig.callbackUrl}
+
+Tavus CVI is temporarily disabled.
+        `);
+      }
+    }
+    return false;
+  }
+};
+
+// Separate function to handle Daily.co loading and initialization
+const loadDailyAndInitialize = async (conversationUrl: string) => {
+  try {
+    // Check if Daily.co is already available
+    if (typeof window !== 'undefined' && window.Daily) {
+      await initializeDailyCall(conversationUrl);
+      return;
+    }
+
+    // Load Daily.co script if not available
+    console.log('📦 Loading Daily.co script...');
+    
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/@daily-co/daily-js';
+    
+    const loadPromise = new Promise((resolve, reject) => {
+      script.onload = resolve;
+      script.onerror = () => reject(new Error('Failed to load Daily.co script'));
+      
+      // Add timeout for script loading
+      setTimeout(() => reject(new Error('Daily.co script loading timed out')), 10000);
+    });
+    
+    document.head.appendChild(script);
+    await loadPromise;
+    
+    console.log('✅ Daily.co script loaded successfully');
+    await initializeDailyCall(conversationUrl);
+    
+  } catch (error) {
+    console.error('❌ Failed to load or initialize Daily.co:', error.message);
+  }
+};
+
+// Initialize Daily.co call frame
+const initializeDailyCall = async (conversationUrl: string) => {
+  try {
+    console.log('🎥 Initializing Daily.co video call...');
+    
+    const callFrame = window.Daily.createFrame({
+      iframeStyle: {
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        width: '300px',
+        height: '200px',
+        borderRadius: '12px',
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+        zIndex: 1000,
+        border: 'none'
+      },
+      showLeaveButton: true,
+      showFullscreenButton: true,
+      showLocalVideo: true,
+      showParticipantsBar: false
+    });
+
+    // Join the conversation with timeout
+    const joinPromise = callFrame.join({ 
+      url: conversationUrl,
+      userName: 'Portfolio Visitor'
+    });
+    
+    // Add timeout for joining
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Daily.co join timeout')), 15000)
+    );
+    
+    await Promise.race([joinPromise, timeoutPromise]);
+
+    // Add event listeners
+    callFrame.on('joined-meeting', () => {
+      console.log('✅ Successfully joined Tavus CVI session');
+    });
+
+    callFrame.on('left-meeting', () => {
+      console.log('👋 Left Tavus CVI session');
+    });
+
+    callFrame.on('error', (error) => {
+      console.error('❌ Daily.co error:', error);
+    });
+
+    // Store call frame reference for cleanup
+    window.tavusCallFrame = callFrame;
+    
+  } catch (error) {
+    console.error('❌ Failed to initialize Daily.co call:', error.message);
+  }
+};
+
+function App() {
+  const [tavusReady, setTavusReady] = useState(false);
+  const [supabaseReady, setSupabaseReady] = useState(false);
+
+  useEffect(() => {
+    // Test Supabase connection
+    testSupabase().then(() => {
+      setSupabaseReady(true);
+    });
+
+    // Initialize Tavus CVI on component mount with delay to ensure DOM is ready
+    const initTimer = setTimeout(() => {
+      initTavusCVI().then((success) => {
+        setTavusReady(success);
+        if (success) {
+          console.log('✅ Tavus CVI initialized successfully');
+        } else {
+          console.log('❌ Tavus CVI initialization failed - running in demo mode');
+        }
+      });
+    }, 1000);
+    
+    // Cleanup function
+    return () => {
+      clearTimeout(initTimer);
+      if (window.tavusCallFrame) {
+        try {
+          window.tavusCallFrame.destroy();
+        } catch (error) {
+          console.warn('Warning: Error destroying Tavus call frame:', error);
+        }
+        window.tavusCallFrame = null;
+      }
+    };
+  }, []);
+
+  return (
+    <Router>
+      <div className="app-container min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        <Header />
+        
+        {/* Status Indicators */}
+        <div className="fixed top-20 right-4 z-40 space-y-2">
+          {supabaseReady && (
+            <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg">
+              ✅ Supabase Connected
+            </div>
+          )}
+          {tavusReady ? (
+            <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg">
+              🎥 Tavus CVI Active
+            </div>
+          ) : (
+            <div className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg">
+              🔧 Tavus CVI Demo Mode
+            </div>
+          )}
+        </div>
+        
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            <Route path="/" element={<Hero />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/contact" element={<Contact />} />
+          </Routes>
+        </Suspense>
+        <Footer />
+      </div>
+    </Router>
+  );
+}
+
+export default App;

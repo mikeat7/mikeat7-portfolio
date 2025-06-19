@@ -138,12 +138,12 @@ const TruthSerum: React.FC<TruthSerumProps> = ({ content }) => {
 
   if (loading) {
     return (
-      <div className="bg-yellow-100 p-6 rounded-xl border-l-4 border-yellow-500">
-        <h4 className="font-semibold text-yellow-700 mb-2 flex items-center">
+      <div className="bg-emerald-100 p-6 rounded-xl border-l-4 border-green-500">
+        <h4 className="font-semibold text-emerald-700 mb-2 flex items-center">
           <Target className="w-5 h-5 mr-2 animate-pulse" />
           Truth Serum
         </h4>
-        <div className="text-sm text-yellow-600">Calibrating confidence levels...</div>
+        <div className="text-sm text-emerald-600">Calibrating confidence levels...</div>
       </div>
     );
   }
@@ -163,7 +163,7 @@ const TruthSerum: React.FC<TruthSerumProps> = ({ content }) => {
 
   const getCategoryColor = (cat: string) => {
     switch (cat) {
-      case 'known': return 'text-yellow-700';
+      case 'known': return 'text-emerald-700';
       case 'speculated': return 'text-amber-700';
       case 'unknown': return 'text-rose-700';
       default: return 'text-gray-600';
@@ -171,14 +171,14 @@ const TruthSerum: React.FC<TruthSerumProps> = ({ content }) => {
   };
 
   const getConfidenceColor = (conf: number) => {
-    if (conf >= 80) return 'text-yellow-700';
+    if (conf >= 80) return 'text-emerald-700';
     if (conf >= 60) return 'text-amber-700';
     return 'text-rose-700';
   };
 
   const getCategoryIndicatorColor = (cat: string) => {
     switch (cat) {
-      case 'known': return 'bg-yellow-300';
+      case 'known': return 'bg-emerald-300';
       case 'speculated': return 'bg-amber-200';
       case 'unknown': return 'bg-rose-300';
       default: return 'bg-gray-300';
@@ -186,8 +186,8 @@ const TruthSerum: React.FC<TruthSerumProps> = ({ content }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-yellow-500">
-      <h4 className="font-semibold text-yellow-700 mb-4 flex items-center">
+    <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500">
+      <h4 className="font-semibold text-green-700 mb-4 flex items-center">
         <Target className="w-5 h-5 mr-2" />
         Truth Serum Analysis
       </h4>
@@ -224,7 +224,7 @@ const TruthSerum: React.FC<TruthSerumProps> = ({ content }) => {
               <div key={index} className="flex items-start text-sm">
                 <span className={`w-2 h-2 rounded-full mt-2 mr-3 ${
                   flag.includes('appropriate') || flag.includes('credible') || flag.includes('present') 
-                    ? 'bg-yellow-300' 
+                    ? 'bg-emerald-300' 
                     : flag.includes('detected') || flag.includes('vague')
                     ? 'bg-amber-200'
                     : 'bg-rose-300'
@@ -236,12 +236,12 @@ const TruthSerum: React.FC<TruthSerumProps> = ({ content }) => {
         )}
 
         {/* Educational Prompt */}
-        <div className="bg-yellow-100 p-4 rounded-lg border border-yellow-200">
-          <div className="font-semibold text-yellow-700 flex items-center mb-2">
+        <div className="bg-emerald-100 p-4 rounded-lg border border-emerald-200">
+          <div className="font-semibold text-emerald-700 flex items-center mb-2">
             <BookOpen className="w-4 h-4 mr-2" />
             Epistemic Humility Prompt
           </div>
-          <p className="text-sm text-yellow-700 leading-relaxed">
+          <p className="text-sm text-emerald-700 leading-relaxed">
             {category === 'known' 
               ? "Even with high confidence, ask: 'What evidence supports this?' and 'What could change this conclusion?'"
               : category === 'speculated'

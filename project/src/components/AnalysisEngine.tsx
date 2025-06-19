@@ -187,7 +187,7 @@ const AnalysisEngine: React.FC = () => {
                   onChange={(e) => setNarratorConfig(prev => ({ ...prev, avatar: e.target.value as any }))}
                   className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="wise-owl">Sophia (Wise Owl)</option>
+                  <option value="wise-owl">Aristotle (Wise Owl)</option>
                   <option value="truth-seeker">Veritas (Truth Seeker)</option>
                   <option value="logic-bot">Logic (Logic Bot)</option>
                   <option value="sage">Minerva (Sage)</option>

@@ -34,8 +34,9 @@ const NarratorSettings: React.FC<NarratorSettingsProps> = ({
   const avatars = [
     { 
       id: 'wise-owl' as const, 
-      name: 'Sophia (Wise Owl)', 
+      name: 'Aristotle (Wise Owl)', 
       tone: 'Sage',
+      gender: 'Male',
       description: 'Wise and contemplative approach to analysis',
       personality: '🦉 Thoughtful, patient, and philosophical'
     },
@@ -43,6 +44,7 @@ const NarratorSettings: React.FC<NarratorSettingsProps> = ({
       id: 'truth-seeker' as const, 
       name: 'Veritas (Truth Seeker)', 
       tone: 'Rigorous',
+      gender: 'Female',
       description: 'Direct and analytical examination of facts',
       personality: '🔍 Precise, logical, and evidence-focused'
     },
@@ -50,6 +52,7 @@ const NarratorSettings: React.FC<NarratorSettingsProps> = ({
       id: 'logic-bot' as const, 
       name: 'Logic (Logic Bot)', 
       tone: 'Systematic',
+      gender: 'Neutral',
       description: 'Methodical and structured analysis',
       personality: '🤖 Systematic, thorough, and objective'
     },
@@ -57,6 +60,7 @@ const NarratorSettings: React.FC<NarratorSettingsProps> = ({
       id: 'sage' as const, 
       name: 'Minerva (Sage)', 
       tone: 'Insightful',
+      gender: 'Female',
       description: 'Philosophical and deep understanding',
       personality: '👑 Wise, insightful, and balanced'
     }
@@ -141,7 +145,16 @@ const NarratorSettings: React.FC<NarratorSettingsProps> = ({
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="font-medium text-gray-800">{avatar.name}</div>
+                    <div className="font-medium text-gray-800 flex items-center space-x-2">
+                      <span>{avatar.name}</span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        avatar.gender === 'Male' ? 'bg-blue-100 text-blue-700' :
+                        avatar.gender === 'Female' ? 'bg-pink-100 text-pink-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {avatar.gender} Voice
+                      </span>
+                    </div>
                     <div className="text-sm text-gray-600 mt-1">{avatar.description}</div>
                     <div className="text-xs text-gray-500 mt-2">{avatar.personality}</div>
                   </div>
@@ -309,7 +322,7 @@ const NarratorSettings: React.FC<NarratorSettingsProps> = ({
           <h4 className="font-semibold text-gray-700 mb-2">Preview</h4>
           <div className="text-sm text-gray-600">
             <strong>{selectedAvatar.name}</strong> will provide {selectedAvatar.tone.toLowerCase()} analysis 
-            in <strong>{selectedLanguage?.name}</strong> ({selectedLanguage?.region})
+            in <strong>{selectedLanguage?.name}</strong> ({selectedLanguage?.region}) using a <strong>{selectedAvatar.gender.toLowerCase()} voice</strong>
             {config.voiceEnabled && ` with voice narration at ${config.narrationSpeed}x speed`}
             {!config.chimeMuted && ` and audio notifications`}.
           </div>
