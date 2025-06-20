@@ -1,6 +1,3 @@
-import { tavusConfig } from '../config/config';
-
-// Tavus CVI Initialization – Proper API call to v1
 export const initTavusCVI = async () => {
   try {
     console.log('🚀 Initializing Tavus CVI...');
@@ -13,28 +10,36 @@ export const initTavusCVI = async () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        replica_id: tavusConfig.replicaId || 'r_stock_001',
+        replica_id: tavusConfig.replicaId,
         callback_url: tavusConfig.callbackUrl,
-        enable_recording: tavusConfig.enableRecording ?? true,
-        max_duration: tavusConfig.maxDuration ?? 1800,
+        enable_recording: tavusConfig.enableRecording,
+        max_duration: tavusConfig.maxDuration,
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Tavus API response error:', response.status, errorText);
+    const data = await response.json();
+    const url = data?.data?.conversation_url;
+
+    if (!url) {
+      console.error('❌ Tavus API responded without a conversation URL');
       return false;
     }
 
-    const data = await response.json();
-    console.log('✅ Tavus conversation initialized:', data);
+    await loadDailyAndInitialize(url);
     return true;
 
-  } catch (error: any) {
-    console.error('❌ Tavus network error:', error.message || error);
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.error('❌ Tavus API request timed out after 30 seconds. Please check your internet connection.');
+    } else if (error.message.includes('Failed to fetch')) {
+      console.error('❌ Network error connecting to Tavus API. Please check your internet connection and try again.');
+    } else {
+      console.error('❌ Tavus CVI initialization failed:', error.message);
+    }
     return false;
   }
 };
+
 
     // Add timeout and better error handling for the fetch request
     const controller = new AbortController();
@@ -91,22 +96,32 @@ export const initTavusCVI = async () => {
     console.log('✅ Tavus conversation created:', conversation_id);
     console.log('🔗 Conversation URL:', conversation_url);
     
+     const data = await response.json();
+    const url = data?.data?.conversation_url;
+
+    if (!url) {
+      console.error('❌ Tavus API responded without a conversation URL');
+      return false;
+    }
+
     // Load Daily.co and initialize video call
-    await loadDailyAndInitialize(conversation_url);
-    
+    await loadDailyAndInitialize(url);
+
     return true;
-    
   } catch (error) {
     if (error.name === 'AbortError') {
       console.error('❌ Tavus API request timed out after 30 seconds. Please check your internet connection.');
-    } else if (error.message.includes('Failed to fetch')) {
+    } else if (error.message?.includes('Failed to fetch')) {
       console.error('❌ Network error connecting to Tavus API. Please check your internet connection and try again.');
     } else {
-      console.error('❌ Tavus CVI initialization failed:', error.message);
+      console.error('❌ Tavus CVI initialization failed:', error.message || error);
     }
     return false;
   }
 };
+
+
+
 
 // Separate function to handle Daily.co loading and initialization
 const loadDailyAndInitialize = async (conversationUrl: string) => {

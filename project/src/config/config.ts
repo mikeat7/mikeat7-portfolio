@@ -8,7 +8,8 @@ export const supabaseConfig = {
 export const tavusConfig = {
   apiKey: import.meta.env.VITE_TAVUS_API_KEY,
   callbackUrl: import.meta.env.VITE_TAVUS_CALLBACK_URL,
-  replicaId: import.meta.env.VITE_TAVUS_REPLICA_ID,
+  replicaId: 'r89d84ea6160', // Your active Tavus replica
   enableRecording: import.meta.env.VITE_TAVUS_ENABLE_RECORDING === 'true',
   maxDuration: Number(import.meta.env.VITE_TAVUS_MAX_DURATION || 1800),
 };
+

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { initTavusCVI } from './tavus'; // Make sure this file exists
 import { createClient } from '@supabase/supabase-js';
 import { supabaseUrl, supabaseKey, tavusApiKey } from './config/config';
+import TavusDebugPanel from './components/TavusDebugPanel';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -34,6 +35,9 @@ function App() {
         <div>My Portfolio (Demo Mode)</div>
       )}
       {/* Add your portfolio content here */}
+      
+      {/* Tavus Debug Panel - only show in development */}
+      <TavusDebugPanel />
     </div>
   );
 }
