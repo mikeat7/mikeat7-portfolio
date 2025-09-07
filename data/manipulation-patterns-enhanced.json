@@ -1,0 +1,156 @@
+[
+  {
+    "id": "false-consensus-manufacturing",
+    "name": "False Consensus Manufacturing",
+    "category": "consensus",
+    "description": "Creates impression of widespread agreement without evidence",
+    "semantic_indicators": [
+      "as much as we want",
+      "we all know",
+      "everyone agrees",
+      "nobody disputes",
+      "it's widely accepted",
+      "common sense tells us",
+      "any reasonable person"
+    ],
+    "context_clues": ["to", "that", "this", "the fact"],
+    "psychological_mechanism": "Bypasses individual judgment by appealing to imaginary group consensus",
+    "detection_confidence": 0.9,
+    "severity": "high"
+  },
+  {
+    "id": "crisis-amplification",
+    "name": "Crisis Language Amplification", 
+    "category": "emotional",
+    "description": "Uses dramatic language to amplify perceived urgency and threat",
+    "semantic_indicators": [
+      "surge",
+      "spike",
+      "explosion",
+      "crisis",
+      "emergency",
+      "catastrophe",
+      "disaster",
+      "unprecedented",
+      "alarming",
+      "skyrocketing"
+    ],
+    "context_clues": ["cases", "numbers", "rates", "levels", "situation"],
+    "psychological_mechanism": "Triggers fight-or-flight response to bypass rational analysis",
+    "detection_confidence": 0.85,
+    "severity": "high"
+  },
+  {
+    "id": "vague-quantification",
+    "name": "Vague Quantification",
+    "category": "logical", 
+    "description": "Uses imprecise numbers to create false impression of measurement",
+    "semantic_indicators": [
+      "rising",
+      "increasing",
+      "growing",
+      "declining",
+      "falling",
+      "surging",
+      "climbing",
+      "dropping"
+    ],
+    "context_clues": ["cases", "numbers", "rates", "levels", "across", "nationwide"],
+    "psychological_mechanism": "Mimics scientific precision while avoiding actual data",
+    "detection_confidence": 0.75,
+    "severity": "medium"
+  },
+  {
+    "id": "buried-data-limitations",
+    "name": "Buried Data Limitations",
+    "category": "authority",
+    "description": "Admits data weakness in subordinate clauses while maintaining authoritative tone",
+    "semantic_indicators": [
+      "no longer conducts rigorous",
+      "fewer people are also",
+      "trends are estimates",
+      "data do provide a hint",
+      "limited surveillance",
+      "incomplete data",
+      "preliminary findings"
+    ],
+    "context_clues": ["but", "however", "although", "while", "despite"],
+    "psychological_mechanism": "Maintains authority impression while legally covering for weak data",
+    "detection_confidence": 0.9,
+    "severity": "critical"
+  },
+  {
+    "id": "false-limitation",
+    "name": "False Limitation Framing",
+    "category": "framing",
+    "description": "Artificially restricts scope or application to dismiss broader utility",
+    "semantic_indicators": [
+      "only good for",
+      "just for",
+      "merely",
+      "nothing but",
+      "simply",
+      "only works for",
+      "limited to"
+    ],
+    "context_clues": ["horses", "animals", "veterinary", "specific", "narrow"],
+    "psychological_mechanism": "Reduces complex topics to oversimplified categories",
+    "detection_confidence": 0.85,
+    "severity": "high"
+  },
+  {
+    "id": "speculative-certainty",
+    "name": "Speculative Certainty",
+    "category": "logical",
+    "description": "Presents speculation as probable fact without supporting evidence",
+    "semantic_indicators": [
+      "likely growing",
+      "probably increasing",
+      "expected to rise",
+      "anticipated surge",
+      "projected increase",
+      "estimated growth"
+    ],
+    "context_clues": ["in", "states", "regions", "areas", "locations"],
+    "psychological_mechanism": "Creates false confidence in uncertain projections",
+    "detection_confidence": 0.8,
+    "severity": "medium"
+  },
+  {
+    "id": "institutional-name-dropping",
+    "name": "Institutional Name-dropping",
+    "category": "authority",
+    "description": "Uses institutional names without providing context for data quality",
+    "semantic_indicators": [
+      "CDC reports",
+      "WHO states",
+      "FDA confirms",
+      "NIH findings",
+      "government data",
+      "official sources"
+    ],
+    "context_clues": ["that", "show", "indicate", "reveal", "confirm"],
+    "psychological_mechanism": "Borrows institutional credibility without acknowledging limitations",
+    "detection_confidence": 0.7,
+    "severity": "medium"
+  },
+  {
+    "id": "inevitability-framing",
+    "name": "Inevitability Framing",
+    "category": "framing",
+    "description": "Presents changeable situations as unchangeable facts",
+    "semantic_indicators": [
+      "isn't going away",
+      "here to stay",
+      "permanent reality",
+      "new normal",
+      "inevitable",
+      "unavoidable",
+      "inescapable"
+    ],
+    "context_clues": ["COVID", "virus", "pandemic", "situation", "reality"],
+    "psychological_mechanism": "Reduces resistance by presenting problems as unchangeable",
+    "detection_confidence": 0.85,
+    "severity": "high"
+  }
+]
