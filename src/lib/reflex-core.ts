@@ -11,11 +11,11 @@ import { analyzeEthicalDrift } from "@/lib/vx/vx-ed01";
 import { analyzeToneUrgency } from "@/lib/vx/vx-tu01";
 import { analyzeJargonOverload } from "@/lib/vx/vx-ju01";
 import { analyzeRepetition } from "@/lib/vx/vx-ri01";
-import { ReflexFrame } from "./types";
+import type { VXFrame } from "@/types/VXTypes";
 
-// ⚙️ Runtime detection across all available vx-* reflexes
-export function detectAllReflexes(input: string): ReflexFrame[] {
-  const frames: ReflexFrame[] = [];
+// ⚙️ Runtime detection across all available vx-* reflexes (standardized to VXFrame)
+export function detectAllReflexes(input: string): VXFrame[] {
+  const frames: VXFrame[] = [];
 
   frames.push(...analyzeSpeculation(input));
   frames.push(...analyzeEmotion(input));
