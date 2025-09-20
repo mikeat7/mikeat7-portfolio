@@ -1,2 +1,4 @@
 // src/context/VXContext.tsx
-export { VXProvider, useVXContext, VXContext } from './VXProvider';
+// Shim barrel: prefer importing from '@/context/VXProvider' going forward.
+export { VXProvider, useVXContext } from './VXProvider';
+export type { VXContextType } from './VXProvider';
