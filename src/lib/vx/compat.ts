@@ -16,13 +16,15 @@ export type ReflexFrame = {
 };
 
 export function toReflexFrame(vx: CoreVXFrame, i: number = 0): ReflexFrame {
+  const anyVX = vx as any;
   return {
     id: vx.reflexId || `vx-${i}`,
     label: vx.reflexLabel || vx.reflexId || "vx",
     confidence: vx.confidence ?? 0,
     rationale: vx.rationale ?? "",
-    fragment: vx.fragment,
-    explanation: vx.explanation,
-    tone: vx.tone ?? "neutral"
+    fragment: anyVX.fragment,
+    explanation: anyVX.explanation,
+    tone: anyVX.tone ?? "neutral"
   };
 }
+
