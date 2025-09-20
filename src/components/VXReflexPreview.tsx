@@ -7,9 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import type { VXFrame } from '@/types/VXTypes';
 
 const VXReflexPreview: React.FC = () => {
-  const { reflexFrames } = useContext(VXContext);
+  const ctx = useContext(VXContext);
+  const reflexFrames: VXFrame[] = ctx?.reflexFrames ?? [];
 
-  if (!reflexFrames || reflexFrames.length === 0) {
+  if (reflexFrames.length === 0) {
     return (
       <div className="text-center text-gray-400 italic py-8">
         No reflexes triggered yet. Submit input to begin analysis.
@@ -52,4 +53,5 @@ const VXReflexPreview: React.FC = () => {
 };
 
 export default VXReflexPreview;
+
 
