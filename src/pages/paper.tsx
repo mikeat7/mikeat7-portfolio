@@ -1,25 +1,32 @@
 // src/pages/paper.tsx
 
 import React from "react";
-import { useVXContext } from "@/context/VXContext"; // ✅ Correct path
+import { useVXContext } from "@/context/VXContext";
 import ReflexInfoDrawer from "@/components/ReflexInfoDrawer";
 import CoFirePanel from "@/components/CoFirePanel";
 import BackButton from "@/components/BackButton";
+import { toReflexFrame } from "@/lib/vx/compat";
 
 export default function PaperAnalysisPage() {
   const { reflexFrames } = useVXContext();
 
-  const paperReflexes = reflexFrames.filter(
+  // Narrow to paper-related patterns in the VXFrame list
+  const paperReflexesVX = reflexFrames.filter(
     (r) => r.reflexId === "vx-da01" || r.reflexId === "vx-fp01"
   );
+
+  // Adapt VXFrame -> ReflexFrame for components that expect { id, label, tone, ... }
+  const paperReflexes = paperReflexesVX.map(toReflexFrame);
 
   return (
     <div className="p-6">
       <BackButton />
       <h1 className="text-2xl font-bold mb-4">Scientific Paper Analysis</h1>
+
       <CoFirePanel reflexes={paperReflexes} />
+
       {paperReflexes.map((reflex) => (
-        <ReflexInfoDrawer key={reflex.reflexId} reflex={reflex} />
+        <ReflexInfoDrawer key={reflex.id} reflex={reflex} />
       ))}
     </div>
   );
