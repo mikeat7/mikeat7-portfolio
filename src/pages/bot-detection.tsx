@@ -9,22 +9,24 @@ import { toReflexFrame } from '@/lib/vx/compat';
 export default function BotDetectionPage() {
   const { reflexFrames } = useVXContext();
 
-  // Narrow to bot-ish patterns in the VXFrame list
+  // Keep as VXFrame[] for components that expect VXFrame
   const botReflexesVX = reflexFrames.filter(
     (r) => r.reflexId === 'vx-ri01' || r.reflexId === 'vx-ju01'
   );
 
-  // Adapt VXFrame -> ReflexFrame for components that expect { id, label, tone, ... }
-  const botReflexes = botReflexesVX.map(toReflexFrame);
+  // Adapt to ReflexFrame for components that expect the legacy shape
+  const botReflexesLegacy = botReflexesVX.map(toReflexFrame);
 
   return (
     <div className="p-6">
       <BackButton />
       <h1 className="text-2xl font-bold mb-4">Bot-Like Behavior Detection</h1>
 
-      <CoFirePanel reflexes={botReflexes} />
+      {/* CoFirePanel expects VXFrame[] */}
+      <CoFirePanel reflexes={botReflexesVX} />
 
-      {botReflexes.map((reflex) => (
+      {/* ReflexInfoDrawer expects { id, label, tone, ... } */}
+      {botReflexesLegacy.map((reflex) => (
         <ReflexInfoDrawer key={reflex.id} reflex={reflex} />
       ))}
     </div>
