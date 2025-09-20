@@ -1,29 +1,24 @@
-export type VXFrame = {
-  reflexId: string;
-  confidence: number;
-  rationale: string;
-  fragment?: string;
-  explanation?: string;
-  tags?: string[];
-  priority?: number;
-  tone?: string;
-};
+// src/lib/vx/compat.ts
+import type { VXFrame as CoreVXFrame } from "@/types/VXTypes";
+
+// Re-export so other files can import from here if they want
+export type VXFrame = CoreVXFrame;
 
 export type ReflexFrame = {
   id: string;
   label: string;
   confidence: number;
-  rationale: string;
+  rationale: string;   // required for older UI components
   fragment?: string;
   explanation?: string;
-  tone?: string;
+  tone: string;        // required (no undefined) for older UI components
   linkedLesson?: string;
 };
 
-export function toReflexFrame(vx: VXFrame, i = 0): ReflexFrame {
+export function toReflexFrame(vx: CoreVXFrame, i: number = 0): ReflexFrame {
   return {
     id: vx.reflexId || `vx-${i}`,
-    label: vx.reflexId || "vx",
+    label: vx.reflexLabel || vx.reflexId || "vx",
     confidence: vx.confidence ?? 0,
     rationale: vx.rationale ?? "",
     fragment: vx.fragment,
