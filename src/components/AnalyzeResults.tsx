@@ -1,58 +1,45 @@
 // src/components/AnalyzeResults.tsx
+import React from "react";
+import type { VXFrame } from "@/types/VXTypes";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
-import React, { useState } from "react";
-import { useVXContext } from "@/context/VXContext";
-import { VXFrame } from "@/types/VXTypes";
-import ReflexInfoDrawer from "@/components/ReflexInfoDrawer";
-import CoFirePanel from "@/components/CoFirePanel";
-
-
-const getColor = (confidence: number) => {
-  if (confidence >= 0.75) return "bg-red-100 border-red-500 text-red-700";
-  if (confidence >= 0.5) return "bg-yellow-100 border-yellow-500 text-yellow-700";
-  return "bg-green-100 border-green-500 text-green-700";
+type Props = {
+  frame: VXFrame;
+  onClose: () => void;
 };
 
-const AnalyzeResults: React.FC = () => {
-  const { reflexFrames } = useVXContext();
-  const [selectedFrame, setSelectedFrame] = useState<VXFrame | null>(null);
-
-  if (!reflexFrames || reflexFrames.length === 0) {
-    return (
-      <div className="mt-4 p-4 text-gray-600 italic border border-dashed rounded">
-        No reflexes triggered. Please enter a statement to analyze.
-      </div>
-    );
-  }
+const AnalyzeResults: React.FC<Props> = ({ frame, onClose }) => {
+  const label = frame.reflexLabel ?? frame.reflexId;
+  const confidencePct = Math.round((frame.confidence ?? 0) * 100);
 
   return (
-    <div className="mt-4 space-y-4">
-   
-      <CoFirePanel />
-      <div className="grid gap-4">
-        {reflexFrames.map((frame, index) => (
-          <div
-            key={`${frame.reflexId}-${index}`}
-            className={`p-4 rounded border ${getColor(frame.confidence)} cursor-pointer`}
-            onClick={() => setSelectedFrame(frame)}
-          >
-            <h3 className="text-lg font-semibold">{frame.reflexLabel}</h3>
-            <p className="text-sm mt-1">{frame.rationale}</p>
-            <p className="text-xs mt-2 font-mono">
-              Confidence: {(frame.confidence * 100).toFixed(1)}%
-            </p>
-          </div>
-        ))}
-      </div>
+    <Card className="border shadow-sm">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="font-bold text-lg">{label}</h4>
+          <Badge className="px-2 py-0.5 text-xs border">{frame.reflexId}</Badge>
+        </div>
 
-      {selectedFrame && (
-        <ReflexInfoDrawer
-          frame={selectedFrame}
-          onClose={() => setSelectedFrame(null)}
-        />
-      )}
-    </div>
+        <p className="text-sm text-gray-700 mb-1">
+          <strong>Confidence:</strong> {confidencePct}%
+        </p>
+        <p className="text-sm text-gray-600">
+          <strong>Details:</strong> {frame.rationale ?? "—"}
+        </p>
+
+        <div className="mt-3">
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm"
+          >
+            Close
+          </button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
 export default AnalyzeResults;
+
