@@ -1,19 +1,22 @@
 // src/pages/bot-detection.tsx
-
-import { useVXContext } from '@/context/VXContext';
-import ReflexInfoDrawer from '@/components/ReflexInfoDrawer';
-import CoFirePanel from '@/components/CoFirePanel';
+import React from 'react';
+import { useVXContext } from '@/context/VXProvider'; // prefer the provider barrel
 import BackButton from '@/components/BackButton';
-import { toReflexFrame } from '@/lib/vx/compat';
+import CoFirePanel from '@/components/CoFirePanel';
+import ReflexInfoDrawer from '@/components/ReflexInfoDrawer';
+import type { VXFrame } from '@/types/VXTypes';
+import { toReflexFrame, type ReflexFrame } from '@/lib/vx/compat';
 
 export default function BotDetectionPage() {
   const { reflexFrames } = useVXContext();
 
-  const botReflexesVX = reflexFrames.filter(
-    (r) => r.reflexId === 'vx-ri01' || r.reflexId === 'vx-ju01'
+  // Focus on rhetorical interruption + jargon overload
+  const botReflexesVX: VXFrame[] = reflexFrames.filter((r: VXFrame) =>
+    r.reflexId === 'vx-ri01' || r.reflexId === 'vx-ju01'
   );
 
-  const botReflexesLegacy = botReflexesVX.map(toReflexFrame);
+  // Legacy shape for the drawer component
+  const botReflexesLegacy: ReflexFrame[] = botReflexesVX.map(toReflexFrame);
 
   return (
     <div className="p-6">
@@ -23,11 +26,10 @@ export default function BotDetectionPage() {
       {/* CoFirePanel expects VXFrame[] */}
       <CoFirePanel reflexes={botReflexesVX} />
 
-      {/* ReflexInfoDrawer expects { id, label, tone, ... } plus isOpen/onClose */}
-      {botReflexesLegacy.map((reflex) => (
+      {/* Drawer expects legacy shape + isOpen/onClose */}
+      {botReflexesLegacy.map((reflex: ReflexFrame) => (
         <ReflexInfoDrawer key={reflex.id} reflex={reflex} isOpen={false} onClose={() => {}} />
       ))}
     </div>
   );
 }
-
