@@ -1,54 +1,70 @@
 // src/components/ReflexInfoDrawer.tsx
-
 import React from "react";
-import { ReflexUISchema } from "@/data/vx-ui-schema"; // Adjust path if needed
+import type { ReflexFrame } from "@/lib/vx/compat";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import ReflexUISchema from "@/data/vx-ui-schema";
 
 type Props = {
+  reflex: ReflexFrame;
   isOpen: boolean;
   onClose: () => void;
-  reflex: {
-    id: string;
-    label: string;
-    confidence: number;
-    rationale: string;
-    tone: string;
-    linkedLesson?: string;
-  };
 };
 
-const ReflexInfoDrawer: React.FC<Props> = ({ isOpen, onClose, reflex }) => {
-  if (!isOpen) return null;
+const ReflexInfoDrawer: React.FC<Props> = ({ reflex, isOpen, onClose }) => {
+  if (!isOpen) {
+    // Render a compact card version when closed (to avoid layout jumps)
+    return (
+      <Card className="border shadow-sm">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold">{reflex.label}</h4>
+            <Badge className="text-xs px-2 py-0.5 border">{Math.round(reflex.confidence * 100)}%</Badge>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            {reflex.rationale || reflex.explanation || "No rationale provided."}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  const severityColor =
-    reflex.confidence >= 0.85 ? "bg-red-100 text-red-700" :
-    reflex.confidence >= 0.6 ? "bg-yellow-100 text-yellow-800" :
-    "bg-green-100 text-green-800";
+  const schema = (ReflexUISchema as any)[reflex.id] || {};
+  const color = schema.color || "gray";
+  const summary = schema.summary || "No UI schema summary available.";
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-end">
-      <div className="w-full sm:w-96 bg-white shadow-xl p-6 rounded-l-xl overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Reflex Insight</h2>
-          <button onClick={onClose} className="text-sm text-gray-500 hover:text-black">✕</button>
+    <div className="fixed inset-0 bg-black/40 z-40 flex">
+      <div className="ml-auto h-full w-full max-w-md bg-white shadow-xl p-5 overflow-auto">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold">{reflex.label}</h3>
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm"
+          >
+            Close
+          </button>
         </div>
-        <div className={`p-3 rounded ${severityColor}`}>
-          <p className="font-bold">{reflex.label}</p>
-          <p className="text-sm">Confidence: {(reflex.confidence * 100).toFixed(0)}%</p>
-          <p className="text-sm mt-2">{reflex.rationale}</p>
+
+        <div className="flex items-center gap-2">
+          <Badge className="text-xs px-2 py-0.5 border">tone: {reflex.tone || "neutral"}</Badge>
+          <Badge className="text-xs px-2 py-0.5 border" style={{ borderColor: color }}>
+            {Math.round(reflex.confidence * 100)}%
+          </Badge>
         </div>
-        {reflex.linkedLesson && (
-          <div className="mt-4">
-            <a
-              href={`/educate#${reflex.linkedLesson}`}
-              className="text-blue-600 hover:underline text-sm"
-            >
-              Learn more: {reflex.linkedLesson}
-            </a>
-          </div>
-        )}
+
+        <p className="text-sm text-gray-700 mt-4">
+          {reflex.rationale || reflex.explanation || "No rationale provided."}
+        </p>
+
+        <div className="mt-4">
+          <h4 className="font-medium mb-1">UI Schema</h4>
+          <p className="text-sm text-gray-600">{summary}</p>
+        </div>
       </div>
     </div>
   );
 };
 
 export default ReflexInfoDrawer;
+
