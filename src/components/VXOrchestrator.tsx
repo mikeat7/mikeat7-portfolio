@@ -1,9 +1,10 @@
 // src/components/VXOrchestrator.tsx
-// Clarity Armor Reflex Runtime — Context & Analyzer Export
+// Clarity Armor Reflex Runtime — Context & Analyzer Orchestrator
 
-import React, { useEffect, useContext } from 'react';
-import { VXContext } from '@/context/VXContext';
-import runReflexAnalysis from '@/lib/analysis/runReflexAnalysis';
+import React, { useEffect, useContext } from "react";
+import { VXContext } from "@/context/VXContext";
+import { runReflexAnalysis } from "@/lib/analysis/runReflexAnalysis";
+import type { VXFrame } from "@/types/VXTypes";
 
 interface Props {
   input: string;
@@ -11,24 +12,35 @@ interface Props {
 }
 
 const VXOrchestrator: React.FC<Props> = ({ input, children }) => {
-  const { setLatestInput, setReflexFrames } = useContext(VXContext);
+  // Context may be undefined or not include setters yet; keep this resilient.
+  const ctx = useContext(VXContext) as
+    | (Partial<{
+        setLatestInput: (s: string) => void;
+        setReflexFrames: (f: VXFrame[]) => void;
+      }>)
+    | undefined;
 
   useEffect(() => {
-    if (!input) return;
+    if (!input || input.trim().length < 1) return;
 
-    // Update context with new input
-    setLatestInput(input);
+    // Update context if available
+    ctx?.setLatestInput?.(input);
 
-    // Run analysis and set frames
+    // Run analysis and publish frames into context if setter exists
     const run = async () => {
-      const frames = await runReflexAnalysis(input);
-      setReflexFrames(frames);
+      try {
+        const frames = await runReflexAnalysis(input);
+        ctx?.setReflexFrames?.(frames);
+      } catch (e) {
+        console.error("VXOrchestrator: analysis failed", e);
+      }
     };
 
     run();
-  }, [input, setLatestInput, setReflexFrames]);
+  }, [input, ctx]);
 
-  return <>{children}</>; // ✅ Allows child render with loaded context
+  // Orchestrator doesn’t render UI itself; it just coordinates
+  return <>{children}</>;
 };
 
 export default VXOrchestrator;
