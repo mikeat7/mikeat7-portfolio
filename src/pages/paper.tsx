@@ -24,9 +24,9 @@ export default function PaperAnalysisPage() {
       {/* VXFrame[] */}
       <CoFirePanel reflexes={paperReflexesVX} />
 
-      {/* Legacy frame shape */}
+      {/* Legacy frame shape + required props */}
       {paperReflexesLegacy.map((reflex) => (
-        <ReflexInfoDrawer key={reflex.id} reflex={reflex} />
+        <ReflexInfoDrawer key={reflex.id} reflex={reflex} isOpen={false} onClose={() => {}} />
       ))}
     </div>
   );
