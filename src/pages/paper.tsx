@@ -10,22 +10,22 @@ import { toReflexFrame } from "@/lib/vx/compat";
 export default function PaperAnalysisPage() {
   const { reflexFrames } = useVXContext();
 
-  // Narrow to paper-related patterns in the VXFrame list
   const paperReflexesVX = reflexFrames.filter(
     (r) => r.reflexId === "vx-da01" || r.reflexId === "vx-fp01"
   );
 
-  // Adapt VXFrame -> ReflexFrame for components that expect { id, label, tone, ... }
-  const paperReflexes = paperReflexesVX.map(toReflexFrame);
+  const paperReflexesLegacy = paperReflexesVX.map(toReflexFrame);
 
   return (
     <div className="p-6">
       <BackButton />
       <h1 className="text-2xl font-bold mb-4">Scientific Paper Analysis</h1>
 
-      <CoFirePanel reflexes={paperReflexes} />
+      {/* VXFrame[] */}
+      <CoFirePanel reflexes={paperReflexesVX} />
 
-      {paperReflexes.map((reflex) => (
+      {/* Legacy frame shape */}
+      {paperReflexesLegacy.map((reflex) => (
         <ReflexInfoDrawer key={reflex.id} reflex={reflex} />
       ))}
     </div>
