@@ -22,25 +22,28 @@ import { detectComprehensiveManipulation } from '@/lib/vx/vx-mp01';
 import { detectPseudoInquiry } from '@/lib/vx/vx-inquiry-protection';
 import { detectAIGeneratedContent } from '@/lib/vx/vx-ai01';
 import { detectNarrativeFraming } from '@/lib/vx/vx-nf01';
-import { detectNarrativeFraming } from '@/lib/vx/vx-nf01';
 import { adaptiveLearning } from '@/lib/adaptive/AdaptiveLearningEngine';
 
 /**
  * Main reflex analysis runner
- * Dispatches text through all 16 VX detectors and aggregates results
+ * Dispatches text through all VX detectors and aggregates results
  */
-const runReflexAnalysis = async (input: string): Promise<VXFrame[]> => {
+export const runReflexAnalysis = async (input: string): Promise<VXFrame[]> => {
   if (!input || input.trim().length < 3) {
     console.log('🔍 Analysis skipped: input too short');
     return [];
   }
 
   const timestamp = new Date().toLocaleTimeString();
-  console.log(`🔍 [${timestamp}] Starting comprehensive analysis for input:`, input.substring(0, 50) + '...');
+  console.log(
+    `🔍 [${timestamp}] Starting comprehensive analysis for input:`,
+    input.substring(0, 50) + '...'
+  );
+
   const frames: VXFrame[] = [];
 
   try {
-    // Run all 16 VX detectors in parallel for efficiency
+    // Run detectors in parallel
     const [
       confidenceFrames,        // VX-CO01
       dataLessFrames,          // VX-DA01
@@ -51,7 +54,7 @@ const runReflexAnalysis = async (input: string): Promise<VXFrame[]> => {
       precisionFrames,         // VX-FP01
       hallucinationFrames,     // VX-HA01
       jargonFrames,            // VX-JU01
-      oversimplificationFrames, // VX-NS01
+      oversimplificationFrames,// VX-NS01
       omissionFrames,          // VX-OS01
       consensusFrames,         // VX-PC01
       interruptionFrames,      // VX-RI01
@@ -80,8 +83,8 @@ const runReflexAnalysis = async (input: string): Promise<VXFrame[]> => {
       Promise.resolve(detectAIGeneratedContent(input)),
       Promise.resolve(detectNarrativeFraming(input))
     ]);
-    
-    // Add semantic pattern detection
+
+    // Extra semantic passes (sync)
     const semanticFrames = detectSemanticPatterns(input);
     const enhancedSemanticFrames = detectEnhancedSemanticPatterns(input);
     const comprehensiveFrames = detectComprehensiveManipulation(input);
@@ -106,14 +109,13 @@ const runReflexAnalysis = async (input: string): Promise<VXFrame[]> => {
       vagueness: vaguenessFrames.length,
       aiContent: aiContentFrames.length,
       narrative: narrativeFrames.length,
-      narrative: narrativeFrames.length,
       semantic: semanticFrames.length,
       enhancedSemantic: enhancedSemanticFrames.length,
       comprehensive: comprehensiveFrames.length,
       pseudoInquiry: pseudoInquiryFrames.length
     });
 
-    // Flatten all results into single array
+    // Flatten
     frames.push(
       ...confidenceFrames,
       ...dataLessFrames,
@@ -139,28 +141,29 @@ const runReflexAnalysis = async (input: string): Promise<VXFrame[]> => {
       ...pseudoInquiryFrames
     );
 
-    // Sort by confidence (highest first)
+    // Sort by confidence
     frames.sort((a, b) => b.confidence - a.confidence);
 
-    // Apply adaptive learning adjustments to all frames
-    frames.forEach(frame => {
+    // Adaptive learning tweaks
+    frames.forEach((frame) => {
       const adjustment = adaptiveLearning.getPatternAdjustment(frame.reflexId);
       if (adjustment !== 0) {
         const originalConfidence = frame.confidence;
         frame.confidence = Math.max(0.05, Math.min(0.95, frame.confidence + adjustment));
-        console.log(`🧠 Applied learned adjustment to ${frame.reflexId}: ${originalConfidence} → ${frame.confidence} (${adjustment >= 0 ? '+' : ''}${adjustment.toFixed(3)})`);
+        console.log(
+          `🧠 Applied learned adjustment to ${frame.reflexId}: ${originalConfidence} → ${frame.confidence} (${adjustment >= 0 ? '+' : ''}${adjustment.toFixed(3)})`
+        );
       }
     });
 
     console.log(`🔍 [${timestamp}] Final comprehensive analysis results:`, frames.length, 'frames detected');
-    frames.forEach(frame => console.log(`  - ${frame.reflexLabel}: ${frame.confidence}`));
+    frames.forEach((frame) => console.log(`  - ${frame.reflexLabel ?? frame.reflexId}: ${frame.confidence}`));
 
-    // Apply cluster detection for co-firing reflexes
+    // Co-fire clustering
     const clusteredFrames = detectReflexClusters(frames, input);
-    
+
     console.log(`🔍 [${timestamp}] Complete VX analysis finished, returning ${clusteredFrames.length} frames`);
     return clusteredFrames;
-
   } catch (error) {
     console.error(`🚨 [${timestamp}] Comprehensive reflex analysis error:`, error);
     return [];
@@ -172,54 +175,53 @@ const runReflexAnalysis = async (input: string): Promise<VXFrame[]> => {
  * Adds cluster metadata for UI alerts
  */
 function detectReflexClusters(frames: VXFrame[], originalInput: string): VXFrame[] {
-  // Enhanced cluster detection with discourse quality assessment
-  const hasLegitimateScientificLanguage = /requires further study|needs investigation|warrants research|seems plausible|appears to suggest/i.test(originalInput);
-  
-  // Enhanced cluster detection with multiple tiers
-  const highConfidenceFrames = frames.filter(f => f.confidence >= 0.75);
-  const mediumConfidenceFrames = frames.filter(f => f.confidence >= 0.55);
+  const hasLegitimateScientificLanguage = /requires further study|needs investigation|warrants research|seems plausible|appears to suggest/i.test(
+    originalInput
+  );
+
+  const highConfidenceFrames = frames.filter((f) => f.confidence >= 0.75);
+  const mediumConfidenceFrames = frames.filter((f) => f.confidence >= 0.55);
   const totalFrames = frames.length;
-  
-  // ADJUST cluster thresholds for legitimate scientific discourse
-  const clusterThreshold = hasLegitimateScientificLanguage ? 
-    { high: 3, medium: 4, volume: 5 } : 
-    { high: 2, medium: 3, volume: 4 };
-  
-  // Cluster conditions (any of these trigger alert):
+
+  const clusterThreshold = hasLegitimateScientificLanguage
+    ? { high: 3, medium: 4, volume: 5 }
+    : { high: 2, medium: 3, volume: 4 };
+
   const hasHighCluster = highConfidenceFrames.length >= clusterThreshold.high;
   const hasMediumCluster = mediumConfidenceFrames.length >= clusterThreshold.medium;
   const hasVolumeCluster = totalFrames >= clusterThreshold.volume;
-  
+
   if (hasHighCluster || hasMediumCluster || hasVolumeCluster) {
-    const clusterType = hasHighCluster ? 'HIGH-CONFIDENCE' : 
-                       hasMediumCluster ? 'MEDIUM-CONFIDENCE' : 'VOLUME';
-    const clusterCount = hasHighCluster ? highConfidenceFrames.length :
-                        hasMediumCluster ? mediumConfidenceFrames.length : totalFrames;
-    
+    const clusterType = hasHighCluster ? 'HIGH-CONFIDENCE' : hasMediumCluster ? 'MEDIUM-CONFIDENCE' : 'VOLUME';
+    const clusterCount = hasHighCluster
+      ? highConfidenceFrames.length
+      : hasMediumCluster
+      ? mediumConfidenceFrames.length
+      : totalFrames;
+
     console.log(`🔥 ${clusterType} Cluster detected: ${clusterCount} reflexes`);
-    
-    // Add cluster alert metadata
-    frames.forEach(frame => {
+
+    frames.forEach((frame) => {
       if (frame.confidence >= 0.55) {
         frame.tags = [...(frame.tags || []), 'cluster-alert'];
         frame.priority = Math.max(frame.priority || 1, 3);
       }
     });
-    
-    // Add cluster summary for UI
-    const clusterSummary = {
+
+    const clusterSummary: VXFrame = {
       reflexId: 'cluster-alert',
+      // many places use reflexLabel for display; fall back to reflexId
       reflexLabel: `⚠️ ${clusterType} Manipulation Cluster Detected`,
       rationale: `🔥 ${clusterType} CLUSTER ALERT: ${clusterCount} reflexes triggered on "${originalInput.substring(0, 50)}..." 
       
 📋 Analysis: ${getClusterAnalysis(clusterType, clusterCount)}
 
 ⚠️ Impact: ${getClusterImpact(clusterType)}`,
-      confidence: Math.max(...frames.map(f => f.confidence)),
+      confidence: Math.max(...frames.map((f) => f.confidence)),
       tags: ['cluster', 'alert', clusterType.toLowerCase()],
       priority: 4
-    };
-    
+    } as VXFrame;
+
     frames.unshift(clusterSummary);
   }
 
