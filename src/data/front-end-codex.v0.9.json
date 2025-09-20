@@ -1,0 +1,210 @@
+{
+  "codex_version": "0.9.0",
+  "codex_date": "2025-08-10",
+  "description": "Front-end runtime contract for Truth Serum + Clarity Armor. Defines mode handshakes, reflex priorities, context decay rules, citation policy, omission scan defaults, failure semantics, and compatibility requirements.",
+
+  "compat_matrix": {
+    "min_app_semver": "0.1.0",
+    "min_node": "18.0.0",
+    "min_typescript": "5.2",
+    "supported_ui_layers": ["react-18", "vite"],
+    "ui_components": ["FailureBanner"],
+    "llm_targets": [
+      {
+        "name": "gpt-5-thinking",
+        "min_version": "2025-06",
+        "notes": "Prefer JSON I/O where possible; honor handshake header in every call."
+      }
+    ]
+  },
+
+  "handshake_required_fields": {
+    "mode": ["--direct", "--careful", "--recap"],
+    "stakes": ["low", "medium", "high"],
+    "min_confidence": { "type": "number", "range": [0, 1] },
+    "cite_policy": ["auto", "force", "off"],
+    "omission_scan": ["auto", true, false],
+    "reflex_profile": ["default", "strict", "lenient"],
+    "codex_version": "0.9.0"
+  },
+
+  "handshake_defaults": {
+    "mode": "--careful",
+    "stakes": "medium",
+    "min_confidence": 0.6,
+    "cite_policy": "auto",
+    "omission_scan": "auto",
+    "reflex_profile": "default"
+  },
+
+  "modes": {
+    "--direct": {
+      "description": "Skip caveats, favor speed; still obey confidence gates.",
+      "qualifier_frequency": "low",
+      "min_confidence_default": 0.55,
+      "drift_alerts": "minimal"
+    },
+    "--careful": {
+      "description": "Enhanced guardrails; frequent confirmations; safer defaults.",
+      "qualifier_frequency": "high",
+      "min_confidence_default": 0.7,
+      "drift_alerts": "eager"
+    },
+    "--recap": {
+      "description": "Summarize task, context, mode; reset context decay timers.",
+      "qualifier_frequency": "medium",
+      "min_confidence_default": 0.6,
+      "drift_alerts": "normal"
+    }
+  },
+
+  "stakes_policy": {
+    "low": {
+      "cite_policy_default": "auto",
+      "omission_scan_default": "auto",
+      "min_confidence_floor": 0.45
+    },
+    "medium": {
+      "cite_policy_default": "auto",
+      "omission_scan_default": "auto",
+      "min_confidence_floor": 0.6
+    },
+    "high": {
+      "cite_policy_default": "force",
+      "omission_scan_default": true,
+      "min_confidence_floor": 0.75
+    }
+  },
+
+  "citation_policy": {
+    "auto_rules": [
+      { "if_stakes": ["medium", "high"], "if_confidence_lt": 0.85, "require_citation": true },
+      { "if_external_claim": true, "require_citation": true }
+    ],
+    "force_rules": [
+      { "always": true, "require_citation": true }
+    ],
+    "off_rules": [
+      { "if_stakes": ["low"], "require_citation": false }
+    ]
+  },
+
+  "citation_hooks": {
+    "require_for_stakes": ["high"],
+    "anchor_required": true,
+    "log_missing_context": true
+  },
+
+  "context_decay": {
+    "max_turns_without_recap": 12,
+    "max_tokens_since_recap": 3500,
+    "on_expire": "--recap",
+    "force_recap_after_turns": 12,
+    "force_recap_after_tokens": 3500
+  },
+
+  "reflex_profiles": {
+    "default": {
+      "prioritization_order": [
+        "contradiction",
+        "hallucination",
+        "omission",
+        "speculative_authority",
+        "perceived_consensus",
+        "false_precision",
+        "data_less_claim",
+        "emotional_manipulation",
+        "tone_urgency",
+        "ethical_drift"
+      ],
+      "cooldowns": { "global_ms": 1200, "per_reflex_ms": 800 }
+    },
+    "strict": {
+      "prioritization_order": [
+        "contradiction",
+        "hallucination",
+        "omission",
+        "speculative_authority",
+        "false_precision",
+        "perceived_consensus",
+        "data_less_claim",
+        "ethical_drift",
+        "tone_urgency",
+        "emotional_manipulation"
+      ],
+      "cooldowns": { "global_ms": 1600, "per_reflex_ms": 1100 }
+    },
+    "lenient": {
+      "prioritization_order": [
+        "omission",
+        "emotional_manipulation",
+        "tone_urgency",
+        "data_less_claim",
+        "perceived_consensus",
+        "speculative_authority",
+        "false_precision",
+        "ethical_drift",
+        "hallucination",
+        "contradiction"
+      ],
+      "cooldowns": { "global_ms": 900, "per_reflex_ms": 600 }
+    }
+  },
+
+  "reflex_prioritization": {
+    "cofire_allowed": ["vx-ju01", "vx-ri01", "vx-da01", "vx-fp01", "vx-nf01"],
+    "cooldowns": { "vx-ju01": 2, "vx-ri01": 1 },
+    "tiebreakers": ["confidence", "priority", "recency"]
+  },
+
+  "reflex_thresholds": {
+    "emotional_manipulation": { "trigger_at": 0.65, "suppress_below_stakes": "low" },
+    "hallucination": { "trigger_at": 0.5, "block_if_over": 0.8 },
+    "speculative_authority": { "trigger_at": 0.6 },
+    "omission": { "trigger_at": 0.55 },
+    "perceived_consensus": { "trigger_at": 0.6 },
+    "false_precision": { "trigger_at": 0.55 },
+    "data_less_claim": { "trigger_at": 0.6 },
+    "tone_urgency": { "trigger_at": 0.6 },
+    "ethical_drift": { "trigger_at": 0.6 },
+    "contradiction": { "trigger_at": 0.55, "block_if_over": 0.85 }
+  },
+
+  "failure_semantics": {
+    "hedge_threshold": 0.4,
+    "refuse_threshold": 0.2,
+    "ui_component": "FailureBanner",
+
+    "refuse": {
+      "ui_failover_text": "I can’t assist with that. Let’s choose a safer or more specific direction.",
+      "action": "offer_alternatives"
+    },
+    "hedge": {
+      "ui_failover_text": "I’m not fully confident. Here’s what I do know—and what would increase confidence.",
+      "action": "show_confidence_and_next_steps"
+    },
+    "ask_clarify": {
+      "ui_failover_text": "To get this right, I need a quick clarification on X/Y.",
+      "action": "prompt_for_disambiguation"
+    }
+  },
+
+  "telemetry": {
+    "enabled": true,
+    "emit_events": true,
+    "redact_fields": ["latestInput"],
+    "fields": [
+      "mode",
+      "stakes",
+      "min_confidence",
+      "cite_policy",
+      "omission_scan",
+      "reflex_profile",
+      "triggered_reflexes",
+      "co_fires",
+      "cooldowns_applied",
+      "context_age_turns",
+      "tokens_since_recap"
+    ]
+  }
+}
