@@ -1,3 +1,137 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* --------------------------
+   Neumorphism design tokens
+--------------------------- */
+:root {
+  --neo-bg: #ecf0f3;
+  --neo-fg: #0b1020;
+
+  /* shadow pair (light + dark) for the soft embossed look */
+  --neo-shadow-dark: 8px 8px 18px rgba(0, 0, 0, 0.12);
+  --neo-shadow-light: -8px -8px 18px rgba(255, 255, 255, 0.9);
+
+  /* pressed/inset variants */
+  --neo-inset-dark: inset 8px 8px 18px rgba(0, 0, 0, 0.12);
+  --neo-inset-light: inset -8px -8px 18px rgba(255, 255, 255, 0.9);
+
+  --neo-radius: 18px;
+  --neo-transition: 180ms cubic-bezier(.2,.9,.2,1);
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--neo-bg);
+  color: var(--neo-fg);
+}
+
+/* Base surface for pages using the new style */
+.neo-surface {
+  background: var(--neo-bg);
+  min-height: 100%;
+}
+
+/* Card-style block with raised effect */
+.neo-card {
+  background: var(--neo-bg);
+  border-radius: var(--neo-radius);
+  box-shadow: var(--neo-shadow-dark), var(--neo-shadow-light);
+  transition: box-shadow var(--neo-transition), transform var(--neo-transition);
+}
+
+.neo-card:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    10px 10px 22px rgba(0, 0, 0, 0.14),
+    -10px -10px 22px rgba(255, 255, 255, 0.95);
+}
+
+/* Elements that look “pressed into” the surface */
+.neo-pressable {
+  background: var(--neo-bg);
+  border-radius: var(--neo-radius);
+  box-shadow: var(--neo-inset-dark), var(--neo-inset-light);
+  transition: box-shadow var(--neo-transition), transform var(--neo-transition);
+}
+
+.neo-pressable:focus-within {
+  box-shadow:
+    inset 10px 10px 22px rgba(0, 0, 0, 0.12),
+    inset -10px -10px 22px rgba(255, 255, 255, 0.92),
+    0 0 0 3px rgba(59, 130, 246, .25); /* subtle focus ring */
+}
+
+/* Inputs with inset look */
+.neo-input {
+  background: var(--neo-bg);
+  border: none;
+  outline: none;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  width: 100%;
+  box-shadow: var(--neo-inset-dark), var(--neo-inset-light);
+  transition: box-shadow var(--neo-transition);
+  color: var(--neo-fg);
+}
+
+.neo-input::placeholder {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.neo-input:focus {
+  box-shadow:
+    inset 10px 10px 22px rgba(0, 0, 0, 0.12),
+    inset -10px -10px 22px rgba(255, 255, 255, 0.92),
+    0 0 0 3px rgba(59, 130, 246, .25);
+}
+
+/* Rounded CTA with soft shadow */
+.neo-btn {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.75rem 1.2rem;
+  font-weight: 600;
+  color: #0b1020;
+  background: linear-gradient(180deg, #ffffff, #e9edf3);
+  box-shadow:
+    8px 8px 18px rgba(0, 0, 0, 0.12),
+    -8px -8px 18px rgba(255, 255, 255, 0.9);
+  transition: transform var(--neo-transition), box-shadow var(--neo-transition);
+}
+
+.neo-btn:hover {
+  transform: translateY(-1px);
+}
+
+.neo-btn:active {
+  transform: translateY(0);
+  box-shadow:
+    inset 8px 8px 18px rgba(0, 0, 0, 0.12),
+    inset -8px -8px 18px rgba(255, 255, 255, 0.9);
+}
+
+/* Small rounded labels */
+.neo-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  font-size: .75rem;
+  padding: .35rem .7rem;
+  border-radius: 999px;
+  background: var(--neo-bg);
+  box-shadow: var(--neo-shadow-dark), var(--neo-shadow-light);
+}
+
+/* Generic utility for keyboard focus */
+.focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, .3);
+}
+
+/* Optional dark mode (enable by adding .dark to html) */
+html.dark {
+  --neo-bg: #1c2130;
+  --neo-fg: #edf2f
