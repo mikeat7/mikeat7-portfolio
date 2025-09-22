@@ -16,6 +16,7 @@ const TrainPage: React.FC = () => {
   const [copiedHSDirect, setCopiedHSDirect] = useState(false);
   const [copiedHSCareful, setCopiedHSCareful] = useState(false);
   const [copiedHSRecap, setCopiedHSRecap] = useState(false);
+  const [copiedAllHS, setCopiedAllHS] = useState(false); // NEW
 
   // Scroll to top on mount
   useEffect(() => {
@@ -159,6 +160,20 @@ Runtime
   "codex_version": "0.9.0"
 }`;
 
+  // Combined handshakes (NEW)
+  const allHandshakes = `// --direct / low
+${hsDirectLow}
+
+---
+
+// --careful / medium
+${hsCarefulMedium}
+
+---
+
+// --recap / high
+${hsRecapHigh}`;
+
   // Copy helpers
   const copy = async (text: string, setFlag: (b: boolean) => void) => {
     await navigator.clipboard.writeText(text);
@@ -251,6 +266,7 @@ Runtime
             Every task must include a <em>handshake</em> header. Prioritize clarity over confidence,
             never bluff, and ask when unsure.
           </p>
+
           <div className="flex flex-wrap gap-3 mb-4">
             <button
               onClick={() => copy(codexV09Compact, setCopiedV09)}
@@ -258,6 +274,16 @@ Runtime
             >
               {copiedV09 ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
               {copiedV09 ? 'Copied!' : 'Copy v0.9 Compact Codex'}
+            </button>
+
+            {/* NEW: Copy ALL handshakes button */}
+            <button
+              onClick={() => copy(allHandshakes, setCopiedAllHS)}
+              className="flex items-center gap-2 bg-slate-700 text-white px-5 py-2.5 rounded-md hover:bg-slate-800 transition"
+              title="Copies the --direct, --careful and --recap handshakes together"
+            >
+              {copiedAllHS ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+              {copiedAllHS ? 'Copied!' : 'Copy All Handshakes'}
             </button>
           </div>
 
@@ -435,4 +461,3 @@ const res = await fetch("/api/llm", {
 };
 
 export default TrainPage;
-
