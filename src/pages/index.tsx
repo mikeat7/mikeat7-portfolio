@@ -2,8 +2,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ShieldCheck, Beaker, Link2, Cpu, ArrowRight, Sparkles, Layers } from "lucide-react";
+
+// ✅ Import JSON as raw, then cast to our Codex type
+import codexJson from "@/data/front-end-codex.v0.9.json";
+import type { Codex } from "@/lib/codex-runtime";
 import { buildHandshake } from "@/lib/codex-runtime";
-import codex from "@/data/front-end-codex.v0.9.json";
+
+const codex = codexJson as unknown as Codex;
 
 const HandshakeStatus: React.FC = () => {
   const hs = buildHandshake(codex, { mode: "--careful", stakes: "medium" });
@@ -105,7 +110,7 @@ const IndexPage: React.FC = () => {
             </Link>
           </div>
 
-          {/* SECONDARY CTA (visible but softer) */}
+          {/* SECONDARY CTA (softer) */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
             <Link
               to="/wisdom"
@@ -125,7 +130,7 @@ const IndexPage: React.FC = () => {
             </Link>
           </div>
 
-          {/* CORE CAPABILITIES (brief, judge-friendly) */}
+          {/* CORE CAPABILITIES */}
           <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div
               className="rounded-2xl p-6"
@@ -161,4 +166,5 @@ const IndexPage: React.FC = () => {
 };
 
 export default IndexPage;
+
 
