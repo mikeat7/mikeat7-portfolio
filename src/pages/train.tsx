@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Copy, BookOpen, CheckCircle, Cpu } from 'lucide-react';
+import { Copy, BookOpen, CheckCircle, Cpu, HelpCircle } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 
 const TrainPage: React.FC = () => {
@@ -305,6 +305,61 @@ Runtime
               </button>
             </div>
           </div>
+
+          {/* Tiny tooltip/help block */}
+          <div className="bg-slate-100 border border-slate-200 rounded-md p-4 mt-6">
+            <details>
+              <summary className="flex items-center gap-2 cursor-pointer select-none text-slate-800 font-medium">
+                <HelpCircle className="w-4 h-4" />
+                How to use these handshakes (tips)
+              </summary>
+              <div className="mt-3 text-sm text-slate-700 space-y-3">
+                <p>
+                  Paste the handshake JSON <em>in the same message</em> as your task. The model (or your API)
+                  should treat it as a header/contract for that request.
+                </p>
+
+                <div className="grid md:grid-cols-3 gap-3">
+                  <div className="bg-white rounded p-3 border">
+                    <p className="font-medium mb-1">Claude (chat UI)</p>
+                    <pre className="text-[11px] bg-gray-50 p-2 rounded whitespace-pre-wrap">{`Handshake:
+${hsCarefulMedium}
+
+Task:
+"Summarize this paper's methods section. Flag any weaknesses."`}</pre>
+                  </div>
+
+                  <div className="bg-white rounded p-3 border">
+                    <p className="font-medium mb-1">OpenAI API (pseudo)</p>
+                    <pre className="text-[11px] bg-gray-50 p-2 rounded whitespace-pre-wrap">{`fetch("/api/llm", {
+  method: "POST",
+  headers: {"Content-Type":"application/json"},
+  body: JSON.stringify({
+    prompt: "Audit this article for omissions.",
+    handshake: ${hsCarefulMedium}
+  })
+})`}</pre>
+                  </div>
+
+                  <div className="bg-white rounded p-3 border">
+                    <p className="font-medium mb-1">Local dev (fetch)</p>
+                    <pre className="text-[11px] bg-gray-50 p-2 rounded whitespace-pre-wrap">{`const handshake = ${hsDirectLow};
+const res = await fetch("/api/llm", {
+  method: "POST",
+  headers: {"Content-Type":"application/json"},
+  body: JSON.stringify({ prompt, handshake })
+});`}</pre>
+                  </div>
+                </div>
+
+                <ul className="list-disc pl-5">
+                  <li>Pick one handshake per request (direct/careful/recap) and keep it consistent for the session.</li>
+                  <li>For high-stakes work, prefer <code>--careful</code> or <code>--recap</code> and stricter thresholds.</li>
+                  <li>If the thread gets long, send a <code>--recap</code> handshake to refresh context.</li>
+                </ul>
+              </div>
+            </details>
+          </div>
         </div>
 
         {/* Why They Bullshit */}
@@ -380,3 +435,4 @@ Runtime
 };
 
 export default TrainPage;
+
