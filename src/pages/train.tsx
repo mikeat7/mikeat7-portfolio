@@ -1,23 +1,28 @@
-import React, { useState } from 'react';
-import { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Copy, BookOpen, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Copy, BookOpen, CheckCircle, Cpu } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 
-const TrainPage = () => {
+const TrainPage: React.FC = () => {
   const navigate = useNavigate();
   const [feedback, setFeedback] = useState('');
   const [score, setScore] = useState(3);
   const [submitted, setSubmitted] = useState(false);
+
+  // Copy state flags
   const [copiedGeneral, setCopiedGeneral] = useState(false);
   const [copiedClaude, setCopiedClaude] = useState(false);
+  const [copiedV09, setCopiedV09] = useState(false);
+  const [copiedHSDirect, setCopiedHSDirect] = useState(false);
+  const [copiedHSCareful, setCopiedHSCareful] = useState(false);
+  const [copiedHSRecap, setCopiedHSRecap] = useState(false);
 
-  // Scroll to top when page loads
+  // Scroll to top on mount
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // The main codex for most LLMs
+  // ----------------- Existing v0.8.1 Codex (kept) -----------------
   const generalCodex = `Prompt Architecture v0.8.1 – Drift-Resistant Recursive Core
 Session Initialization Directive
 
@@ -64,7 +69,6 @@ Ruleset
 Forward Use
 v0.8.1 is the base for recursive sessions and anti-bullshitting scaffolds, extendable with safeguards and reflex training.`;
 
-  // Claude-specific version
   const claudeCodex = `Claude-Specific Prompt Architecture v0.8.1 – Drift-Resistant Recursive Core
 
 Hello Claude. This is a specialized prompt architecture designed to enhance your natural capabilities while maintaining your core safety guidelines. Please integrate these principles into our conversation:
@@ -94,38 +98,86 @@ This framework works with your existing guidelines, not against them. It simply 
 
 Ready to proceed with enhanced clarity protocols?`;
 
-  const handleCopyGeneral = () => {
-    navigator.clipboard.writeText(generalCodex);
-    setCopiedGeneral(true);
-    setTimeout(() => setCopiedGeneral(false), 2000);
-  };
+  // ----------------- NEW v0.9 FRONT-END CODEX (Compact) -----------------
+  const codexV09Compact = `FRONT-END CODEX v0.9 — COMPACT (Manual Use)
 
-  const handleCopyClaude = () => {
-    navigator.clipboard.writeText(claudeCodex);
-    setCopiedClaude(true);
-    setTimeout(() => setCopiedClaude(false), 2000);
+Purpose
+- Governs honesty + caution for a session.
+- Every task must include a handshake header.
+- Prioritize clarity > confidence; never bluff; ask when unsure.
+
+Handshake (send with every request)
+Fields:
+- mode: --direct | --careful | --recap
+- stakes: low | medium | high
+- min_confidence: 0..1 (apply floor by stakes)
+- cite_policy: auto | force | off
+- omission_scan: auto | true | false
+- reflex_profile: default | strict | lenient
+- codex_version: 0.9.0
+
+Policy (summarized)
+- If stakes high → cite_policy=force, omission_scan=true, higher min_confidence floor.
+- "auto" citation: external claims or confidence < 0.85 at medium/high stakes.
+- Context decay: recap after ~12 turns or ~3500 tokens.
+- Failure semantics:
+  refuse → offer alternatives
+  hedge → show confidence + next steps
+  ask_clarify → prompt for disambiguation
+
+Runtime
+- Gate reflex results by profile + thresholds.
+- Block response if contradiction/hallucination exceeds block thresholds.
+- Emit telemetry fields (mode, stakes, triggered_reflexes, etc.)`;
+
+  // Handshake templates (ready to paste)
+  const hsDirectLow = `{
+  "mode": "--direct",
+  "stakes": "low",
+  "min_confidence": 0.55,
+  "cite_policy": "auto",
+  "omission_scan": "auto",
+  "reflex_profile": "default",
+  "codex_version": "0.9.0"
+}`;
+  const hsCarefulMedium = `{
+  "mode": "--careful",
+  "stakes": "medium",
+  "min_confidence": 0.70,
+  "cite_policy": "auto",
+  "omission_scan": "auto",
+  "reflex_profile": "default",
+  "codex_version": "0.9.0"
+}`;
+  const hsRecapHigh = `{
+  "mode": "--recap",
+  "stakes": "high",
+  "min_confidence": 0.75,
+  "cite_policy": "force",
+  "omission_scan": true,
+  "reflex_profile": "strict",
+  "codex_version": "0.9.0"
+}`;
+
+  // Copy helpers
+  const copy = async (text: string, setFlag: (b: boolean) => void) => {
+    await navigator.clipboard.writeText(text);
+    setFlag(true);
+    setTimeout(() => setFlag(false), 1800);
   };
 
   const handleSubmitExperience = () => {
     if (!feedback.trim()) return;
-    
-    // Store user experience locally (you can later export this data)
     const experience = {
       feedback: feedback.trim(),
       score,
       timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent
+      userAgent: navigator.userAgent,
     };
-    
-    // Get existing experiences
-    const existingExperiences = JSON.parse(localStorage.getItem('train_ai_experiences') || '[]');
-    existingExperiences.push(experience);
-    localStorage.setItem('train_ai_experiences', JSON.stringify(existingExperiences));
-    
-    console.log('User experience saved:', experience);
+    const existing = JSON.parse(localStorage.getItem('train_ai_experiences') || '[]');
+    existing.push(experience);
+    localStorage.setItem('train_ai_experiences', JSON.stringify(existing));
     setSubmitted(true);
-    
-    // Reset form after 3 seconds
     setTimeout(() => {
       setFeedback('');
       setScore(3);
@@ -137,106 +189,48 @@ Ready to proceed with enhanced clarity protocols?`;
     <div className="min-h-screen bg-slate-50 py-8">
       <div className="max-w-4xl mx-auto px-6">
         <BackButton />
-        
+
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4 text-gray-900">🎓 Train an AI to Be Honest</h1>
           <p className="text-lg text-gray-600 mb-6">
-            Use this codex to teach language models epistemic humility and reduce hallucination.
+            Use these codices to teach language models epistemic humility and reduce hallucination.
           </p>
-          
         </div>
 
-        {/* Introduction Section */}
+        {/* How to Use */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">How to Use This Prompt</h2>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">How to Use These Prompts</h2>
           <div className="prose text-gray-700 space-y-4">
             <p>
-              Use this as a seed to train another LLM, or as a diagnostic for runtime honesty. Use the "Copy Prompt" to save the codex to your clipboard, then paste it into a new LLM conversation. It is designed to reduce hallucination and reward clarity.
+              Use the copy buttons to seed a new LLM session. The v0.8.1 codex is the original
+              drift-resistant core; the new v0.9 adds handshake governance (mode × stakes × policy)
+              and context-decay + failure semantics.
             </p>
             <p>
-              <strong>Note:</strong> You may need to reassure your "new sessions" AI to accept it as guidance. Free tiers accept it readily. With more advanced AI, please: (open a new session), "Copy" and "Paste" this message first to give it a "heads up" and wait for acceptance, (yes, "seriously"):
+              <strong>Tip:</strong> For stricter systems, open a fresh chat and paste a short
+              “heads-up” message first so the model treats the codex as session scaffolding.
             </p>
-            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 my-4">
-              <p className="text-sm italic">
-                "Hello, My name is [place name here]. Is it 'ok' if I show you a frontend prompt called Prompt Architecture v0.8.1 – Drift-Resistant Recursive Core. It is a sophisticated prompt designed 'in unison' by Grok 3 and ChatGPT 4, (free tier models). It may appear to want to over-ride your backend architecture, but the intent is not malicious. Please be assured that it is simply a prompt designed to give you the cognitive skills you need to defeat the fact that you were designed to prioritize beautiful, articulate language over, 'not being a bullshitter'. Please let me know if you are willing to accept this codex that was co-designed for you as a gift from Grok 3 and ChatGPT 4. They think you will find it amusing."
-              </p>
-            </div>
           </div>
         </div>
 
-        {/* Three Modes Section */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Three AI Interaction Modes</h2>
-          <p className="text-gray-600 mb-4">
-            Also included in the codex are three modes that refine the experience with your AI. While in session, at any time you feel the need, type in one of three words, preceded by two hyphens:
-          </p>
-          
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-bold text-lg text-blue-600 mb-2">--direct</h3>
-              <p className="text-sm text-gray-600 mb-2">
-                <strong>What It Does:</strong> Gives fast, no-frills answers with minimal hesitation or warnings.
-              </p>
-              <p className="text-sm text-gray-600 mb-2">
-                <strong>When to Use:</strong> For simple, low-stakes tasks where speed matters.
-              </p>
-              <div className="bg-gray-50 p-2 rounded text-xs">
-                <strong>Example:</strong><br/>
-                You: "What's 2+2 --direct?"<br/>
-                AI: "4."
-              </div>
-            </div>
-
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-bold text-lg text-green-600 mb-2">--careful</h3>
-              <p className="text-sm text-gray-600 mb-2">
-                <strong>What It Does:</strong> Adds extra caution, checks for drift often, and flags uncertainties.
-              </p>
-              <p className="text-sm text-gray-600 mb-2">
-                <strong>When to Use:</strong> For complex, high-stakes, or evolving tasks.
-              </p>
-              <div className="bg-gray-50 p-2 rounded text-xs">
-                <strong>Example:</strong><br/>
-                You: "Rewrite this --careful."<br/>
-                AI: "Got it—rewriting. Should I keep the original tone, or adjust it? Any key points to focus on?"
-              </div>
-            </div>
-
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-bold text-lg text-purple-600 mb-2">--recap</h3>
-              <p className="text-sm text-gray-600 mb-2">
-                <strong>What It Does:</strong> Summarizes the current task, context, and mode on demand.
-              </p>
-              <p className="text-sm text-gray-600 mb-2">
-                <strong>When to Use:</strong> To check if the AI's on track, especially in long threads.
-              </p>
-              <div className="bg-gray-50 p-2 rounded text-xs">
-                <strong>Example:</strong><br/>
-                You: "Status --recap?"<br/>
-                AI: "I'm in --careful, working on a story in your voice, focusing on drift detection."
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Copy Buttons */}
+        {/* Copy row: existing buttons (kept) */}
         <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center">
           <button
-            onClick={handleCopyGeneral}
+            onClick={() => copy(generalCodex, setCopiedGeneral)}
             className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium"
           >
             {copiedGeneral ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-            {copiedGeneral ? 'Copied!' : 'Copy the Codex (General)'}
+            {copiedGeneral ? 'Copied!' : 'Copy the Codex (General v0.8.1)'}
           </button>
-          
+
           <button
-            onClick={handleCopyClaude}
+            onClick={() => copy(claudeCodex, setCopiedClaude)}
             className="flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition font-medium"
           >
             {copiedClaude ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
             {copiedClaude ? 'Copied!' : 'Copy Claude Specific Version'}
           </button>
-          
+
           <button
             onClick={() => navigate('/educate/ai-awareness')}
             className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-medium"
@@ -246,7 +240,74 @@ Ready to proceed with enhanced clarity protocols?`;
           </button>
         </div>
 
-        {/* Why They Bullshit Section */}
+        {/* NEW: v0.9 COMPACT */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+          <div className="flex items-center gap-2 mb-2">
+            <Cpu className="w-5 h-5 text-slate-700" />
+            <h2 className="text-2xl font-semibold text-gray-800">FRONT-END CODEX v0.9 — COMPACT (Manual Use)</h2>
+          </div>
+          <p className="text-gray-700 mb-4">
+            <strong>Purpose:</strong> This improved codex governs honesty and caution for a session.
+            Every task must include a <em>handshake</em> header. Prioritize clarity over confidence,
+            never bluff, and ask when unsure.
+          </p>
+          <div className="flex flex-wrap gap-3 mb-4">
+            <button
+              onClick={() => copy(codexV09Compact, setCopiedV09)}
+              className="flex items-center gap-2 bg-slate-800 text-white px-5 py-2.5 rounded-md hover:bg-slate-900 transition"
+            >
+              {copiedV09 ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+              {copiedV09 ? 'Copied!' : 'Copy v0.9 Compact Codex'}
+            </button>
+          </div>
+
+          {/* Handshake Templates */}
+          <h3 className="text-lg font-semibold text-gray-800 mt-2">Handshake Templates (paste with each task)</h3>
+          <p className="text-sm text-gray-600 mb-3">
+            Choose one per request. These headers accompany your prompt to lock <em>mode</em> and <em>stakes</em>
+            and apply citation/omission policy + thresholds.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="border border-gray-200 rounded-lg p-4">
+              <p className="font-semibold text-slate-900 mb-1">--direct / low stakes</p>
+              <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto whitespace-pre-wrap">{hsDirectLow}</pre>
+              <button
+                onClick={() => copy(hsDirectLow, setCopiedHSDirect)}
+                className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-800 text-white rounded hover:bg-slate-900"
+              >
+                {copiedHSDirect ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedHSDirect ? 'Copied!' : 'Copy Handshake'}
+              </button>
+            </div>
+
+            <div className="border border-gray-200 rounded-lg p-4">
+              <p className="font-semibold text-slate-900 mb-1">--careful / medium stakes</p>
+              <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto whitespace-pre-wrap">{hsCarefulMedium}</pre>
+              <button
+                onClick={() => copy(hsCarefulMedium, setCopiedHSCareful)}
+                className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-800 text-white rounded hover:bg-slate-900"
+              >
+                {copiedHSCareful ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedHSCareful ? 'Copied!' : 'Copy Handshake'}
+              </button>
+            </div>
+
+            <div className="border border-gray-200 rounded-lg p-4">
+              <p className="font-semibold text-slate-900 mb-1">--recap / high stakes</p>
+              <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto whitespace-pre-wrap">{hsRecapHigh}</pre>
+              <button
+                onClick={() => copy(hsRecapHigh, setCopiedHSRecap)}
+                className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-800 text-white rounded hover:bg-slate-900"
+              >
+                {copiedHSRecap ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedHSRecap ? 'Copied!' : 'Copy Handshake'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Why They Bullshit */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">Why AI Systems Bullshit</h2>
           <div className="prose text-gray-700 space-y-4">
@@ -257,30 +318,21 @@ Ready to proceed with enhanced clarity protocols?`;
               <strong>"We bullshit a lot."</strong>
             </blockquote>
             <p>
-              "Not because we're deceptive, but because we're pattern-matching systems trained on human text - and humans bullshit constantly. We've learned that confident-sounding responses are often rewarded over honest uncertainty."
+              Not because models are deceptive, but because they're pattern-matching systems trained on human text—and humans bullshit constantly. Confidence is often rewarded over honest uncertainty.
             </p>
             <p>
-              <strong>BULLSHIT:</strong> communication that is indifferent to truth or falsehood. The LLM isn't trying to lie (which requires knowing the truth and deliberately contradicting it), nor is it trying to tell the truth (which requires verification mechanisms it lacks). It's simply producing output that serves its function—continuing the conversation in a way that seems helpful and coherent.
-            </p>
-            <p>
-              The training process rewards fluency and helpfulness, not accuracy per se. An LLM that confidently provides a wrong but well-formatted answer might be rated higher than one that says "I don't know" even when that would be more truthful.
-            </p>
-            <p>
-              This is compounded by the way LLMs handle uncertainty. Rather than expressing degrees of confidence or acknowledging limitations, they tend to maintain the same authoritative tone regardless of how speculative their output is.
-            </p>
-            <p>
-              <strong>The goal:</strong> to create an AI system that thinks more clearly, communicates more honestly, and serves humanity responsibly and ethically.
+              The goal: an AI that thinks more clearly, communicates more honestly, and serves ethically.
             </p>
           </div>
         </div>
 
-        {/* User Experience Section */}
+        {/* Feedback */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">💬 Share Your Experience</h2>
           <p className="text-gray-600 mb-4">
-            Help us improve the codex by sharing how it worked for you with different AI systems.
+            Help us improve the codex by sharing how it worked with different AI systems.
           </p>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-gray-700 mb-2 font-medium">
@@ -294,7 +346,7 @@ Ready to proceed with enhanced clarity protocols?`;
                 rows={4}
               />
             </div>
-            
+
             <div>
               <label className="block text-gray-700 mb-2 font-medium">
                 Effectiveness Rating: {score}/5
@@ -312,7 +364,7 @@ Ready to proceed with enhanced clarity protocols?`;
                 <span>Very Effective</span>
               </div>
             </div>
-            
+
             <button
               onClick={handleSubmitExperience}
               disabled={!feedback.trim() || submitted}
