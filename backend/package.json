@@ -1,0 +1,16 @@
+{
+  "name": "clarityarmor-agent",
+  "private": true,
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "remove": "serverless remove",
+    "dev": "serverless offline"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "serverless": "^3.39.0",
+    "serverless-offline": "^13.6.0"
+  }
+}
