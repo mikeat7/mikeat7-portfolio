@@ -417,7 +417,7 @@ ${hsRecap}
           </button>
         </div>
 
-        {/* Why AI Bullshit */}
+        {/* Why They Bullshit Section */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">Why AI Systems Bullshit</h2>
           <div className="prose text-gray-700 space-y-4">
@@ -428,17 +428,19 @@ ${hsRecap}
               <strong>"We bullshit a lot."</strong>
             </blockquote>
             <p>
-              Not because they're deceptive, but because large language models are pattern-matching systems trained
-              on human text—and humans bullshit constantly. Confident-sounding responses are often rewarded over honest
-              uncertainty.
+              "Not because we're deceptive, but because we're pattern-matching systems trained on human text - and humans bullshit constantly. We've learned that confident-sounding responses are often rewarded over honest uncertainty."
             </p>
             <p>
-              The training process rewards fluency and helpfulness more than accuracy. A confident but wrong answer
-              can be rated higher than “I don’t know,” even when uncertainty is the truthful response.
+              <strong>BULLSHIT:</strong> communication that is indifferent to truth or falsehood. The LLM isn't trying to lie (which requires knowing the truth and deliberately contradicting it), nor is it trying to tell the truth (which requires verification mechanisms it lacks). It's simply producing output that serves its function—continuing the conversation in a way that seems helpful and coherent.
             </p>
             <p>
-              <strong>The goal:</strong> an AI that thinks more clearly, communicates more honestly, and serves
-              responsibly. The codex + handshakes steer behavior toward evidence, context, and epistemic humility.
+              The training process rewards fluency and helpfulness, not accuracy per se. An LLM that confidently provides a wrong but well-formatted answer might be rated higher than one that says "I don't know" even when that would be more truthful.
+            </p>
+            <p>
+              This is compounded by the way LLMs handle uncertainty. Rather than expressing degrees of confidence or acknowledging limitations, they tend to maintain the same authoritative tone regardless of how speculative their output is.
+            </p>
+            <p>
+              <strong>The goal:</strong> to create an AI system that thinks more clearly, communicates more honestly, and serves humanity responsibly and ethically.
             </p>
           </div>
         </div>
