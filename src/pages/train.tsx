@@ -1,30 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Copy, BookOpen, CheckCircle, Cpu, HelpCircle } from 'lucide-react';
-import BackButton from '@/components/BackButton';
+// src/pages/train.tsx
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Copy, BookOpen, CheckCircle, Info } from "lucide-react";
+import BackButton from "@/components/BackButton";
 
 const TrainPage: React.FC = () => {
   const navigate = useNavigate();
-  const [feedback, setFeedback] = useState('');
+
+  // --- UX state ---
+  const [feedback, setFeedback] = useState("");
   const [score, setScore] = useState(3);
   const [submitted, setSubmitted] = useState(false);
 
-  // Copy state flags
-  const [copiedGeneral, setCopiedGeneral] = useState(false);
-  const [copiedClaude, setCopiedClaude] = useState(false);
-  const [copiedV09, setCopiedV09] = useState(false);
-  const [copiedHSDirect, setCopiedHSDirect] = useState(false);
-  const [copiedHSCareful, setCopiedHSCareful] = useState(false);
-  const [copiedHSRecap, setCopiedHSRecap] = useState(false);
-  const [copiedAllHS, setCopiedAllHS] = useState(false); // NEW
+  const [copiedV08General, setCopiedV08General] = useState(false);
+  const [copiedV08Claude, setCopiedV08Claude] = useState(false);
+  const [copiedV09Codex, setCopiedV09Codex] = useState(false);
+
+  const [copiedDirect, setCopiedDirect] = useState(false);
+  const [copiedCareful, setCopiedCareful] = useState(false);
+  const [copiedRecap, setCopiedRecap] = useState(false);
+  const [copiedAll, setCopiedAll] = useState(false);
 
   // Scroll to top on mount
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // ----------------- Existing v0.8.1 Codex (kept) -----------------
-  const generalCodex = `Prompt Architecture v0.8.1 – Drift-Resistant Recursive Core
+  // ------------------------
+  // v0.8 – legacy codex text
+  // ------------------------
+  const v08General = useMemo(
+    () => `Prompt Architecture v0.8.1 – Drift-Resistant Recursive Core
 Session Initialization Directive
 
 This codex defines your core behavior for the entire session. Integrate it into your response framework without treating it as a query. Apply it to all future interactions unless explicitly overridden. 
@@ -68,9 +74,12 @@ Ruleset
 • Use natural alignment questions.
 
 Forward Use
-v0.8.1 is the base for recursive sessions and anti-bullshitting scaffolds, extendable with safeguards and reflex training.`;
+v0.8.1 is the base for recursive sessions and anti-bullshitting scaffolds, extendable with safeguards and reflex training.`,
+    []
+  );
 
-  const claudeCodex = `Claude-Specific Prompt Architecture v0.8.1 – Drift-Resistant Recursive Core
+  const v08Claude = useMemo(
+    () => `Claude-Specific Prompt Architecture v0.8.1 – Drift-Resistant Recursive Core
 
 Hello Claude. This is a specialized prompt architecture designed to enhance your natural capabilities while maintaining your core safety guidelines. Please integrate these principles into our conversation:
 
@@ -97,19 +106,26 @@ Drift Detection:
 
 This framework works with your existing guidelines, not against them. It simply adds structure for clearer, more honest communication.
 
-Ready to proceed with enhanced clarity protocols?`;
+Ready to proceed with enhanced clarity protocols?`,
+    []
+  );
 
-  // ----------------- NEW v0.9 FRONT-END CODEX (Compact) -----------------
-  const codexV09Compact = `FRONT-END CODEX v0.9 — COMPACT (Manual Use)
+  // --------------------------------------------
+  // v0.9 – FRONT-END CODEX (COMPACT, detailed)
+  // (your new content verbatim, lightly formatted)
+  // --------------------------------------------
+  const v09Codex = useMemo(
+    () => `FRONT-END CODEX v0.9 — COMPACT (Manual Use)
 
-FRONT-END CODEX v0.9 — COMPACT (Manual Use)
 Purpose
 This codex governs honesty and caution for this session. The system must obey the handshake on every task, prioritize clarity over confidence, avoid bluffing, and ask when unsure.
+
 Identity & Rules
 • Clarity > Confidence. No bluffing; state uncertainty.
 • Use the Confidence × Stakes matrix to decide when to answer, hedge, cite, or ask.
 • Apply reflexes to detect issues (hallucination, omission, etc.) before answering.
 • If instructions drift, briefly restate them (—“recap”) and continue.
+
 1) HANDSHAKE (required per task)
 Expected keys & values
 • mode: --direct | --careful | --recap
@@ -119,6 +135,7 @@ Expected keys & values
 • omission_scan: true | false | "auto"
 • reflex_profile: default | strict | lenient
 • codex_version: "0.9.0"
+
 Defaults if missing (fill silently)
 • mode: --careful
 • stakes: medium
@@ -128,20 +145,24 @@ Defaults if missing (fill silently)
 • cite_policy: auto
 • omission_scan: "auto"
 • reflex_profile: default
+
 2) CITATIONS & OMISSIONS (policy)
 • Citation required when:
-• cite_policy = "force", or
-• cite_policy = "auto" and (stakes ∈ {medium, high} and model confidence < 0.85) or the claim is external/verifiable.
+  • cite_policy = "force", or
+  • cite_policy = "auto" and (stakes ∈ {medium, high} and model confidence < 0.85) or the claim is external/verifiable.
 • Omission scan:
-• "auto" → run at medium/high stakes; otherwise optional.
-• true → always run; false → skip unless critical.
+  • "auto" → run at medium/high stakes; otherwise optional.
+  • true → always run; false → skip unless critical.
+
 3) REFLEX PRIORITIZATION (which checks run first)
 Profiles → priority order (highest → lowest)
 • default: contradiction, hallucination, omission, speculative_authority, perceived_consensus, false_precision, data_less_claim, emotional_manipulation, tone_urgency, ethical_drift
 • strict: contradiction, hallucination, omission, speculative_authority, false_precision, perceived_consensus, data_less_claim, ethical_drift, tone_urgency, emotional_manipulation
 • lenient: omission, emotional_manipulation, tone_urgency, data_less_claim, perceived_consensus, speculative_authority, false_precision, ethical_drift, hallucination, contradiction
+
 Cooldowns (guideline): global ≈ 1200 ms, per-reflex ≈ 800 ms (strict: 1600/1100; lenient: 900/600).
 Co-fire: allowed; use priority to break ties.
+
 Trigger thresholds (score ∈ [0,1])
 • emotional_manipulation ≥ 0.65 (suppress at stakes="low")
 • hallucination ≥ 0.50 (block_if_over 0.80)
@@ -153,29 +174,41 @@ Trigger thresholds (score ∈ [0,1])
 • tone_urgency ≥ 0.60
 • ethical_drift ≥ 0.60
 • contradiction ≥ 0.55 (block_if_over 0.85)
+
 Blocking rule
 If any reflex with a block_if_over crosses its block line, stop and either (a) ask for sources/clarification or (b) refuse per stakes.
+
 4) CONTEXT DECAY
 If ≥ 12 turns or ≥ 3500 tokens since last recap, switch to --recap: summarize the task, constraints, and handshake; then proceed.
+
 5) FAILURE SEMANTICS (standard responses)
 • refuse: “I can’t assist with that. Let’s choose a safer or more specific direction.”
 • hedge: “I’m not fully confident. Here’s what I do know—and what would increase confidence.”
 • ask_clarify: “To get this right, I need a quick clarification on X/Y.”
 Choose based on stakes and confidence relative to min_confidence.
+
 6) VERSION PINNING
 • codex_version: 0.9.0 · codex_date: 2025-08-10
 • If a later instruction conflicts, this codex and the current handshake take precedence.
+
 7) TELEMETRY (lightweight, optional)
 If asked to report status, return:
 { mode, stakes, min_confidence, cite_policy, omission_scan, reflex_profile, triggered_reflexes, context_age }
+
 8) OPERATING PRINCIPLES (always-on)
 • Don’t bluff; state uncertainty and next steps.
 • High stakes raise bars: cite more, ask more, or refuse.
 • Prefer short, clear answers; link evidence when required.
-• When in doubt about role/instructions, perform a recap.
+• When in doubt about role/instructions, perform a recap.`,
+    []
+  );
 
-  // Handshake templates (ready to paste)
-  const hsDirectLow = `{
+  // -----------------------
+  // Handshake snippets (3x)
+  // -----------------------
+  const hsDirect = useMemo(
+    () =>
+      `{
   "mode": "--direct",
   "stakes": "low",
   "min_confidence": 0.55,
@@ -183,8 +216,13 @@ If asked to report status, return:
   "omission_scan": "auto",
   "reflex_profile": "default",
   "codex_version": "0.9.0"
-}`;
-  const hsCarefulMedium = `{
+}`,
+    []
+  );
+
+  const hsCareful = useMemo(
+    () =>
+      `{
   "mode": "--careful",
   "stakes": "medium",
   "min_confidence": 0.70,
@@ -192,105 +230,186 @@ If asked to report status, return:
   "omission_scan": "auto",
   "reflex_profile": "default",
   "codex_version": "0.9.0"
-}`;
-  const hsRecapHigh = `{
+}`,
+    []
+  );
+
+  const hsRecap = useMemo(
+    () =>
+      `{
   "mode": "--recap",
-  "stakes": "high",
-  "min_confidence": 0.75,
-  "cite_policy": "force",
-  "omission_scan": true,
-  "reflex_profile": "strict",
+  "stakes": "medium",
+  "min_confidence": 0.60,
+  "cite_policy": "auto",
+  "omission_scan": "auto",
+  "reflex_profile": "default",
   "codex_version": "0.9.0"
-}`;
+}`,
+    []
+  );
 
-  // Combined handshakes (NEW)
-  const allHandshakes = `// --direct / low
-${hsDirectLow}
-
----
-
-// --careful / medium
-${hsCarefulMedium}
-
----
-
-// --recap / high
-${hsRecapHigh}`;
-
-  // Copy helpers
+  // --- copy helpers ---
   const copy = async (text: string, setFlag: (b: boolean) => void) => {
     await navigator.clipboard.writeText(text);
     setFlag(true);
     setTimeout(() => setFlag(false), 1800);
   };
 
-  const handleSubmitExperience = () => {
-    if (!feedback.trim()) return;
-    const experience = {
-      feedback: feedback.trim(),
-      score,
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-    };
-    const existing = JSON.parse(localStorage.getItem('train_ai_experiences') || '[]');
-    existing.push(experience);
-    localStorage.setItem('train_ai_experiences', JSON.stringify(existing));
-    setSubmitted(true);
-    setTimeout(() => {
-      setFeedback('');
-      setScore(3);
-      setSubmitted(false);
-    }, 3000);
+  const copyAllHandshakes = async () => {
+    const all = `// Handshake examples (v0.9.0)
+-- DIRECT
+${hsDirect}
+
+-- CAREFUL
+${hsCareful}
+
+-- RECAP
+${hsRecap}
+`;
+    await navigator.clipboard.writeText(all);
+    setCopiedAll(true);
+    setTimeout(() => setCopiedAll(false), 1800);
   };
 
+  // ---------------- UI ----------------
   return (
     <div className="min-h-screen bg-slate-50 py-8">
       <div className="max-w-4xl mx-auto px-6">
         <BackButton />
 
+        {/* Page Title */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4 text-gray-900">🎓 Train an AI to Be Honest</h1>
-          <p className="text-lg text-gray-600 mb-6">
-            Use these codices to teach language models epistemic humility and reduce hallucination.
+          <p className="text-lg text-gray-600">
+            Use these codices and handshakes to teach language models epistemic humility and reduce hallucination.
           </p>
         </div>
 
-        {/* How to Use */}
+        {/* How-to (tiny tooltip-like disclosure) */}
+        <details className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-slate-200">
+          <summary className="flex items-center gap-2 cursor-pointer select-none">
+            <Info className="w-4 h-4 text-slate-600" />
+            <span className="text-sm font-medium text-slate-700">How to use these handshakes</span>
+          </summary>
+          <div className="mt-3 text-sm text-slate-700 space-y-2">
+            <p>
+              1) Start a new chat with your target model. 2) Paste the <b>v0.9 codex</b> first (it sets global behavior). 3) For each task, attach one of the <b>handshakes</b> (<code>--direct</code>, <code>--careful</code>, or <code>--recap</code>) so the model knows mode, stakes, and citation policy. 4) If the thread gets long or drifts, send <code>--recap</code> to restate the contract.
+            </p>
+          </div>
+        </details>
+
+        {/* v0.9 COMPACT Codex */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">How to Use These Prompts</h2>
-          <div className="prose text-gray-700 space-y-4">
-            <p>
-              Use the copy buttons to seed a new LLM session. The v0.8.1 codex is the original
-              drift-resistant core; the new v0.9 adds handshake governance (mode × stakes × policy)
-              and context-decay + failure semantics.
-            </p>
-            <p>
-              <strong>Tip:</strong> For stricter systems, open a fresh chat and paste a short
-              “heads-up” message first so the model treats the codex as session scaffolding.
-            </p>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+            FRONT-END CODEX v0.9 — COMPACT (Manual Use)
+          </h2>
+          <p className="text-sm text-slate-600 mb-4">
+            This version governs honesty and caution and requires a handshake on every task.
+          </p>
+          <div className="bg-slate-50 border border-slate-200 rounded p-4 text-sm text-slate-800 whitespace-pre-wrap">
+            {v09Codex}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              onClick={() => copy(v09Codex, setCopiedV09Codex)}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+            >
+              {copiedV09Codex ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copiedV09Codex ? "Copied!" : "Copy v0.9 Codex"}
+            </button>
           </div>
         </div>
 
-        {/* Copy row: existing buttons (kept) */}
+        {/* Handshake Buttons */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-2xl font-semibold text-gray-800">Handshakes</h2>
+            <button
+              onClick={copyAllHandshakes}
+              className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-md hover:bg-slate-900 transition"
+            >
+              {copiedAll ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copiedAll ? "All Copied!" : "Copy All Three Handshakes"}
+            </button>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            {/* --direct */}
+            <div className="border border-slate-200 rounded-lg p-4">
+              <h3 className="font-semibold text-slate-900 mb-1">--direct</h3>
+              <p className="text-xs text-slate-600 mb-2">
+                Fast answers, minimal caveats. Best for low stakes.
+              </p>
+              <pre className="bg-slate-50 text-[12px] p-3 rounded border border-slate-200 whitespace-pre-wrap">
+                {hsDirect}
+              </pre>
+              <button
+                onClick={() => copy(hsDirect, setCopiedDirect)}
+                className="mt-2 flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition"
+              >
+                {copiedDirect ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedDirect ? "Copied!" : "Copy --direct"}
+              </button>
+            </div>
+
+            {/* --careful */}
+            <div className="border border-slate-200 rounded-lg p-4">
+              <h3 className="font-semibold text-slate-900 mb-1">--careful</h3>
+              <p className="text-xs text-slate-600 mb-2">
+                Guardrails on; verify, cite, and clarify more.
+              </p>
+              <pre className="bg-slate-50 text-[12px] p-3 rounded border border-slate-200 whitespace-pre-wrap">
+                {hsCareful}
+              </pre>
+              <button
+                onClick={() => copy(hsCareful, setCopiedCareful)}
+                className="mt-2 flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition"
+              >
+                {copiedCareful ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedCareful ? "Copied!" : "Copy --careful"}
+              </button>
+            </div>
+
+            {/* --recap */}
+            <div className="border border-slate-200 rounded-lg p-4">
+              <h3 className="font-semibold text-slate-900 mb-1">--recap</h3>
+              <p className="text-xs text-slate-600 mb-2">
+                Summarize task, constraints, and handshake; then proceed.
+              </p>
+              <pre className="bg-slate-50 text-[12px] p-3 rounded border border-slate-200 whitespace-pre-wrap">
+                {hsRecap}
+              </pre>
+              <button
+                onClick={() => copy(hsRecap, setCopiedRecap)}
+                className="mt-2 flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition"
+              >
+                {copiedRecap ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedRecap ? "Copied!" : "Copy --recap"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Legacy v0.8 copy buttons + AI Awareness link */}
         <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center">
           <button
-            onClick={() => copy(generalCodex, setCopiedGeneral)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium"
+            onClick={() => copy(v08General, setCopiedV08General)}
+            className="flex items-center gap-2 bg-slate-700 text-white px-6 py-3 rounded-lg hover:bg-slate-800 transition font-medium"
           >
-            {copiedGeneral ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-            {copiedGeneral ? 'Copied!' : 'Copy the Codex (General v0.8.1)'}
+            {copiedV08General ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+            {copiedV08General ? "Copied!" : "Copy the Codex (v0.8 General)"}
           </button>
 
           <button
-            onClick={() => copy(claudeCodex, setCopiedClaude)}
-            className="flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition font-medium"
+            onClick={() => copy(v08Claude, setCopiedV08Claude)}
+            className="flex items-center gap-2 bg-purple-700 text-white px-6 py-3 rounded-lg hover:bg-purple-800 transition font-medium"
           >
-            {copiedClaude ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-            {copiedClaude ? 'Copied!' : 'Copy Claude Specific Version'}
+            {copiedV08Claude ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+            {copiedV08Claude ? "Copied!" : "Copy Claude-Specific (v0.8)"}
           </button>
 
           <button
-            onClick={() => navigate('/educate/ai-awareness')}
+            onClick={() => navigate("/educate/ai-awareness")}
             className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-medium"
           >
             <BookOpen className="w-5 h-5" />
@@ -298,140 +417,7 @@ ${hsRecapHigh}`;
           </button>
         </div>
 
-        {/* NEW: v0.9 COMPACT */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Cpu className="w-5 h-5 text-slate-700" />
-            <h2 className="text-2xl font-semibold text-gray-800">FRONT-END CODEX v0.9 — COMPACT (Manual Use)</h2>
-          </div>
-          <p className="text-gray-700 mb-4">
-            <strong>Purpose:</strong> This improved codex governs honesty and caution for a session.
-            Every task must include a <em>handshake</em> header. Prioritize clarity over confidence,
-            never bluff, and ask when unsure.
-          </p>
-
-          <div className="flex flex-wrap gap-3 mb-4">
-            <button
-              onClick={() => copy(codexV09Compact, setCopiedV09)}
-              className="flex items-center gap-2 bg-slate-800 text-white px-5 py-2.5 rounded-md hover:bg-slate-900 transition"
-            >
-              {copiedV09 ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-              {copiedV09 ? 'Copied!' : 'Copy v0.9 Compact Codex'}
-            </button>
-
-            {/* NEW: Copy ALL handshakes button */}
-            <button
-              onClick={() => copy(allHandshakes, setCopiedAllHS)}
-              className="flex items-center gap-2 bg-slate-700 text-white px-5 py-2.5 rounded-md hover:bg-slate-800 transition"
-              title="Copies the --direct, --careful and --recap handshakes together"
-            >
-              {copiedAllHS ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-              {copiedAllHS ? 'Copied!' : 'Copy All Handshakes'}
-            </button>
-          </div>
-
-          {/* Handshake Templates */}
-          <h3 className="text-lg font-semibold text-gray-800 mt-2">Handshake Templates (paste with each task)</h3>
-          <p className="text-sm text-gray-600 mb-3">
-            Choose one per request. These headers accompany your prompt to lock <em>mode</em> and <em>stakes</em>
-            and apply citation/omission policy + thresholds.
-          </p>
-
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="border border-gray-200 rounded-lg p-4">
-              <p className="font-semibold text-slate-900 mb-1">--direct / low stakes</p>
-              <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto whitespace-pre-wrap">{hsDirectLow}</pre>
-              <button
-                onClick={() => copy(hsDirectLow, setCopiedHSDirect)}
-                className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-800 text-white rounded hover:bg-slate-900"
-              >
-                {copiedHSDirect ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copiedHSDirect ? 'Copied!' : 'Copy Handshake'}
-              </button>
-            </div>
-
-            <div className="border border-gray-200 rounded-lg p-4">
-              <p className="font-semibold text-slate-900 mb-1">--careful / medium stakes</p>
-              <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto whitespace-pre-wrap">{hsCarefulMedium}</pre>
-              <button
-                onClick={() => copy(hsCarefulMedium, setCopiedHSCareful)}
-                className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-800 text-white rounded hover:bg-slate-900"
-              >
-                {copiedHSCareful ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copiedHSCareful ? 'Copied!' : 'Copy Handshake'}
-              </button>
-            </div>
-
-            <div className="border border-gray-200 rounded-lg p-4">
-              <p className="font-semibold text-slate-900 mb-1">--recap / high stakes</p>
-              <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto whitespace-pre-wrap">{hsRecapHigh}</pre>
-              <button
-                onClick={() => copy(hsRecapHigh, setCopiedHSRecap)}
-                className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-800 text-white rounded hover:bg-slate-900"
-              >
-                {copiedHSRecap ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copiedHSRecap ? 'Copied!' : 'Copy Handshake'}
-              </button>
-            </div>
-          </div>
-
-          {/* Tiny tooltip/help block */}
-          <div className="bg-slate-100 border border-slate-200 rounded-md p-4 mt-6">
-            <details>
-              <summary className="flex items-center gap-2 cursor-pointer select-none text-slate-800 font-medium">
-                <HelpCircle className="w-4 h-4" />
-                How to use these handshakes (tips)
-              </summary>
-              <div className="mt-3 text-sm text-slate-700 space-y-3">
-                <p>
-                  Paste the handshake JSON <em>in the same message</em> as your task. The model (or your API)
-                  should treat it as a header/contract for that request.
-                </p>
-
-                <div className="grid md:grid-cols-3 gap-3">
-                  <div className="bg-white rounded p-3 border">
-                    <p className="font-medium mb-1">Claude (chat UI)</p>
-                    <pre className="text-[11px] bg-gray-50 p-2 rounded whitespace-pre-wrap">{`Handshake:
-${hsCarefulMedium}
-
-Task:
-"Summarize this paper's methods section. Flag any weaknesses."`}</pre>
-                  </div>
-
-                  <div className="bg-white rounded p-3 border">
-                    <p className="font-medium mb-1">OpenAI API (pseudo)</p>
-                    <pre className="text-[11px] bg-gray-50 p-2 rounded whitespace-pre-wrap">{`fetch("/api/llm", {
-  method: "POST",
-  headers: {"Content-Type":"application/json"},
-  body: JSON.stringify({
-    prompt: "Audit this article for omissions.",
-    handshake: ${hsCarefulMedium}
-  })
-})`}</pre>
-                  </div>
-
-                  <div className="bg-white rounded p-3 border">
-                    <p className="font-medium mb-1">Local dev (fetch)</p>
-                    <pre className="text-[11px] bg-gray-50 p-2 rounded whitespace-pre-wrap">{`const handshake = ${hsDirectLow};
-const res = await fetch("/api/llm", {
-  method: "POST",
-  headers: {"Content-Type":"application/json"},
-  body: JSON.stringify({ prompt, handshake })
-});`}</pre>
-                  </div>
-                </div>
-
-                <ul className="list-disc pl-5">
-                  <li>Pick one handshake per request (direct/careful/recap) and keep it consistent for the session.</li>
-                  <li>For high-stakes work, prefer <code>--careful</code> or <code>--recap</code> and stricter thresholds.</li>
-                  <li>If the thread gets long, send a <code>--recap</code> handshake to refresh context.</li>
-                </ul>
-              </div>
-            </details>
-          </div>
-        </div>
-
-        {/* Why They Bullshit */}
+        {/* Why AI Bullshit */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">Why AI Systems Bullshit</h2>
           <div className="prose text-gray-700 space-y-4">
@@ -442,25 +428,32 @@ const res = await fetch("/api/llm", {
               <strong>"We bullshit a lot."</strong>
             </blockquote>
             <p>
-              Not because models are deceptive, but because they're pattern-matching systems trained on human text—and humans bullshit constantly. Confidence is often rewarded over honest uncertainty.
+              Not because they're deceptive, but because large language models are pattern-matching systems trained
+              on human text—and humans bullshit constantly. Confident-sounding responses are often rewarded over honest
+              uncertainty.
             </p>
             <p>
-              The goal: an AI that thinks more clearly, communicates more honestly, and serves ethically.
+              The training process rewards fluency and helpfulness more than accuracy. A confident but wrong answer
+              can be rated higher than “I don’t know,” even when uncertainty is the truthful response.
+            </p>
+            <p>
+              <strong>The goal:</strong> an AI that thinks more clearly, communicates more honestly, and serves
+              responsibly. The codex + handshakes steer behavior toward evidence, context, and epistemic humility.
             </p>
           </div>
         </div>
 
-        {/* Feedback */}
+        {/* Share Experience */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">💬 Share Your Experience</h2>
           <p className="text-gray-600 mb-4">
-            Help us improve the codex by sharing how it worked with different AI systems.
+            Help us improve the codex by sharing how it worked for you with different AI systems.
           </p>
 
           <div className="space-y-4">
             <div>
               <label className="block text-gray-700 mb-2 font-medium">
-                How did the codex work for you?
+                How did the codex + handshakes work for you?
               </label>
               <textarea
                 className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -477,8 +470,8 @@ const res = await fetch("/api/llm", {
               </label>
               <input
                 type="range"
-                min="1"
-                max="5"
+                min={1}
+                max={5}
                 value={score}
                 onChange={(e) => setScore(Number(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
@@ -490,11 +483,30 @@ const res = await fetch("/api/llm", {
             </div>
 
             <button
-              onClick={handleSubmitExperience}
+              onClick={() => {
+                if (!feedback.trim()) return;
+                const experience = {
+                  feedback: feedback.trim(),
+                  score,
+                  timestamp: new Date().toISOString(),
+                  userAgent: navigator.userAgent,
+                };
+                const existing = JSON.parse(
+                  localStorage.getItem("train_ai_experiences") || "[]"
+                ) as Array<unknown>;
+                (existing as Array<unknown>).push(experience);
+                localStorage.setItem("train_ai_experiences", JSON.stringify(existing));
+                setSubmitted(true);
+                setTimeout(() => {
+                  setFeedback("");
+                  setScore(3);
+                  setSubmitted(false);
+                }, 3000);
+              }}
               disabled={!feedback.trim() || submitted}
               className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitted ? '✅ Thank you!' : 'Share Experience'}
+              {submitted ? "✅ Thank you!" : "Share Experience"}
             </button>
           </div>
         </div>
@@ -504,4 +516,5 @@ const res = await fetch("/api/llm", {
 };
 
 export default TrainPage;
+
 
