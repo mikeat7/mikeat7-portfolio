@@ -5,22 +5,32 @@ provider:
   name: aws
   runtime: nodejs20.x
   region: us-east-1
-  memorySize: 512
-  timeout: 15
-  environment:
-    LOG_LEVEL: info
+  stage: dev
+
+  # HTTP API (API Gateway v2) CORS goes here (not at the function level)
+  httpApi:
+    cors:
+      allowedOrigins:
+        - http://localhost:5173
+        - https://clarityarmor.com
+      allowedHeaders:
+        - Content-Type
+      allowedMethods:
+        - OPTIONS
+        - GET
+        - POST
+      allowCredentials: false
+
+  # Basic Lambda execution role bits (Serverless will create/attach)
   iam:
     role:
       statements:
-        # Uncomment when you wire Bedrock/DynamoDB:
-        # - Effect: Allow
-        #   Action:
-        #     - bedrock:InvokeModel
-        #   Resource: "*"
-        # - Effect: Allow
-        #   Action:
-        #     - dynamodb:PutItem
-        #   Resource: "*"
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: "*"
 
 functions:
   analyze:
@@ -29,12 +39,4 @@ functions:
       - httpApi:
           path: /agent/analyze
           method: POST
-          cors:
-            allowedOrigins:
-              - https://clarityarmor.com
-              - http://localhost:5173
-            allowedHeaders:
-              - content-type
-            allowedMethods:
-              - POST
-            allowCredentials: false
+
