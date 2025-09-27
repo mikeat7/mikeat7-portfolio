@@ -70,13 +70,18 @@ const AnalyzePage = () => {
       {/* Bubble ambience */}
       <div className="bubble-bg">
         {[
-          'epistemic humility',
-          'source, then claim',
-          'no false precision',
+          'be aware of common biases',
+          'embrace the opposite',
+          'its not a bug, its a feature',
           'seek disconfirming evidence',
-          'explain uncertainty',
+          'it all seems so uncertain',
           'avoid vague authority',
-          'cite or qualify',
+          'question your sources',
+      'how do I know if they are telling me the truth',
+          'consider alternative explanations',
+          'use logic and reason',
+          'too much information',
+          'analyze methodologies and evidence',
         ].map((t, i) => (
           <span key={i} className="bubble-text">
             {t}
