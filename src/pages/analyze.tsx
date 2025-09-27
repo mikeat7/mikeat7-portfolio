@@ -1,4 +1,3 @@
-```tsx
 // src/pages/analyze.tsx
 import React, { useState } from "react";
 import { useVXContext } from "@/context/VXProvider";
@@ -479,6 +478,5 @@ const AnalyzePage = () => {
 };
 
 export default AnalyzePage;
-```
 
 
