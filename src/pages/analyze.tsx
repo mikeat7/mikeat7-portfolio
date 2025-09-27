@@ -1,13 +1,37 @@
+```tsx
 // src/pages/analyze.tsx
 import React, { useState } from "react";
 import { useVXContext } from "@/context/VXProvider";
 import runReflexAnalysis from "@/lib/analysis/runReflexAnalysis";
 import { callAgentAnalyze } from "@/lib/llmClient";
-import { buildHandshake, type Mode, type Stakes, type CitePolicy } from "@/lib/codex-runtime";
+import {
+  buildHandshake,
+  type Mode,
+  type Stakes,
+  type CitePolicy,
+} from "@/lib/codex-runtime";
 import codex from "@/data/front-end-codex.v0.9.json";
 import CoFirePanel from "@/components/CoFirePanel";
 import BackButton from "@/components/BackButton";
 import "@/styles.css"; // bubbles
+
+// Simple hover-tooltips (native title=)
+const TOOLTIPS = {
+  useAgent:
+    "Run on our AWS Agent (server) or locally in your browser. Agent adds server-side checks; local is instant/private.",
+  mode:
+    "--direct: fast & concise • --careful: guardrails & checks • --recap: summarize task/assumptions first.",
+  stakes:
+    "How serious the outcome is. Higher stakes raise confidence/citation requirements and trigger stricter behavior.",
+  min_confidence:
+    "Minimum confidence before we hedge, ask for clarification, or refuse. Slide right = stricter.",
+  cite_policy:
+    "auto: cite when needed • force: always require citations • off: don’t require citations.",
+  omission_scan:
+    "auto: run at medium/high stakes • true: always run • false: skip unless critical.",
+  reflex_profile:
+    "default: balanced • strict: blockier (contradictions/hallucinations first) • lenient: softer checks.",
+};
 
 const AnalyzePage = () => {
   const { reflexFrames, setReflexFrames, isAnalyzing, setIsAnalyzing } = useVXContext();
@@ -28,9 +52,8 @@ const AnalyzePage = () => {
   const [reflexProfile, setReflexProfile] =
     useState<"default" | "strict" | "lenient">("default");
 
-  const hasAgent =
-    !!(import.meta as any).env?.VITE_AGENT_API_BASE &&
-    String((import.meta as any).env.VITE_AGENT_API_BASE).trim().length > 0;
+  const envBase = (import.meta as any).env?.VITE_AGENT_API_BASE;
+  const hasAgent = !!envBase && String(envBase).trim().length > 0;
   const [useAgent, setUseAgent] = useState<boolean>(hasAgent);
 
   const [notice, setNotice] = useState<string | null>(null);
@@ -45,6 +68,33 @@ const AnalyzePage = () => {
     omission_scan,
     reflex_profile: reflexProfile,
   });
+
+  // Presets
+  function applyPreset(kind: "fast" | "balanced" | "audit") {
+    if (kind === "fast") {
+      setMode("--direct");
+      setStakes("low");
+      setMinConfidence(0.55);
+      setCitePolicy("off");
+      setOmissionUI("false");
+      setReflexProfile("lenient");
+    } else if (kind === "balanced") {
+      setMode("--careful");
+      setStakes("medium");
+      setMinConfidence(0.65);
+      setCitePolicy("auto");
+      setOmissionUI("auto");
+      setReflexProfile("default");
+    } else {
+      // audit
+      setMode("--careful");
+      setStakes("high");
+      setMinConfidence(0.75);
+      setCitePolicy("force");
+      setOmissionUI("true");
+      setReflexProfile("strict");
+    }
+  }
 
   const handleAnalyze = async () => {
     if (!input.trim()) return;
@@ -66,7 +116,7 @@ const AnalyzePage = () => {
           cite_policy: citePolicy,
           omission_scan,
           reflex_profile: reflexProfile,
-        });
+        } as any);
 
         if (Array.isArray(agentFrames) && agentFrames.length > 0) {
           frames = agentFrames;
@@ -142,6 +192,50 @@ const AnalyzePage = () => {
               placeholder="Paste a paragraph, a link to an article, or a snippet from a methods section…"
             />
 
+            {/* PRESETS */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-slate-600">Presets:</span>
+              <button
+                type="button"
+                onClick={() => applyPreset("fast")}
+                className="px-3 py-1 rounded-lg"
+                title="--direct · low · min_conf≈0.55 · cite=off · omission=false · lenient"
+                style={{
+                  background: "#e9eef5",
+                  boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
+                }}
+                disabled={isAnalyzing}
+              >
+                Fast skim
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPreset("balanced")}
+                className="px-3 py-1 rounded-lg"
+                title="--careful · medium · min_conf≈0.65 · cite=auto · omission=auto · default"
+                style={{
+                  background: "#e9eef5",
+                  boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
+                }}
+                disabled={isAnalyzing}
+              >
+                Balanced review
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPreset("audit")}
+                className="px-3 py-1 rounded-lg"
+                title="--careful · high · min_conf≥0.75 · cite=force · omission=true · strict"
+                style={{
+                  background: "#e9eef5",
+                  boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
+                }}
+                disabled={isAnalyzing}
+              >
+                Audit-grade
+              </button>
+            </div>
+
             {/* CONTROLS */}
             <div className="grid md:grid-cols-2 gap-4">
               {/* Left: source + basics */}
@@ -154,7 +248,7 @@ const AnalyzePage = () => {
                 }}
               >
                 <div className="flex items-center gap-3 flex-wrap">
-                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                  <label className="flex items-center gap-2 text-sm text-slate-600" title={TOOLTIPS.useAgent}>
                     <input
                       type="checkbox"
                       checked={useAgent}
@@ -169,7 +263,7 @@ const AnalyzePage = () => {
                     )}
                   </label>
 
-                  <label className="text-sm text-slate-600">
+                  <label className="text-sm text-slate-600" title={TOOLTIPS.mode}>
                     Mode{" "}
                     <select
                       value={mode}
@@ -183,7 +277,7 @@ const AnalyzePage = () => {
                     </select>
                   </label>
 
-                  <label className="text-sm text-slate-600">
+                  <label className="text-sm text-slate-600" title={TOOLTIPS.stakes}>
                     Stakes{" "}
                     <select
                       value={stakes}
@@ -198,7 +292,7 @@ const AnalyzePage = () => {
                   </label>
                 </div>
 
-                <div className="mt-3">
+                <div className="mt-3" title={TOOLTIPS.min_confidence}>
                   <label className="block text-sm text-slate-600">
                     Min confidence: <strong>{minConfidence.toFixed(2)}</strong>
                   </label>
@@ -225,7 +319,7 @@ const AnalyzePage = () => {
                 }}
               >
                 <div className="flex items-center gap-3 flex-wrap">
-                  <label className="text-sm text-slate-600">
+                  <label className="text-sm text-slate-600" title={TOOLTIPS.cite_policy}>
                     Cite policy{" "}
                     <select
                       value={citePolicy}
@@ -239,11 +333,13 @@ const AnalyzePage = () => {
                     </select>
                   </label>
 
-                  <label className="text-sm text-slate-600">
+                  <label className="text-sm text-slate-600" title={TOOLTIPS.omission_scan}>
                     Omission scan{" "}
                     <select
                       value={omissionUI}
-                      onChange={(e) => setOmissionUI(e.target.value as "auto" | "true" | "false")}
+                      onChange={(e) =>
+                        setOmissionUI(e.target.value as "auto" | "true" | "false")
+                      }
                       className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
                       disabled={isAnalyzing}
                     >
@@ -253,7 +349,7 @@ const AnalyzePage = () => {
                     </select>
                   </label>
 
-                  <label className="text-sm text-slate-600">
+                  <label className="text-sm text-slate-600" title={TOOLTIPS.reflex_profile}>
                     Reflex profile{" "}
                     <select
                       value={reflexProfile}
@@ -383,4 +479,6 @@ const AnalyzePage = () => {
 };
 
 export default AnalyzePage;
+```
+
 
