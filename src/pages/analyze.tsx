@@ -2,11 +2,10 @@
 import React, { useState } from 'react';
 import { useVXContext } from '@/context/VXProvider';
 import runReflexAnalysis from '@/lib/analysis/runReflexAnalysis';
-import { callAgentAnalyze } from '@/lib/llmClient'; // ✅ NEW
-import ReflexInfoDrawer from '@/components/ReflexInfoDrawer';
+import { callAgentAnalyze } from '@/lib/llmClient';
 import CoFirePanel from '@/components/CoFirePanel';
 import BackButton from '@/components/BackButton';
-import '@/styles.css'; // ✅ bubbles
+import '@/styles.css';
 
 type Mode = '--direct' | '--careful' | '--recap';
 type Stakes = 'low' | 'medium' | 'high';
@@ -70,18 +69,13 @@ const AnalyzePage = () => {
       {/* Bubble ambience */}
       <div className="bubble-bg">
         {[
-          'be aware of common biases',
-          'embrace the opposite',
-          'its not a bug, its a feature',
+          'epistemic humility',
+          'source, then claim',
+          'no false precision',
           'seek disconfirming evidence',
-          'it all seems so uncertain',
+          'explain uncertainty',
           'avoid vague authority',
-          'question your sources',
-      'how do I know if they are telling me the truth',
-          'consider alternative explanations',
-          'use logic and reason',
-          'too much information',
-          'analyze methodologies and evidence',
+          'cite or qualify',
         ].map((t, i) => (
           <span key={i} className="bubble-text">
             {t}
@@ -264,3 +258,4 @@ const AnalyzePage = () => {
 };
 
 export default AnalyzePage;
+
