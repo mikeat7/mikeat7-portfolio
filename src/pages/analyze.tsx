@@ -14,8 +14,11 @@ const AnalyzePage = () => {
   const { reflexFrames, setReflexFrames, isAnalyzing, setIsAnalyzing } = useVXContext();
   const [input, setInput] = useState('');
   const [analysisCount, setAnalysisCount] = useState(0);
-  const [mode, setMode] = useState<Mode>('' as Mode || '--careful');
-  const [stakes, setStakes] = useState<Stakes>('' as Stakes || 'medium');
+
+  // ✅ set explicit defaults (fixes TS2873)
+  const [mode, setMode] = useState<Mode>('--careful');
+  const [stakes, setStakes] = useState<Stakes>('medium');
+
   const [notice, setNotice] = useState<string | null>(null);
   const [source, setSource] = useState<'agent' | 'local' | null>(null);
 
@@ -33,22 +36,22 @@ const AnalyzePage = () => {
     setSource(null);
 
     try {
-      let frames = [];
+      let frames: any[] = [];
+
       if (useAgent && hasAgent) {
         const agentFrames = await callAgentAnalyze({ text: input, mode, stakes });
         if (Array.isArray(agentFrames) && agentFrames.length > 0) {
-          frames = agentFrames as any;
+          frames = agentFrames as any[];
           setSource('agent');
         } else {
-          // Auto-fallback to local if agent returns nothing
           const localFrames = await runReflexAnalysis(input);
-          frames = localFrames as any;
+          frames = localFrames as any[];
           setSource('local');
           setNotice('Agent returned no detections—showing local analysis instead.');
         }
       } else {
         const localFrames = await runReflexAnalysis(input);
-        frames = localFrames as any;
+        frames = localFrames as any[];
         setSource('local');
       }
 
@@ -96,8 +99,8 @@ const AnalyzePage = () => {
           <h1 className="text-3xl font-bold text-slate-900">Analyze a Statement</h1>
           <p className="mt-2 text-slate-700">
             Paste any text—or a URL—to reveal hidden assumptions, emotional manipulation,
-            semantic patterns, and missing context. This page also handles
-            <strong> Scientific Paper Checks</strong> and <strong> Link &amp; Article Audits</strong>.
+            semantic patterns, and missing context. This also handles <strong>Scientific Paper Checks</strong> and{' '}
+            <strong>Link &amp; Article Audits</strong>.
           </p>
 
           {/* Controls */}
@@ -172,7 +175,8 @@ const AnalyzePage = () => {
               {analysisCount > 0 && (
                 <>
                   Runs: {analysisCount} · Source:{' '}
-                  <span className="px-2 py-[2px] rounded-md"
+                  <span
+                    className="px-2 py-[2px] rounded-md"
                     style={{
                       background: '#e9eef5',
                       boxShadow: 'inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff',
@@ -258,4 +262,5 @@ const AnalyzePage = () => {
 };
 
 export default AnalyzePage;
+
 
