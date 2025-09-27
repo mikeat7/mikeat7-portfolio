@@ -1,0 +1,5 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Link } from 'react-router-dom';
+export default function TruthSerum() {
+    return (_jsxs("main", { className: "min-h-screen p-10 bg-gradient-to-br from-slate-100 to-slate-200 text-center", children: [_jsx("h1", { className: "text-5xl font-bold mb-6 text-gray-900", children: "Truth Serum + Clarity Armor" }), _jsx("p", { className: "max-w-2xl mx-auto text-lg text-gray-700 mb-8", children: "A platform to detect hidden logic, emotional manipulation, and omitted truths in AI and human communication. Learn, analyze, and strengthen your clarity reflexes." }), _jsxs("nav", { className: "flex justify-center gap-6", children: [_jsx(Link, { to: "/educate", className: "text-blue-600 hover:underline font-medium text-lg", children: "Educate Yourself" }), _jsx(Link, { to: "/analyze", className: "text-blue-600 hover:underline font-medium text-lg", children: "Analyze Text" }), _jsx(Link, { to: "/omissions", className: "text-blue-600 hover:underline font-medium text-lg", children: "View Omissions" })] })] }));
+}

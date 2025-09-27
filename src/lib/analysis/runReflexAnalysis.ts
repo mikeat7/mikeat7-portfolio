@@ -1,5 +1,7 @@
 // src/lib/analysis/runReflexAnalysis.ts
 import { VXFrame } from '@/types/VXTypes';
+
+// --- Detectors (unchanged) ---
 import { detectEmotionalManipulation } from '@/lib/vx/vx-em08';
 import { detectSpeculativeOverreach } from '@/lib/vx/vx-so01';
 import { detectHallucination } from '@/lib/vx/vx-ha01';
@@ -20,23 +22,54 @@ import { detectSemanticPatterns } from '@/lib/vx/vx-semantic-core';
 import { detectEnhancedSemanticPatterns } from '@/lib/vx/vx-enhanced-semantic';
 import { detectComprehensiveManipulation } from '@/lib/vx/vx-mp01';
 import { detectPseudoInquiry } from '@/lib/vx/vx-inquiry-protection';
-import { detectNarrativeFraming } from '@/lib/vx/vx-nf01'; // ✅ keep single import
-import { adaptiveLearning } from '@/lib/adaptive/AdaptiveLearningEngine';
+import { detectNarrativeFraming } from '@/lib/vx/vx-nf01';
+
+// --- Codex v0.9 policy helpers ---
+import codex from '@/data/front-end-codex.v0.9.json';
+import {
+  buildHandshake,
+  getReflexOrder,
+  shouldTriggerReflex,
+  emitTelemetry,
+  type Stakes,
+  type Mode,
+} from '@/lib/codex-runtime';
+
+// -------------------------------
+// Public API
+// -------------------------------
+export interface AnalysisOptions {
+  mode?: Mode;          // '--direct' | '--careful' | '--recap'
+  stakes?: Stakes;      // 'low' | 'medium' | 'high'
+  useAgent?: boolean;   // if true and endpoint present, blend frames from AWS agent
+}
+
+const DEFAULT_OPTS: Required<AnalysisOptions> = {
+  mode: '--careful',
+  stakes: 'medium',
+  useAgent: true,
+};
 
 /**
- * Main reflex analysis runner
- * Dispatches text through detectors and aggregates results
+ * Main reflex analysis runner.
+ * - Runs local detectors
+ * - (Optionally) merges frames from AWS agent if VITE_AGENT_API_BASE is set
+ * - Gates & sorts frames via Codex v0.9 (thresholds, block rules, profile order)
+ * - Emits lightweight telemetry (console)
  */
-const runReflexAnalysis = async (input: string): Promise<VXFrame[]> => {
+const runReflexAnalysis = async (input: string, opts: AnalysisOptions = {}): Promise<VXFrame[]> => {
+  const { mode, stakes, useAgent } = { ...DEFAULT_OPTS, ...opts };
+
   if (!input || input.trim().length < 3) {
     console.log('🔍 Analysis skipped: input too short');
     return [];
   }
 
   const timestamp = new Date().toLocaleTimeString();
-  console.log(`🔍 [${timestamp}] Starting comprehensive analysis for input:`, input.substring(0, 50) + '...');
-  const frames: VXFrame[] = [];
+  const handshake = buildHandshake(codex as any, { mode, stakes });
 
+  // 1) Local detectors (in parallel)
+  let localFrames: VXFrame[] = [];
   try {
     const [
       confidenceFrames,        // VX-CO01
@@ -55,7 +88,7 @@ const runReflexAnalysis = async (input: string): Promise<VXFrame[]> => {
       speculativeFrames,       // VX-SO01
       toneFrames,              // VX-TU01
       vaguenessFrames,         // VX-VG01
-      aiContentFrames,         // VX-AI01
+      aiContentFrames,         // not implemented → empty
       narrativeFrames          // VX-NF01
     ] = await Promise.all([
       Promise.resolve(detectConfidenceIllusion(input)),
@@ -74,41 +107,17 @@ const runReflexAnalysis = async (input: string): Promise<VXFrame[]> => {
       Promise.resolve(detectSpeculativeOverreach(input)),
       Promise.resolve(detectToneEscalation(input)),
       Promise.resolve(detectVagueness(input)),
-      Promise.resolve([]), // detectAIGeneratedContent: provide empty if not implemented
-      Promise.resolve(detectNarrativeFraming(input))
+      Promise.resolve([] as VXFrame[]),
+      Promise.resolve(detectNarrativeFraming(input)),
     ]);
-    
+
     const semanticFrames = detectSemanticPatterns(input);
     const enhancedSemanticFrames = detectEnhancedSemanticPatterns(input);
     const comprehensiveFrames = detectComprehensiveManipulation(input);
     const pseudoInquiryFrames = detectPseudoInquiry(input);
 
-    console.log(`🔍 [${timestamp}] Complete VX detection results:`, {
-      confidence: confidenceFrames.length,
-      dataLess: dataLessFrames.length,
-      ethical: ethicalFrames.length,
-      emotional: emotionalFrames.length,
-      entrapment: entrapmentFrames.length,
-      urgency: urgencyFrames.length,
-      precision: precisionFrames.length,
-      hallucination: hallucinationFrames.length,
-      jargon: jargonFrames.length,
-      oversimplification: oversimplificationFrames.length,
-      omission: omissionFrames.length,
-      consensus: consensusFrames.length,
-      interruption: interruptionFrames.length,
-      speculative: speculativeFrames.length,
-      tone: toneFrames.length,
-      vagueness: vaguenessFrames.length,
-      aiContent: aiContentFrames.length,
-      narrative: narrativeFrames.length,
-      semantic: semanticFrames.length,
-      enhancedSemantic: enhancedSemanticFrames.length,
-      comprehensive: comprehensiveFrames.length,
-      pseudoInquiry: pseudoInquiryFrames.length
-    });
-
-    frames.push(
+    // Accumulate locally
+    localFrames = [
       ...confidenceFrames,
       ...dataLessFrames,
       ...ethicalFrames,
@@ -130,66 +139,183 @@ const runReflexAnalysis = async (input: string): Promise<VXFrame[]> => {
       ...semanticFrames,
       ...enhancedSemanticFrames,
       ...comprehensiveFrames,
-      ...pseudoInquiryFrames
-    );
+      ...pseudoInquiryFrames,
+    ];
 
-    // Sort by confidence (highest first)
-    frames.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0));
-
-    // Adaptive learning tweaks
-    frames.forEach(frame => {
-      const adjustment = adaptiveLearning.getPatternAdjustment(frame.reflexId);
-      if (adjustment !== 0) {
-        frame.confidence = Math.max(0.05, Math.min(0.95, (frame.confidence ?? 0) + adjustment));
-      }
+    console.log(`🔍 [${timestamp}] Local VX detections:`, {
+      confidence: confidenceFrames.length,
+      dataLess: dataLessFrames.length,
+      ethical: ethicalFrames.length,
+      emotional: emotionalFrames.length,
+      entrapment: entrapmentFrames.length,
+      urgency: urgencyFrames.length,
+      precision: precisionFrames.length,
+      hallucination: hallucinationFrames.length,
+      jargon: jargonFrames.length,
+      oversimplification: oversimplificationFrames.length,
+      omission: omissionFrames.length,
+      consensus: consensusFrames.length,
+      interruption: interruptionFrames.length,
+      speculative: speculativeFrames.length,
+      tone: toneFrames.length,
+      vagueness: vaguenessFrames.length,
+      aiContent: aiContentFrames.length,
+      narrative: narrativeFrames.length,
+      semantic: semanticFrames.length,
+      enhancedSemantic: enhancedSemanticFrames.length,
+      comprehensive: comprehensiveFrames.length,
+      pseudoInquiry: pseudoInquiryFrames.length,
     });
-
-    const clusteredFrames = detectReflexClusters(frames, input);
-    console.log(`🔍 [${timestamp}] Complete VX analysis finished, returning ${clusteredFrames.length} frames`);
-    return clusteredFrames;
-
-  } catch (error) {
-    console.error(`🚨 [${timestamp}] Comprehensive reflex analysis error:`, error);
-    return [];
+  } catch (err) {
+    console.error(`🚨 [${timestamp}] Local detector error:`, err);
   }
+
+  // 2) Optional: AWS Agent frames
+  let agentFrames: VXFrame[] = [];
+  if (useAgent && typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_AGENT_API_BASE) {
+    try {
+      const base = (import.meta as any).env.VITE_AGENT_API_BASE as string;
+      const res = await fetch(`${base}/agent/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input: { text: input }, handshake }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const frames = Array.isArray(data?.frames) ? data.frames : (data?.frames?.items ?? []);
+        if (Array.isArray(frames)) {
+          agentFrames = frames.map((f: any) => ({
+            reflexId: String(f.reflexId ?? f.id ?? 'agent-unknown'),
+            reflexLabel: String(f.reflexLabel ?? f.label ?? 'Agent Reflex'),
+            confidence: Number(f.confidence ?? 0.5),
+            rationale: String(f.rationale ?? f.reason ?? ''),
+            tags: Array.isArray(f.tags) ? f.tags : [],
+            priority: typeof f.priority === 'number' ? f.priority : undefined,
+          })) as VXFrame[];
+          // Tag as agent-origin
+          agentFrames.forEach(f => (f.tags = [...(f.tags ?? []), 'agent']));
+        }
+      } else {
+        console.warn(`⚠️ Agent call failed with status ${res.status}`);
+      }
+    } catch (err) {
+      console.warn('⚠️ Agent call error:', err);
+    }
+  }
+
+  // 3) Merge + de-duplicate frames
+  const merged = dedupeFrames([...localFrames, ...agentFrames]);
+
+  // 4) Codex gating (thresholds & blockers)
+  const gated = [];
+  let blockedBy: string | null = null;
+  for (const f of merged) {
+    const { trigger, block } = shouldTriggerReflex(codex as any, f.reflexId, f.confidence ?? 0, stakes);
+    if (block && !blockedBy) blockedBy = f.reflexId;
+    if (trigger) gated.push(f);
+  }
+  if (blockedBy) {
+    gated.unshift({
+      reflexId: 'policy-block',
+      reflexLabel: 'Analysis Paused: High-Risk Signal',
+      rationale:
+        `Reflex "${blockedBy}" exceeded its block threshold for stakes="${stakes}". ` +
+        `Request sources/clarification or reduce stakes.`,
+      confidence: 0.99,
+      tags: ['policy', 'block'],
+      priority: 5,
+    });
+  }
+
+  // 5) Cluster detection (your existing UX)
+  const clustered = detectReflexClusters(gated, input);
+
+  // 6) Sort: profile order first, then confidence
+  const profileOrder = getReflexOrder(codex as any, handshake.reflex_profile);
+  const indexOf = (id: string) => {
+    const i = profileOrder.indexOf(id);
+    return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+  };
+  clustered.sort((a, b) => {
+    const ai = indexOf(a.reflexId);
+    const bi = indexOf(b.reflexId);
+    if (ai !== bi) return ai - bi;
+    return (b.confidence ?? 0) - (a.confidence ?? 0);
+  });
+
+  // 7) Telemetry (console only)
+  emitTelemetry(
+    codex as any,
+    {
+      name: 'analysis_complete',
+      data: {
+        mode,
+        stakes,
+        triggered_reflexes: clustered.map(f => f.reflexId),
+        total: clustered.length,
+        used_agent: agentFrames.length > 0,
+      },
+    },
+    (e) => console.log('[telemetry]', e)
+  );
+
+  console.log(`🔍 [${timestamp}] Analysis finished, returning ${clustered.length} frames`);
+  return clustered;
 };
+
+// -------------------------------------------
+// Helpers
+// -------------------------------------------
+function dedupeFrames(frames: VXFrame[]): VXFrame[] {
+  const seen = new Set<string>();
+  const out: VXFrame[] = [];
+  for (const f of frames) {
+    const key = `${f.reflexId}::${(f.rationale ?? f.reason ?? '').slice(0, 160)}::${f.reflexLabel ?? ''}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      out.push(f);
+    }
+  }
+  return out;
+}
 
 /** Cluster detection (co-firing reflexes) */
 function detectReflexClusters(frames: VXFrame[], originalInput: string): VXFrame[] {
-  const hasLegitimateScientificLanguage =
-    /requires further study|needs investigation|warrants research|seems plausible|appears to suggest/i.test(originalInput);
+  const hasLegitSci =
+    /requires further study|needs investigation|warrants research|seems plausible|appears to suggest/i.test(
+      originalInput
+    );
 
-  const highConfidenceFrames = frames.filter(f => (f.confidence ?? 0) >= 0.75);
-  const mediumConfidenceFrames = frames.filter(f => (f.confidence ?? 0) >= 0.55);
-  const totalFrames = frames.length;
+  const high = frames.filter((f) => (f.confidence ?? 0) >= 0.75).length;
+  const med = frames.filter((f) => (f.confidence ?? 0) >= 0.55).length;
+  const total = frames.length;
 
-  const clusterThreshold = hasLegitimateScientificLanguage
+  const threshold = hasLegitSci
     ? { high: 3, medium: 4, volume: 5 }
     : { high: 2, medium: 3, volume: 4 };
 
-  const hasHighCluster = highConfidenceFrames.length >= clusterThreshold.high;
-  const hasMediumCluster = mediumConfidenceFrames.length >= clusterThreshold.medium;
-  const hasVolumeCluster = totalFrames >= clusterThreshold.volume;
+  const hasHigh = high >= threshold.high;
+  const hasMed = med >= threshold.medium;
+  const hasVol = total >= threshold.volume;
 
-  if (hasHighCluster || hasMediumCluster || hasVolumeCluster) {
-    const clusterType = hasHighCluster ? 'HIGH-CONFIDENCE' : hasMediumCluster ? 'MEDIUM-CONFIDENCE' : 'VOLUME';
-    const clusterCount = hasHighCluster ? highConfidenceFrames.length : hasMediumCluster ? mediumConfidenceFrames.length : totalFrames;
+  if (hasHigh || hasMed || hasVol) {
+    const clusterType = hasHigh ? 'HIGH-CONFIDENCE' : hasMed ? 'MEDIUM-CONFIDENCE' : 'VOLUME';
+    const clusterCount = hasHigh ? high : hasMed ? med : total;
 
-    frames.forEach(frame => {
-      if ((frame.confidence ?? 0) >= 0.55) {
-        frame.tags = [...(frame.tags || []), 'cluster-alert'];
-        frame.priority = Math.max(frame.priority || 1, 3);
+    frames.forEach((f) => {
+      if ((f.confidence ?? 0) >= 0.55) {
+        f.tags = [...(f.tags || []), 'cluster-alert'];
+        f.priority = Math.max(f.priority || 1, 3);
       }
     });
 
     frames.unshift({
       reflexId: 'cluster-alert',
       reflexLabel: `⚠️ ${clusterType} Manipulation Cluster Detected`,
-      rationale:
-        `🔥 ${clusterType} CLUSTER ALERT: ${clusterCount} reflexes triggered on "${originalInput.substring(0, 50)}..."`,
-      confidence: Math.max(...frames.map(f => f.confidence ?? 0)),
+      rationale: `🔥 ${clusterType} CLUSTER ALERT: ${clusterCount} reflexes triggered on "${originalInput.substring(0, 50)}..."`,
+      confidence: Math.max(...frames.map((f) => f.confidence ?? 0)),
       tags: ['cluster', 'alert', clusterType.toLowerCase()],
-      priority: 4
+      priority: 4,
     });
   }
 

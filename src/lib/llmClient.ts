@@ -1,72 +1,36 @@
-import codex from "@/data/front-end-codex.v0.9.json";
-import { buildHandshake, emitTelemetry, type Mode, type Stakes } from "@/lib/codex-runtime";
+// src/lib/llmClient.ts
+import codexJson from "@/data/front-end-codex.v0.9.json";
+import { buildHandshake, type Mode, type Stakes, type Codex } from "@/lib/codex-runtime";
+import type { VXFrame } from "@/types/VXTypes";
 
-export interface LLMRequest {
-  prompt: string;
-  stakes?: Stakes;
+const codex = codexJson as unknown as Codex; // ✅ satisfy TS; we validate at boot
+
+const BASE =
+  (import.meta as any).env?.VITE_AGENT_API_BASE?.replace(/\/$/, "") || "";
+
+export async function callAgentAnalyze(input: {
+  text: string;
   mode?: Mode;
-  // Optional: any other headers/params your backend expects
-  system?: string;
-  max_tokens?: number;
-}
+  stakes?: Stakes;
+}): Promise<VXFrame[]> {
+  if (!BASE) throw new Error("VITE_AGENT_API_BASE is not set");
 
-export interface LLMResponse {
-  ok: boolean;
-  text?: string;
-  citations?: Array<{ title?: string; url?: string }>;
-  error?: string;
-}
-
-/**
- * Build a handshake and POST to your (future) API route.
- * If you don’t have a backend yet, this will still return a mock response
- * so the UI can function in “front-end only” mode.
- */
-export async function callLLM(payload: LLMRequest): Promise<LLMResponse> {
-  const handshake = buildHandshake(codex as any, {
-    stakes: payload.stakes ?? "medium",
-    mode: payload.mode ?? "--careful",
+  const handshake = buildHandshake(codex, {
+    mode: input.mode ?? "--careful",
+    stakes: input.stakes ?? "medium",
   });
 
-  // Telemetry (pre-call)
-  emitTelemetry("llm.call.start", {
-    mode: handshake.mode,
-    stakes: handshake.stakes,
+  const res = await fetch(`${BASE}/agent/analyze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ input: { text: input.text }, handshake }),
   });
 
-  try {
-    const res = await fetch("/api/llm", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...payload, handshake }),
-    });
-
-    if (!res.ok) {
-      const errorText = await res.text().catch(() => res.statusText);
-      emitTelemetry("llm.call.error", { status: res.status, error: errorText });
-      // Front-end-only mock fallback
-      return {
-        ok: true,
-        text:
-          "⚠️ (Mocked) No backend yet. This is a placeholder completion so the UI keeps working.\n\n" +
-          "Tip: wire /api/llm to call your hosted model and pass `handshake` into the request headers/body.",
-        citations: [],
-      };
-    }
-
-    const data = (await res.json()) as LLMResponse;
-
-    // Telemetry (post-call)
-    emitTelemetry("llm.call.complete", { ok: data.ok });
-    return data;
-  } catch (err: any) {
-    emitTelemetry("llm.call.error", { error: String(err?.message || err) });
-    // Front-end-only mock fallback
-    return {
-      ok: true,
-      text:
-        "⚠️ (Mocked) Network error or no backend. Returning placeholder text so you can proceed.",
-      citations: [],
-    };
+  if (!res.ok) {
+    const msg = await res.text().catch(() => res.statusText);
+    throw new Error(`Agent analyze failed: ${res.status} ${msg}`);
   }
+
+  const data = await res.json();
+  return Array.isArray(data?.frames) ? (data.frames as VXFrame[]) : [];
 }
