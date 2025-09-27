@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useVXContext } from '@/context/VXProvider';
 import runReflexAnalysis from '@/lib/analysis/runReflexAnalysis';
+import { callAgentAnalyze } from '@/lib/llmClient'; // ✅ NEW
 import ReflexInfoDrawer from '@/components/ReflexInfoDrawer';
 import CoFirePanel from '@/components/CoFirePanel';
 import BackButton from '@/components/BackButton';
@@ -12,14 +13,34 @@ const AnalyzePage = () => {
   const [input, setInput] = useState('');
   const [analysisCount, setAnalysisCount] = useState(0);
 
+  // ✅ Detect if an agent base URL is configured; default toggle to true only if present
+  const hasAgent =
+    !!(import.meta as any).env?.VITE_AGENT_API_BASE &&
+    String((import.meta as any).env.VITE_AGENT_API_BASE).trim().length > 0;
+  const [useAgent, setUseAgent] = useState<boolean>(hasAgent);
+
   const handleAnalyze = async () => {
     if (!input.trim()) return;
     setIsAnalyzing(true);
     setReflexFrames([]);
 
     try {
-      const analysis = await runReflexAnalysis(input);
-      setReflexFrames(analysis);
+      let analysis;
+      if (useAgent && hasAgent) {
+        // ✅ Call AWS agent
+        analysis = await callAgentAnalyze({
+          text: input,
+          mode: '--careful',
+          stakes: 'medium',
+        });
+        console.log('🛰️ Agent frames:', analysis);
+      } else {
+        // ✅ Local fallback
+        analysis = await runReflexAnalysis(input);
+        console.log('🧪 Local frames:', analysis);
+      }
+
+      setReflexFrames(analysis || []);
       setAnalysisCount(prev => prev + 1);
     } catch (error) {
       console.error('🚨 Analysis failed:', error);
@@ -69,16 +90,36 @@ const AnalyzePage = () => {
               rows={6}
               placeholder="Paste a paragraph, a link to an article, or a snippet from a methods section…"
             />
-            <button
-              onClick={handleAnalyze}
-              disabled={!input.trim() || isAnalyzing}
-              className="px-6 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
-            >
-              {isAnalyzing ? 'Analyzing…' : 'Run Analysis'}
-            </button>
+
+            {/* ✅ Small control row: toggle + run button */}
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <label className="flex items-center gap-2 text-sm text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={useAgent}
+                  onChange={(e) => setUseAgent(e.target.checked)}
+                  disabled={!hasAgent}
+                />
+                Use AWS Agent
+                {!hasAgent && (
+                  <span className="ml-2 text-xs text-slate-500">
+                    (no VITE_AGENT_API_BASE set — using local engine)
+                  </span>
+                )}
+              </label>
+
+              <button
+                onClick={handleAnalyze}
+                disabled={!input.trim() || isAnalyzing}
+                className="px-6 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
+              >
+                {isAnalyzing ? 'Analyzing…' : 'Run Analysis'}
+              </button>
+            </div>
+
             {analysisCount > 0 && (
               <p className="text-xs text-slate-600">
-                Runs completed: {analysisCount}
+                Runs completed: {analysisCount} · Mode: {useAgent && hasAgent ? 'AWS Agent' : 'Local'}
               </p>
             )}
           </div>
@@ -98,7 +139,7 @@ const AnalyzePage = () => {
                     <h3 className="font-semibold text-lg">{frame.reflexLabel}</h3>
                     <p className="text-sm text-slate-700 mt-1">{frame.rationale ?? frame.reason}</p>
                     <p className="text-xs text-slate-500 mt-2">
-                      Confidence: {Math.round(frame.confidence * 100)}% • Reflex ID: {frame.reflexId}
+                      Confidence: {Math.round((frame.confidence ?? 0) * 100)}% • Reflex ID: {frame.reflexId}
                     </p>
                   </div>
                 ))}
@@ -123,4 +164,5 @@ const AnalyzePage = () => {
 };
 
 export default AnalyzePage;
+
 
