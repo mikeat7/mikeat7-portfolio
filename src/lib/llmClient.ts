@@ -1,9 +1,12 @@
 // src/lib/llmClient.ts
-import codexJson from "@/data/front-end-codex.v0.9.json";
-import { buildHandshake, type Mode, type Stakes, type Codex } from "@/lib/codex-runtime";
+import codex from "@/data/front-end-codex.v0.9.json";
+import {
+  buildHandshake,
+  type Mode,
+  type Stakes,
+  type CitePolicy,
+} from "@/lib/codex-runtime";
 import type { VXFrame } from "@/types/VXTypes";
-
-const codex = codexJson as unknown as Codex; // ✅ satisfy TS; we validate at boot
 
 const BASE =
   (import.meta as any).env?.VITE_AGENT_API_BASE?.replace(/\/$/, "") || "";
@@ -12,18 +15,32 @@ export async function callAgentAnalyze(input: {
   text: string;
   mode?: Mode;
   stakes?: Stakes;
+  min_confidence?: number;
+  cite_policy?: CitePolicy;
+  omission_scan?: "auto" | boolean;
+  reflex_profile?: "default" | "strict" | "lenient";
 }): Promise<VXFrame[]> {
-  if (!BASE) throw new Error("VITE_AGENT_API_BASE is not set");
+  if (!BASE) {
+    throw new Error("VITE_AGENT_API_BASE is not set");
+  }
 
-  const handshake = buildHandshake(codex, {
-    mode: input.mode ?? "--careful",
-    stakes: input.stakes ?? "medium",
+  // Build handshake with any provided overrides (Codex enforces floors/defaults)
+  const handshake = buildHandshake(codex as any, {
+    mode: input.mode,
+    stakes: input.stakes,
+    min_confidence: input.min_confidence,
+    cite_policy: input.cite_policy,
+    omission_scan: input.omission_scan,
+    reflex_profile: input.reflex_profile,
   });
 
   const res = await fetch(`${BASE}/agent/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ input: { text: input.text }, handshake }),
+    body: JSON.stringify({
+      input: { text: input.text },
+      handshake,
+    }),
   });
 
   if (!res.ok) {
@@ -34,3 +51,4 @@ export async function callAgentAnalyze(input: {
   const data = await res.json();
   return Array.isArray(data?.frames) ? (data.frames as VXFrame[]) : [];
 }
+
