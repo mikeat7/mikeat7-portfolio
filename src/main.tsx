@@ -60,6 +60,9 @@ emitTelemetry(
   },
   (e) => console.log("[telemetry]", e)
 );
+if (import.meta.env.DEV) {
+  console.info("Dev runbook: /docs/HANDOFF.md (repo) — start here.");
+}
 
 // --- Render app (always render; we only fail-fast in console) ---
 ReactDOM.createRoot(document.getElementById("root")!).render(
