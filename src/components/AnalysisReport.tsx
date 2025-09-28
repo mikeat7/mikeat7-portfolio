@@ -1,77 +1,122 @@
+// src/components/AnalysisReport.tsx
 import React from "react";
 import type { VXFrame } from "@/types/VXTypes";
 
-type Props = { frames: VXFrame[]; inputSample?: string; handshakeLine?: string };
+type Props = {
+  frames: VXFrame[];
+  inputSample?: string;
+  handshakeLine?: string;
+  sectionScores?: Array<{ label: string; count: number }>;
+  reportText?: string; // optional server report (from /agent/summarize)
+};
 
-function group(frames: VXFrame[]) {
-  const byId: Record<string, VXFrame[]> = {};
-  for (const f of frames) {
-    byId[f.reflexId] ??= [];
-    byId[f.reflexId].push(f);
-  }
-  // Sort groups by max confidence desc
-  return Object.entries(byId)
-    .map(([id, arr]) => ({
-      id,
-      label: arr[0]?.reflexLabel ?? id,
-      maxConf: Math.max(...arr.map(a => a.confidence ?? 0)),
-      items: arr
-    }))
-    .sort((a, b) => b.maxConf - a.maxConf);
+function fmt(num: number) {
+  return (num ?? 0).toFixed(2);
 }
 
-export default function AnalysisReport({ frames, inputSample, handshakeLine }: Props) {
-  if (!frames?.length) return null;
-  const groups = group(frames);
-  const top = groups.slice(0, 5);
+function bucketize(frames: VXFrame[]) {
+  const buckets: Record<string, VXFrame[]> = {};
+  for (const f of frames) {
+    const key = f.reflexId?.split("-")[1] ?? "misc";
+    buckets[key] = buckets[key] || [];
+    buckets[key].push(f);
+  }
+  return buckets;
+}
 
-  const suggestions = [
-    frames.some(f => f.reflexId.includes("omission")) && "Ask for missing context or opposing evidence.",
-    frames.some(f => f.reflexId.includes("speculative") || f.reflexId.includes("pc01")) && "Request concrete sources instead of 'experts say' or vague consensus.",
-    frames.some(f => f.reflexId.includes("fp01") || f.reflexId.includes("co01")) && "Verify numbers/precision; state uncertainty explicitly.",
-    frames.some(f => f.reflexId.includes("fo01") || f.reflexId.includes("tu01")) && "De-escalate urgency; evaluate time sensitivity with evidence.",
-  ].filter(Boolean) as string[];
+const AnalysisReport: React.FC<Props> = ({
+  frames,
+  inputSample,
+  handshakeLine,
+  sectionScores,
+  reportText,
+}) => {
+  const buckets = bucketize(frames);
+  const total = frames.length;
 
   return (
     <div
-      className="mt-6 rounded-2xl p-5"
-      style={{ background:"#e9eef5", boxShadow:"inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #fff" }}
+      className="rounded-3xl p-6 md:p-8 mt-8"
+      style={{
+        background: "#e9eef5",
+        boxShadow:
+          "inset 8px 8px 16px #cfd6e0, inset -8px -8px 16px #ffffff",
+      }}
     >
-      <h3 className="text-lg font-semibold text-slate-900">Analysis Report</h3>
+      <h2 className="text-xl font-semibold">Analysis Report</h2>
+
       {handshakeLine && (
-        <p className="text-xs text-slate-600 mt-1">{handshakeLine}</p>
+        <p className="mt-1 text-xs text-slate-600">{handshakeLine}</p>
       )}
+
       {inputSample && (
-        <p className="text-xs text-slate-500 mt-1 italic">
-          Sample: “{inputSample.slice(0, 120)}{inputSample.length > 120 ? "…" : ""}”
-        </p>
+        <blockquote className="mt-3 text-sm text-slate-700 border-l-4 border-slate-300 pl-3 italic">
+          {inputSample.slice(0, 300)}
+          {inputSample.length > 300 ? "…" : ""}
+        </blockquote>
       )}
 
-      <div className="mt-4 space-y-3">
-        {top.map(g => (
-          <div key={g.id}>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{g.label}</span>
-              <span className="text-[10px] px-2 py-[2px] rounded-md"
-                style={{ background:"#e9eef5", boxShadow:"inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #fff" }}>
-                ~{Math.round(g.maxConf*100)}% conf
-              </span>
-            </div>
-            <p className="text-sm text-slate-700 mt-1">
-              {g.items[0]?.rationale ?? "Pattern detected."}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {suggestions.length > 0 && (
-        <div className="mt-4">
-          <h4 className="text-sm font-semibold text-slate-800">Next steps</h4>
-          <ul className="list-disc pl-5 text-sm text-slate-700">
-            {suggestions.map((s, i) => <li key={i}>{s}</li>)}
-          </ul>
+      {/* Optional server-made narrative */}
+      {reportText && (
+        <div className="mt-4 text-sm text-slate-800 leading-6 whitespace-pre-wrap">
+          {reportText}
         </div>
       )}
+
+      {/* Section scoreboard (Long-Doc Mode) */}
+      {sectionScores && sectionScores.length > 0 && (
+        <div className="mt-6">
+          <h3 className="font-medium text-slate-900">Per-Section Scoreboard</h3>
+          <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            {sectionScores.map((s, i) => (
+              <div
+                key={i}
+                className="text-xs px-3 py-2 rounded-lg"
+                style={{
+                  background: "#e9eef5",
+                  boxShadow:
+                    "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff",
+                }}
+              >
+                <div className="font-semibold">{s.label}</div>
+                <div className="text-slate-600">detections: {s.count}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-6">
+        <h3 className="font-medium text-slate-900">Reflex Summary</h3>
+        <p className="text-sm text-slate-600">Total detections: {total}</p>
+
+        <div className="mt-2 grid gap-2">
+          {Object.entries(buckets)
+            .sort((a, b) => b[1].length - a[1].length)
+            .map(([code, list]) => (
+              <div
+                key={code}
+                className="text-sm px-3 py-2 rounded-lg"
+                style={{
+                  background: "#e9eef5",
+                  boxShadow:
+                    "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff",
+                }}
+              >
+                <div className="flex justify-between">
+                  <span className="font-semibold">
+                    {code.toUpperCase()} • {list[0]?.reflexLabel ?? ""}
+                  </span>
+                  <span className="text-xs text-slate-600">
+                    {list.length} hits · top conf {fmt(Math.max(...list.map(f => f.confidence ?? 0)))}
+                  </span>
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default AnalysisReport;
