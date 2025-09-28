@@ -1,4 +1,5 @@
 service: clarityarmor-agent
+
 frameworkVersion: '3'
 
 provider:
@@ -6,31 +7,22 @@ provider:
   runtime: nodejs20.x
   region: us-east-1
   stage: dev
-
-  # HTTP API (API Gateway v2) CORS goes here (not at the function level)
+  memorySize: 512
+  timeout: 10
   httpApi:
     cors:
       allowedOrigins:
-        - http://localhost:5173
         - https://clarityarmor.com
+        - http://localhost:5173
       allowedHeaders:
         - Content-Type
       allowedMethods:
         - OPTIONS
-        - GET
         - POST
       allowCredentials: false
-
-  # Basic Lambda execution role bits (Serverless will create/attach)
-  iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action:
-            - logs:CreateLogGroup
-            - logs:CreateLogStream
-            - logs:PutLogEvents
-          Resource: "*"
+      maxAge: 86400
+  environment:
+    ALLOWED_ORIGINS: 'https://clarityarmor.com,http://localhost:5173'
 
 functions:
   analyze:
@@ -38,5 +30,19 @@ functions:
     events:
       - httpApi:
           path: /agent/analyze
-          method: POST
+          method: post
+
+  summarize:
+    handler: handler.summarize
+    events:
+      - httpApi:
+          path: /agent/summarize
+          method: post
+
+  chat:
+    handler: handler.chat
+    events:
+      - httpApi:
+          path: /agent/chat
+          method: post
 
