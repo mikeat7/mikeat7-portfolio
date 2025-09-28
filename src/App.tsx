@@ -8,7 +8,7 @@ import BullshitDetection from "@/pages/educate/bullshit-detection";
 import LogicalFallacies from "@/pages/educate/logical-fallacies";
 import AIAwareness from "@/pages/educate/ai-awareness";
 import AdvancedPractice from "@/pages/educate/advanced-practice";
-import Analyze from "@/pages/analyze";
+import Analyze from "@/pages/analyze.tsx";
 import Wisdom from "@/pages/wisdom";
 import Train from "@/pages/train";
 import Paper from "@/pages/paper";
