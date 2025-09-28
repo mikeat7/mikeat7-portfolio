@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useVXContext } from "@/context/VXProvider";
 import runReflexAnalysis from "@/lib/analysis/runReflexAnalysis";
+import AnalysisReport from "@/components/AnalysisReport";
 import { callAgentAnalyze } from "@/lib/llmClient";
 import {
   buildHandshake,
@@ -455,7 +456,11 @@ const AnalyzePage = () => {
                   </div>
                 ))}
               </div>
-
+<AnalysisReport
+  frames={reflexFrames}
+  inputSample={input}
+  handshakeLine={`Handshake · mode=${previewHandshake.mode} · stakes=${previewHandshake.stakes} · min_conf=${previewHandshake.min_confidence} · cite_policy=${previewHandshake.cite_policy} · omission_scan=${String(previewHandshake.omission_scan)} · profile=${previewHandshake.reflex_profile}`}
+/>
               <CoFirePanel reflexes={reflexFrames} />
             </div>
           )}
