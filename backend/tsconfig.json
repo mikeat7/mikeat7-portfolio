@@ -10,7 +10,9 @@
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "types": ["node", "aws-lambda"],
+    "lib": ["ES2022"]
   },
   "include": ["src"]
 }
