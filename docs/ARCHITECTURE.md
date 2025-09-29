@@ -4,7 +4,7 @@
 flowchart TD
   subgraph Frontend [Frontend — clarityarmor.com]
     A[User Input]
-    B[Handshake Presets (--direct/--careful/--recap)]
+    B["Handshake Presets (--direct / --careful / --recap)"]
     C[Analyze Page (TSX)]
     D[AnalysisReport + Heatmap]
   end
@@ -33,8 +33,8 @@ flowchart TD
   K --> L
   K --> M
   K --> N
-    L -->|clean_text| K
-  M -->|citations| K
-  N -->|risk_flags| K
-  K -->|tool traces + answer| J --> I --> D
+  L --> K
+  M --> K
+  N --> K
+  K --> J --> I --> D
 
