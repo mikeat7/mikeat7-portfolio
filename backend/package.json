@@ -1,16 +1,18 @@
 {
-  "name": "clarityarmor-agent",
-  "private": true,
+  "name": "tsca-agent",
+  "version": "0.1.0",
   "type": "module",
-  "version": "0.0.1",
   "scripts": {
-    "deploy": "serverless deploy",
-    "remove": "serverless remove",
-    "dev": "serverless offline"
+    "build": "tsc -p tsconfig.json",
+    "deploy": "npm run build && serverless deploy",
+    "dev": "serverless offline --stage dev"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.645.0"
+  },
   "devDependencies": {
     "serverless": "^3.39.0",
-    "serverless-offline": "^13.6.0"
+    "serverless-offline": "^13.8.0",
+    "typescript": "^5.6.3"
   }
 }
