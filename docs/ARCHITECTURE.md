@@ -33,7 +33,8 @@ flowchart TD
   K --> L
   K --> M
   K --> N
-  L --> K
-  M --> K
-  N --> K
-  K --> J --> I --> D
+    L -->|clean_text| K
+  M -->|citations| K
+  N -->|risk_flags| K
+  K -->|tool traces + answer| J --> I --> D
+
