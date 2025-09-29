@@ -7,6 +7,7 @@ Harden the TSCA platform against spin, manipulation, and omission while meeting 
 
 ## 1. Scope
 The ASW plan defines how the **codex v0.9** + **VX reflexes** integrate with an AWS Bedrock-based agent to deliver **transparent, reproducible, policy-driven analysis**.
+**Required AWS tech target (for hackathon compliance):** Bedrock (Claude) + Agents/AgentCore, API Gateway + Lambda action group(s), Guardrails; optional Knowledge Bases (Kendra) for `search_citations`.
 
 ---
 
