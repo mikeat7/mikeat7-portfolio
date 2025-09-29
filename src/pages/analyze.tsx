@@ -11,6 +11,18 @@ import AnalysisReport from "@/components/AnalysisReport";
 import { chunkByHeadings, chunkByWindow, aggregateFrames } from "@/lib/longdoc";
 import "@/styles.css"; // bubbles
 
+// Tiny inline "?" help chip that shows tooltip on hover
+const Help = ({ text }: { text: string }) => (
+  <span
+    title={text}
+    aria-label={text}
+    className="ml-1 inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/70 text-[10px] leading-none text-slate-600 px-1.5 py-[1px] cursor-help align-middle"
+    style={{ transform: "translateY(-1px)" }}
+  >
+    ?
+  </span>
+);
+
 const AnalyzePage = () => {
   const { reflexFrames, setReflexFrames, isAnalyzing, setIsAnalyzing } = useVXContext();
   const [input, setInput] = useState("");
@@ -218,10 +230,15 @@ const AnalyzePage = () => {
 
             {/* PRESETS */}
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-700">Presets:</span>
+              <span className="text-slate-700">
+                Presets
+                <Help text="Quick = low stakes, permissive; Careful = balanced defaults; Audit = strict, high-stakes guardrails." />
+                :
+              </span>
               <button
                 onClick={() => applyPreset("quick")}
                 className="px-2 py-1 rounded-md"
+                title="Low friction: --direct · low stakes · min_conf≈0.55 · citations off · omission scan off · lenient profile"
                 style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
               >
                 Quick
@@ -229,6 +246,7 @@ const AnalyzePage = () => {
               <button
                 onClick={() => applyPreset("careful")}
                 className="px-2 py-1 rounded-md"
+                title="Balanced: --careful · medium stakes · min_conf≈0.60 · citations auto · omission scan auto · default profile"
                 style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
               >
                 Careful
@@ -236,6 +254,7 @@ const AnalyzePage = () => {
               <button
                 onClick={() => applyPreset("audit")}
                 className="px-2 py-1 rounded-md"
+                title="Strict: --careful · high stakes · min_conf≈0.75 · citations force · omission scan on · strict profile"
                 style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
               >
                 Audit
@@ -262,6 +281,7 @@ const AnalyzePage = () => {
                       disabled={!hasAgent || isAnalyzing}
                     />
                     Use AWS Agent
+                    <Help text="Checked = call your Lambda (/agent/analyze). Unchecked = run local VX engine only. Useful offline or when testing CORS." />
                     {!hasAgent && (
                       <span className="ml-1 text-xs text-slate-500">
                         (no VITE_AGENT_API_BASE — using local engine)
@@ -270,7 +290,9 @@ const AnalyzePage = () => {
                   </label>
 
                   <label className="text-sm text-slate-600">
-                    Mode{" "}
+                    Mode
+                    <Help text="--direct = concise answers; --careful = hedged + safer defaults; --recap = restate instructions before answering." />
+                    {" "}
                     <select
                       value={mode}
                       onChange={(e) => setMode(e.target.value as Mode)}
@@ -284,7 +306,9 @@ const AnalyzePage = () => {
                   </label>
 
                   <label className="text-sm text-slate-600">
-                    Stakes{" "}
+                    Stakes
+                    <Help text="low/medium/high raise the floor for min confidence & policy strictness. High stakes prompts more citations/omission scans." />
+                    {" "}
                     <select
                       value={stakes}
                       onChange={(e) => setStakes(e.target.value as Stakes)}
@@ -301,6 +325,7 @@ const AnalyzePage = () => {
                 <div className="mt-3">
                   <label className="block text-sm text-slate-600">
                     Min confidence: <strong>{minConfidence.toFixed(2)}</strong>
+                    <Help text="Minimum model confidence to surface a detection. Floors from mode/stakes may clamp this upward." />
                   </label>
                   <input
                     type="range"
@@ -324,10 +349,12 @@ const AnalyzePage = () => {
                       disabled={isAnalyzing}
                     />
                     Long-Doc Mode
+                    <Help text="Splits long text by headings (##) or fixed windows (~1800 chars, 200 overlap). Aggregates frames + shows a per-section scoreboard." />
                   </label>
                   {longDoc && (
                     <label>
                       Strategy{" "}
+                      <Help text="Headings = semantic sections (##). Window = fixed-size chunks when no headings exist." />
                       <select
                         value={chunkStrategy}
                         onChange={(e) => setChunkStrategy(e.target.value as any)}
@@ -353,7 +380,9 @@ const AnalyzePage = () => {
               >
                 <div className="flex items-center gap-3 flex-wrap">
                   <label className="text-sm text-slate-600">
-                    Cite policy{" "}
+                    Cite policy
+                    <Help text='auto = cite when stakes/uncertainty demand; force = always cite; off = no citations (use only for low-stakes quick looks).' />
+                    {" "}
                     <select
                       value={citePolicy}
                       onChange={(e) => setCitePolicy(e.target.value as CitePolicy)}
@@ -367,7 +396,9 @@ const AnalyzePage = () => {
                   </label>
 
                   <label className="text-sm text-slate-600">
-                    Omission scan{" "}
+                    Omission scan
+                    <Help text='auto = run at medium/high stakes; true = always run; false = skip unless critical. Flags missing context/alternatives.' />
+                    {" "}
                     <select
                       value={omissionUI}
                       onChange={(e) => setOmissionUI(e.target.value as "auto" | "true" | "false")}
@@ -381,7 +412,9 @@ const AnalyzePage = () => {
                   </label>
 
                   <label className="text-sm text-slate-600">
-                    Reflex profile{" "}
+                    Reflex profile
+                    <Help text="default = balanced ordering/thresholds; strict = tighter thresholds (blockier); lenient = permissive, highlights softer signals." />
+                    {" "}
                     <select
                       value={reflexProfile}
                       onChange={(e) =>
@@ -400,6 +433,7 @@ const AnalyzePage = () => {
                     onClick={handleAnalyze}
                     disabled={!input.trim() || isAnalyzing}
                     className="ml-auto px-6 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
+                    title="Run the selected source (Agent or Local) using the current handshake settings."
                   >
                     {isAnalyzing ? "Analyzing…" : "Run Analysis"}
                   </button>
@@ -409,8 +443,11 @@ const AnalyzePage = () => {
 
             {/* Handshake summary */}
             <div className="text-xs text-slate-700 mt-2">
-              <span className="font-medium">Handshake</span> · mode=
-              <code>{previewHandshake.mode}</code> · stakes=
+              <span className="font-medium">
+                Handshake
+                <Help text="Your runtime guardrails: mode, stakes, min confidence, cite policy, omission scan, and reflex profile. These control safety and evidence." />
+              </span>{" "}
+              · mode=<code>{previewHandshake.mode}</code> · stakes=
               <code>{previewHandshake.stakes}</code> · min_confidence=
               <code>{previewHandshake.min_confidence}</code> · cite_policy=
               <code>{previewHandshake.cite_policy}</code> · omission_scan=
@@ -474,6 +511,7 @@ const AnalyzePage = () => {
                               boxShadow:
                                 "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
                             }}
+                            title={`Frames from ${source} engine`}
                           >
                             {source}
                           </span>
@@ -497,6 +535,7 @@ const AnalyzePage = () => {
                 <button
                   onClick={handleGenerateReport}
                   className="px-5 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition"
+                  title="Ask the agent to compose a narrative summary from detected frames + your handshake."
                 >
                   Generate Report
                 </button>
@@ -530,4 +569,5 @@ const AnalyzePage = () => {
 };
 
 export default AnalyzePage;
+
 
