@@ -1,48 +1,47 @@
-service: clarityarmor-agent
-
-frameworkVersion: '3'
+service: tsca-agent
+frameworkVersion: "3"
 
 provider:
   name: aws
   runtime: nodejs20.x
-  region: us-east-1
-  stage: dev
-  memorySize: 512
-  timeout: 10
+  region: ${env:AWS_REGION, 'us-east-1'}
+  memorySize: 256
+  timeout: 15
   httpApi:
-    cors:
-      allowedOrigins:
-        - https://clarityarmor.com
-        - http://localhost:5173
-      allowedHeaders:
-        - Content-Type
-      allowedMethods:
-        - OPTIONS
-        - POST
-      allowCredentials: false
-      maxAge: 86400
+    cors: true
   environment:
-    ALLOWED_ORIGINS: 'https://clarityarmor.com,http://localhost:5173'
+    NODE_OPTIONS: --enable-source-maps
+    BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, ''}
+    BEDROCK_REGION: ${env:BEDROCK_REGION, 'us-east-1'}
+
+iam:
+  role:
+    statements:
+      - Effect: Allow
+        Action:
+          - bedrock:InvokeModel
+        Resource: "*"
 
 functions:
-  analyze:
-    handler: handler.analyze
-    events:
-      - httpApi:
-          path: /agent/analyze
-          method: post
-
-  summarize:
-    handler: handler.summarize
-    events:
-      - httpApi:
-          path: /agent/summarize
-          method: post
-
   chat:
-    handler: handler.chat
+    handler: dist/handlers/chat.handler
     events:
       - httpApi:
+          method: POST
           path: /agent/chat
-          method: post
+  fetchUrl:
+    handler: dist/handlers/fetch_url.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /agent/fetch-url
 
+package:
+  patterns:
+    - '!**/*'
+    - 'dist/**'
+    - 'node_modules/**'
+    - 'package.json'
+
+plugins:
+  - serverless-offline
