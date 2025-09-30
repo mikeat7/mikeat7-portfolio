@@ -759,3 +759,7 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
 
 export default AnalyzePage;
 
+};
+
+export default AnalyzePage;
+
