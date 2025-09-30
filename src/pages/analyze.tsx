@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 import { useVXContext } from "@/context/VXProvider";
 import runReflexAnalysis from "@/lib/analysis/runReflexAnalysis";
 import { callAgentSummarize } from "@/lib/llmClient"; // keep summarize as-is (non-blocking)
-import { agentChat, agentFetchUrl } from "@/lib/agentClient"; // new: direct agent calls
+import { agentChatTurn, agentFetchUrl, type ChatMessage } from "@/lib/agentClient"; // history-aware chat + tool traces
 import { buildHandshake, type Mode, type Stakes, type CitePolicy } from "@/lib/codex-runtime";
 import codex from "@/data/front-end-codex.v0.9.json";
 import CoFirePanel from "@/components/CoFirePanel";
@@ -97,28 +97,10 @@ const AnalyzePage = () => {
     }
   };
 
-  // Analyze: we ALWAYS produce frames locally (deterministic),
-  // and optionally ping the Agent for telemetry (non-blocking).
+  // Analyze: we ALWAYS produce frames locally (deterministic).
+  // Optionally ping the Agent in parallel in the future (non-blocking).
   const analyzeChunk = async (text: string) => {
-    // Local frames are the source of truth for the UI
-    const localFrames = await runReflexAnalysis(text);
-
-    if (useAgent && hasAgent) {
-      // Fire-and-forget: consult agent so we can later show tool traces (ignored for now)
-      try {
-        await agentChat(text, {
-          mode,
-          stakes,
-          cite_policy: citePolicy,
-          omission_scan,
-          reflex_profile: reflexProfile,
-        });
-      } catch {
-        /* ignore agent errors in Analyze path */
-      }
-    }
-
-    return localFrames;
+    return await runReflexAnalysis(text);
   };
 
   const handleAnalyze = async () => {
@@ -145,7 +127,11 @@ const AnalyzePage = () => {
         for (const c of chunks) {
           const f = await analyzeChunk(c.text);
           const labeled = f.map((fr) => ({ ...fr, chunkId: c.id }));
-          perSection.push({ label: c.title ?? `Section ${perSection.length + 1}`, frames: labeled, chunkId: c.id });
+          perSection.push({
+            label: c.title ?? `Section ${perSection.length + 1}`,
+            frames: labeled,
+            chunkId: c.id,
+          });
         }
 
         // Aggregate & scoreboard
@@ -248,7 +234,11 @@ const AnalyzePage = () => {
                   className={`px-4 py-2 rounded-xl text-sm ${
                     activeTab === tab ? "bg-slate-900 text-white" : "text-slate-700"
                   }`}
-                  style={activeTab !== tab ? { boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" } : {}}
+                  style={
+                    activeTab !== tab
+                      ? { boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }
+                      : {}
+                  }
                 >
                   {tab === "analyze" ? "Analyze" : "Chat"}
                 </button>
@@ -281,7 +271,10 @@ const AnalyzePage = () => {
                     onClick={() => applyPreset("quick")}
                     className="px-2 py-1 rounded-md"
                     title="Low friction: --direct · low stakes · min_conf≈0.55 · citations off · omission scan off · lenient profile"
-                    style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
+                    style={{
+                      background: "#e9eef5",
+                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                    }}
                   >
                     Quick
                   </button>
@@ -289,7 +282,10 @@ const AnalyzePage = () => {
                     onClick={() => applyPreset("careful")}
                     className="px-2 py-1 rounded-md"
                     title="Balanced: --careful · medium stakes · min_conf≈0.60 · citations auto · omission scan auto · default profile"
-                    style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
+                    style={{
+                      background: "#e9eef5",
+                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                    }}
                   >
                     Careful
                   </button>
@@ -297,7 +293,10 @@ const AnalyzePage = () => {
                     onClick={() => applyPreset("audit")}
                     className="px-2 py-1 rounded-md"
                     title="Strict: --careful · high stakes · min_conf≈0.75 · citations force · omission scan on · strict profile"
-                    style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
+                    style={{
+                      background: "#e9eef5",
+                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                    }}
                   >
                     Audit
                   </button>
@@ -322,7 +321,7 @@ const AnalyzePage = () => {
                           disabled={!hasAgent || isAnalyzing}
                         />
                         Use AWS Agent
-                        <Help text="Checked = consult the Agent in parallel; frames remain deterministic from local VX. Unchecked = local VX only." />
+                        <Help text="Checked = consult the Agent in parallel later; frames remain deterministic from local VX. Unchecked = local VX only." />
                         {!hasAgent && (
                           <span className="ml-1 text-xs text-slate-500">
                             (no VITE_AGENT_API_BASE — using local engine)
@@ -466,7 +465,7 @@ const AnalyzePage = () => {
                         onClick={handleAnalyze}
                         disabled={!input.trim() || isAnalyzing}
                         className="ml-auto px-6 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
-                        title="Run the selected source (Agent consulted in parallel) using the current handshake settings."
+                        title="Run the selected source (Agent consulted in parallel later) using the current handshake settings."
                       >
                         {isAnalyzing ? "Analyzing…" : "Run Analysis"}
                       </button>
@@ -495,7 +494,10 @@ const AnalyzePage = () => {
                       Runs: {analysisCount} · Source:{" "}
                       <span
                         className="px-2 py-[2px] rounded-md"
-                        style={{ background: "#e9eef5", boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff" }}
+                        style={{
+                          background: "#e9eef5",
+                          boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
+                        }}
                       >
                         {source ?? "—"}
                       </span>
@@ -505,7 +507,10 @@ const AnalyzePage = () => {
                 {notice && (
                   <div
                     className="mt-2 text-xs text-slate-700 px-3 py-2 rounded-lg"
-                    style={{ background: "#e9eef5", boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff" }}
+                    style={{
+                      background: "#e9eef5",
+                      boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff",
+                    }}
                   >
                     {notice}
                   </div>
@@ -531,7 +536,11 @@ const AnalyzePage = () => {
                             {source && (
                               <span
                                 className="text-[10px] uppercase tracking-wide px-2 py-[2px] rounded-md"
-                                style={{ background: "#e9eef5", boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff" }}
+                                style={{
+                                  background: "#e9eef5",
+                                  boxShadow:
+                                    "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
+                                }}
                                 title={`Frames from ${source} engine`}
                               >
                                 {source}
@@ -565,7 +574,9 @@ const AnalyzePage = () => {
                     inputSample={input}
                     sectionScores={sectionScores}
                     reportText={reportText}
-                    handshakeLine={`Handshake · mode=${previewHandshake.mode} · stakes=${previewHandshake.stakes} · min_conf=${previewHandshake.min_confidence} · cite_policy=${previewHandshake.cite_policy} · omission_scan=${String(previewHandshake.omission_scan)} · profile=${previewHandshake.reflex_profile}`}
+                    handshakeLine={`Handshake · mode=${previewHandshake.mode} · stakes=${previewHandshake.stakes} · min_conf=${previewHandshake.min_confidence} · cite_policy=${previewHandshake.cite_policy} · omission_scan=${String(
+                      previewHandshake.omission_scan
+                    )} · profile=${previewHandshake.reflex_profile}`}
                   />
                 </>
               )}
@@ -584,7 +595,7 @@ const AnalyzePage = () => {
             </>
           )}
 
-          {/* TAB: Chat (new) */}
+          {/* TAB: Chat */}
           {activeTab === "chat" && (
             <ChatPanel
               buildHandshake={() =>
@@ -607,9 +618,8 @@ const AnalyzePage = () => {
 
 // Inline Chat panel keeps file self-contained and styling consistent
 const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) => {
-  const [history, setHistory] = useState<Array<{ role: "user" | "assistant" | "tool"; text: string; frames?: any[] }>>(
-    []
-  );
+  type ChatMsg = ChatMessage & { frames?: any[]; tools?: any[] };
+  const [history, setHistory] = useState<ChatMsg[]>([]);
   const [text, setText] = useState("Paste a URL or ask a question. The agent may call fetch-url.");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -619,32 +629,40 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
     setBusy(true);
     setError(null);
 
-    const userMsg = { role: "user" as const, text };
-    const nextHist = [...history, userMsg];
+    // Prepare prior history (backend will append the *new* user turn from input.text)
+    const priorHistory = history.map(({ role, text }) => ({ role, text }));
+
+    // Add user turn locally for display + VX analysis
+    const userMsg: ChatMsg = { role: "user", text };
+    const nextHist: ChatMsg[] = [...history, userMsg];
     setHistory(nextHist);
 
     try {
-      // Optional: run VX on the user's message
+      // VX on user's message (transparency)
       const userFrames = await runReflexAnalysis(text);
       nextHist[nextHist.length - 1] = { ...userMsg, frames: userFrames };
       setHistory([...nextHist]);
 
-      // Call the Agent
+      // Call agent with *prior* turns + current text
       const hs = buildHandshake();
-      const resp = await agentChat(text, {
+      const resp = await agentChatTurn(priorHistory, text, {
         mode: hs.mode,
         stakes: hs.stakes,
+        min_confidence: hs.min_confidence,
         cite_policy: hs.cite_policy,
         omission_scan: hs.omission_scan,
         reflex_profile: hs.reflex_profile,
+        codex_version: hs.codex_version,
       });
 
       const assistantText = String(resp?.message ?? "").trim() || "(no reply)";
-      const assistantMsg = { role: "assistant" as const, text: assistantText };
+      const assistantMsg: ChatMsg = { role: "assistant", text: assistantText, tools: resp?.tools ?? [] };
 
-      // Optional: run VX on assistant reply for transparency
+      // VX on assistant reply
       const asFrames = await runReflexAnalysis(assistantText);
-      setHistory((h) => [...h, assistantMsg, { role: "tool", text: JSON.stringify(resp?.tools ?? [], null, 2) }, { role: "assistant", text: "(analysis of reply)", frames: asFrames }]);
+      assistantMsg.frames = asFrames;
+
+      setHistory((h) => [...h, assistantMsg]);
     } catch (e: any) {
       setError(e?.message || "Agent error");
     } finally {
@@ -660,7 +678,7 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
     try {
       const data = await agentFetchUrl(url);
       const plain = String(data?.text ?? "").slice(0, 4000);
-      setHistory((h) => [...h, { role: "tool", text: `Fetched ${url}\n\n${plain}` }]);
+      setHistory((h) => [...h, { role: "tool", text: `fetch_url(${url}) →\n\n${plain}` }]);
     } catch (e: any) {
       setError(e?.message || "fetch-url error");
     } finally {
@@ -680,21 +698,40 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
         </button>
       </div>
 
-      <div className="border rounded-2xl bg-[#e9eef5] p-3" style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}>
+      <div
+        className="border rounded-2xl bg-[#e9eef5] p-3"
+        style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
+      >
         <div className="max-h-[50vh] overflow-auto space-y-3">
           {history.map((m, i) => (
-            <div key={i} className="p-3 rounded-lg" style={{ background: m.role === "user" ? "#f4f6fb" : m.role === "assistant" ? "#eef2f8" : "#fff7ed" }}>
+            <div
+              key={i}
+              className="p-3 rounded-lg"
+              style={{ background: m.role === "user" ? "#f4f6fb" : m.role === "assistant" ? "#eef2f8" : "#fff7ed" }}
+            >
               <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">{m.role}</div>
               <pre className="whitespace-pre-wrap text-sm text-slate-800">{m.text}</pre>
-              {m.frames && m.frames.length > 0 && (
-                <div className="mt-2 text-xs text-slate-600">
-                  Frames: {m.frames.length} {/* compact preview */}
+
+              {/* Tool chips for assistant turns */}
+              {m.role === "assistant" && m.tools && m.tools.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {m.tools.map((t: any, idx: number) => (
+                    <span key={idx} className="text-[10px] px-2 py-1 rounded-md border bg-white/70">
+                      {t.name}
+                      {t.args?.url ? `: ${t.args.url}` : ""}
+                      {typeof t.duration_ms === "number" ? ` · ${t.duration_ms}ms` : ""}
+                    </span>
+                  ))}
                 </div>
+              )}
+
+              {/* Frames count preview */}
+              {m.frames && m.frames.length > 0 && (
+                <div className="mt-2 text-xs text-slate-600">Frames: {m.frames.length}</div>
               )}
             </div>
           ))}
         </div>
-
       </div>
 
       <div className="flex items-start gap-2">
@@ -702,7 +739,7 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
           value={text}
           onChange={(e) => setText(e.target.value)}
           className="flex-1 border rounded-xl p-3 text-sm"
-          placeholder="Say something…"
+          placeholder="Say something… (URLs will trigger fetch-url)"
           rows={3}
           disabled={busy}
         />
@@ -715,13 +752,10 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
         </button>
       </div>
 
-      {error && (
-        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">{error}</div>
-      )}
+      {error && <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">{error}</div>}
     </div>
   );
 };
 
 export default AnalyzePage;
-
 
