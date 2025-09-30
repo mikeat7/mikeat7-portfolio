@@ -1,3 +1,4 @@
+// backend/src/lib/types.ts
 export type Mode = "--direct" | "--careful" | "--recap";
 export type Stakes = "low" | "medium" | "high";
 export type CitePolicy = "auto" | "force" | "off";
@@ -12,9 +13,22 @@ export interface Handshake {
   codex_version: string;
 }
 
+export interface Message {
+  role: "user" | "assistant" | "tool";
+  text: string;
+}
+
 export interface ChatRequestBody {
   input: { text?: string; query?: string };
   handshake: Handshake;
+  history?: Message[]; // NEW: multi-turn history
+}
+
+export interface ToolTrace {
+  name: string;
+  args: unknown;
+  duration_ms?: number;
+  result_preview?: string;
 }
 
 export interface ChatResponse {
@@ -26,6 +40,7 @@ export interface ChatResponse {
     rationale: string;
     tags?: string[];
   }>;
-  tools?: Array<{ name: string; args: unknown; duration_ms?: number }>;
+  tools?: ToolTrace[];     // NEW
   handshake?: Handshake;
 }
+
