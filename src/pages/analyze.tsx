@@ -26,6 +26,84 @@ const Help = ({ text }: { text: string }) => (
 
 type SourceKind = "agent" | "local" | null;
 
+/** Category hub — sizing reflects importance.
+ * Analyze (largest), Education Hub (≈half of Analyze), Train AI (smaller than Education),
+ * Quotes of Wisdom (smallest, last).
+ * Routes are left as-is via hrefs; no route changes.
+ */
+const CategoryHub: React.FC = () => {
+  const box = "rounded-2xl p-4 text-left transition hover:opacity-95";
+  const neo = {
+    outer:
+      "bg-[#e9eef5] shadow-[9px_9px_18px_rgba(163,177,198,0.6),_-9px_-9px_18px_rgba(255,255,255,0.9)]",
+    inner:
+      "bg-[#e9eef5] shadow-[inset_6px_6px_12px_#cfd6e0,inset_-6px_-6px_12px_#ffffff]",
+  };
+  const title = "font-semibold text-slate-900";
+  const sub = "text-xs text-slate-600 mt-1";
+  const cta = "mt-2 inline-block text-xs underline text-slate-700";
+
+  return (
+    <div className="mt-4 grid grid-cols-12 gap-3">
+      {/* 1) Analyze Language — largest */}
+      <a
+        href="/analyze"
+        className={`col-span-12 md:col-span-8 ${box} ${neo.outer} h-40 flex items-start`}
+        aria-label="Analyze Language"
+      >
+        <div>
+          <div className={`${title} text-2xl`}>Analyze Language</div>
+          <div className={`${sub}`}>
+            The foundation: detect spin, omission, and manipulative patterns.
+          </div>
+          <span className={cta}>Open analyzer</span>
+        </div>
+      </a>
+
+      {/* 2) Education Hub — about half of Analyze */}
+      <a
+        href="/education"
+        className={`col-span-12 md:col-span-4 ${box} ${neo.outer} h-20 flex items-start`}
+        aria-label="Education Hub"
+      >
+        <div>
+          <div className={`${title} text-lg`}>Education Hub</div>
+          <div className={sub}>Lessons & walkthroughs on epistemic hygiene.</div>
+          <span className={cta}>Enter hub</span>
+        </div>
+      </a>
+
+      {/* 3) How to Train your AI to be Honest — smaller than Education, larger than Quotes */}
+      <a
+        href="/train"
+        className={`col-span-12 md:col-span-6 ${box} ${neo.outer} h-24 flex items-start`}
+        aria-label="How to Train your AI to be Honest"
+      >
+        <div>
+          <div className={`${title} text-base`}>How to Train your AI to be Honest</div>
+          <div className={sub}>
+            Copy the codex &amp; handshakes to teach AIs epistemic humility (v0.8 &amp; v0.9).
+          </div>
+          <span className={cta}>Open training tools</span>
+        </div>
+      </a>
+
+      {/* 4) Quotes of Wisdom — smallest, moved to last */}
+      <a
+        href="/quotes"
+        className={`col-span-12 md:col-span-6 ${box} ${neo.outer} h-16 flex items-start`}
+        aria-label="Quotes of Wisdom"
+      >
+        <div>
+          <div className={`${title} text-sm`}>Quotes of Wisdom</div>
+          <div className={sub}>Curated quotes from great thinkers</div>
+          <span className={cta}>Visit quotes and add your own</span>
+        </div>
+      </a>
+    </div>
+  );
+};
+
 const AnalyzePage = () => {
   const { reflexFrames, setReflexFrames, isAnalyzing, setIsAnalyzing } = useVXContext();
   const [input, setInput] = useState("");
@@ -48,7 +126,7 @@ const AnalyzePage = () => {
   const [useAgent, setUseAgent] = useState<boolean>(hasAgent);
 
   // Long-Doc Mode
-  const [longDoc, setLongDoc] = useState(false);
+  ￼const [longDoc, setLongDoc] = useState(false);
   const [chunkStrategy, setChunkStrategy] = useState<"headings" | "window">("headings");
   const [sectionScores, setSectionScores] = useState<Array<{ label: string; count: number }>>([]);
 
@@ -97,8 +175,7 @@ const AnalyzePage = () => {
     }
   };
 
-  // Analyze: we ALWAYS produce frames locally (deterministic).
-  // Optionally ping the Agent in parallel in the future (non-blocking).
+  // Analyze: frames produced locally (deterministic)
   const analyzeChunk = async (text: string) => {
     return await runReflexAnalysis(text);
   };
@@ -136,7 +213,6 @@ const AnalyzePage = () => {
 
         // Aggregate & scoreboard
         const allFrames = perSection.flatMap((s) => s.frames);
-        const agg = aggregateFrames(allFrames);
         const scoreboard = perSection.map((s) => ({ label: s.label, count: s.frames.length }));
 
         frames = allFrames;
@@ -205,14 +281,16 @@ const AnalyzePage = () => {
       <div className="relative max-w-6xl mx-auto px-4">
         <BackButton />
 
-        {/* Top header + tabs */}
+        {/* Card shell */}
         <div
           className="rounded-3xl p-8 md:p-10"
           style={{
             background: "#e9eef5",
-            boxShadow: "9px 9px 18px rgba(163,177,198,0.6), -9px -9px 18px rgba(255,255,255,0.9)",
+            boxShadow:
+              "9px 9px 18px rgba(163,177,198,0.6), -9px -9px 18px rgba(255,255,255,0.9)",
           }}
         >
+          {/* Header */}
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
               <h1 className="text-3xl font-bold text-slate-900">Analyze a Statement</h1>
@@ -225,7 +303,11 @@ const AnalyzePage = () => {
             {/* Tabs */}
             <div
               className="flex items-center gap-1 p-1 rounded-2xl"
-              style={{ background: "#e9eef5", boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff" }}
+              style={{
+                background: "#e9eef5",
+                boxShadow:
+                  "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff",
+              }}
             >
               {(["analyze", "chat"] as const).map((tab) => (
                 <button
@@ -236,7 +318,10 @@ const AnalyzePage = () => {
                   }`}
                   style={
                     activeTab !== tab
-                      ? { boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }
+                      ? {
+                          boxShadow:
+                            "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                        }
                       : {}
                   }
                 >
@@ -246,7 +331,10 @@ const AnalyzePage = () => {
             </div>
           </div>
 
-          {/* TAB: Analyze (existing UI) */}
+          {/* Category hub (design fix) */}
+          <CategoryHub />
+
+          {/* TAB: Analyze */}
           {activeTab === "analyze" && (
             <>
               {/* INPUT */}
@@ -273,7 +361,8 @@ const AnalyzePage = () => {
                     title="Low friction: --direct · low stakes · min_conf≈0.55 · citations off · omission scan off · lenient profile"
                     style={{
                       background: "#e9eef5",
-                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                      boxShadow:
+                        "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
                     }}
                   >
                     Quick
@@ -284,7 +373,8 @@ const AnalyzePage = () => {
                     title="Balanced: --careful · medium stakes · min_conf≈0.60 · citations auto · omission scan auto · default profile"
                     style={{
                       background: "#e9eef5",
-                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                      boxShadow:
+                        "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
                     }}
                   >
                     Careful
@@ -295,7 +385,8 @@ const AnalyzePage = () => {
                     title="Strict: --careful · high stakes · min_conf≈0.75 · citations force · omission scan on · strict profile"
                     style={{
                       background: "#e9eef5",
-                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                      boxShadow:
+                        "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
                     }}
                   >
                     Audit
@@ -309,7 +400,8 @@ const AnalyzePage = () => {
                     className="rounded-2xl p-4"
                     style={{
                       background: "#e9eef5",
-                      boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
+                      boxShadow:
+                        "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
                     }}
                   >
                     <div className="flex items-center gap-3 flex-wrap">
@@ -412,7 +504,8 @@ const AnalyzePage = () => {
                     className="rounded-2xl p-4"
                     style={{
                       background: "#e9eef5",
-                      boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
+                      boxShadow:
+                        "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
                     }}
                   >
                     <div className="flex items-center gap-3 flex-wrap">
@@ -496,7 +589,8 @@ const AnalyzePage = () => {
                         className="px-2 py-[2px] rounded-md"
                         style={{
                           background: "#e9eef5",
-                          boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
+                          boxShadow:
+                            "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
                         }}
                       >
                         {source ?? "—"}
@@ -509,7 +603,8 @@ const AnalyzePage = () => {
                     className="mt-2 text-xs text-slate-700 px-3 py-2 rounded-lg"
                     style={{
                       background: "#e9eef5",
-                      boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff",
+                      boxShadow:
+                        "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff",
                     }}
                   >
                     {notice}
@@ -529,10 +624,15 @@ const AnalyzePage = () => {
                         <div
                           key={`${frame.reflexId}-${index}`}
                           className="p-4 rounded-2xl bg-[#e9eef5]"
-                          style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
+                          style={{
+                            boxShadow:
+                              "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
+                          }}
                         >
                           <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-lg">{frame.reflexLabel ?? frame.reflexId}</h3>
+                            <h3 className="font-semibold text-lg">
+                              {frame.reflexLabel ?? frame.reflexId}
+                            </h3>
                             {source && (
                               <span
                                 className="text-[10px] uppercase tracking-wide px-2 py-[2px] rounded-md"
@@ -547,9 +647,13 @@ const AnalyzePage = () => {
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-slate-700 mt-1">{frame.rationale ?? (frame as any).reason}</p>
+                          <p className="text-sm text-slate-700 mt-1">
+                            {frame.rationale ?? (frame as any).reason}
+                          </p>
                           <p className="text-xs text-slate-500 mt-2">
-                            Confidence: {Math.round(((frame.confidence ?? 0) as number) * 100)}% • Reflex ID: {frame.reflexId}
+                            Confidence:{" "}
+                            {Math.round(((frame.confidence ?? 0) as number) * 100)}% •
+                            Reflex ID: {frame.reflexId}
                           </p>
                         </div>
                       ))}
@@ -584,7 +688,10 @@ const AnalyzePage = () => {
               {analysisCount > 0 && reflexFrames.length === 0 && !isAnalyzing && (
                 <div
                   className="mt-8 p-4 rounded-2xl bg-[#e9eef5]"
-                  style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
+                  style={{
+                    boxShadow:
+                      "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
+                  }}
                 >
                   <p className="text-slate-700 text-center">
                     No reflexes detected. Try text with strong certainty, unnamed authorities,
@@ -620,7 +727,9 @@ const AnalyzePage = () => {
 const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) => {
   type ChatMsg = ChatMessage & { frames?: any[]; tools?: any[] };
   const [history, setHistory] = useState<ChatMsg[]>([]);
-  const [text, setText] = useState("Paste a URL or ask a question. The agent may call fetch-url.");
+  const [text, setText] = useState(
+    "Paste a URL or ask a question. The agent may call fetch-url."
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -656,7 +765,11 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
       });
 
       const assistantText = String(resp?.message ?? "").trim() || "(no reply)";
-      const assistantMsg: ChatMsg = { role: "assistant", text: assistantText, tools: resp?.tools ?? [] };
+      const assistantMsg: ChatMsg = {
+        role: "assistant",
+        text: assistantText,
+        tools: resp?.tools ?? [],
+      };
 
       // VX on assistant reply
       const asFrames = await runReflexAnalysis(assistantText);
@@ -678,7 +791,10 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
     try {
       const data = await agentFetchUrl(url);
       const plain = String(data?.text ?? "").slice(0, 4000);
-      setHistory((h) => [...h, { role: "tool", text: `fetch_url(${url}) →\n\n${plain}` }]);
+      setHistory((h) => [
+        ...h,
+        { role: "tool", text: `fetch_url(${url}) →\n\n${plain}` },
+      ]);
     } catch (e: any) {
       setError(e?.message || "fetch-url error");
     } finally {
@@ -700,26 +816,45 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
 
       <div
         className="border rounded-2xl bg-[#e9eef5] p-3"
-        style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
+        style={{
+          boxShadow:
+            "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
+        }}
       >
         <div className="max-h-[50vh] overflow-auto space-y-3">
           {history.map((m, i) => (
             <div
               key={i}
               className="p-3 rounded-lg"
-              style={{ background: m.role === "user" ? "#f4f6fb" : m.role === "assistant" ? "#eef2f8" : "#fff7ed" }}
+              style={{
+                background:
+                  m.role === "user"
+                    ? "#f4f6fb"
+                    : m.role === "assistant"
+                    ? "#eef2f8"
+                    : "#fff7ed",
+              }}
             >
-              <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">{m.role}</div>
-              <pre className="whitespace-pre-wrap text-sm text-slate-800">{m.text}</pre>
+              <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">
+                {m.role}
+              </div>
+              <pre className="whitespace-pre-wrap text-sm text-slate-800">
+                {m.text}
+              </pre>
 
               {/* Tool chips for assistant turns */}
               {m.role === "assistant" && m.tools && m.tools.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {m.tools.map((t: any, idx: number) => (
-                    <span key={idx} className="text-[10px] px-2 py-1 rounded-md border bg-white/70">
+                    <span
+                      key={idx}
+                      className="text-[10px] px-2 py-1 rounded-md border bg-white/70"
+                    >
                       {t.name}
                       {t.args?.url ? `: ${t.args.url}` : ""}
-                      {typeof t.duration_ms === "number" ? ` · ${t.duration_ms}ms` : ""}
+                      {typeof t.duration_ms === "number"
+                        ? ` · ${t.duration_ms}ms`
+                        : ""}
                     </span>
                   ))}
                 </div>
@@ -727,7 +862,9 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
 
               {/* Frames count preview */}
               {m.frames && m.frames.length > 0 && (
-                <div className="mt-2 text-xs text-slate-600">Frames: {m.frames.length}</div>
+                <div className="mt-2 text-xs text-slate-600">
+                  Frames: {m.frames.length}
+                </div>
               )}
             </div>
           ))}
@@ -752,12 +889,17 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
         </button>
       </div>
 
-      {error && <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">{error}</div>}
+      {error && (
+        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">
+          {error}
+        </div>
+      )}
     </div>
   );
 };
 
 export default AnalyzePage;
+
 
 };
 
