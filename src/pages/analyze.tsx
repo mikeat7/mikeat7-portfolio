@@ -1,8 +1,8 @@
-﻿// src/pages/analyze.tsx
+// src/pages/analyze.tsx
 import React, { useMemo, useState } from "react";
 import { useVXContext } from "@/context/VXProvider";
 import runReflexAnalysis from "@/lib/analysis/runReflexAnalysis";
-import { callAgentSummarize } from "@/lib/llmClient"; // keep summarize as-is (non-blocking)
+import { callAgentSummarize, callAgentAnalyze } from "@/lib/llmClient"; // agent analyze + summarize
 import { agentChatTurn, agentFetchUrl, type ChatMessage } from "@/lib/agentClient"; // history-aware chat + tool traces
 import { buildHandshake, type Mode, type Stakes, type CitePolicy } from "@/lib/codex-runtime";
 import codex from "@/data/front-end-codex.v0.9.json";
@@ -26,84 +26,6 @@ const Help = ({ text }: { text: string }) => (
 
 type SourceKind = "agent" | "local" | null;
 
-/** Category hub â€” sizing reflects importance.
- * Analyze (largest), Education Hub (â‰ˆhalf of Analyze), Train AI (smaller than Education),
- * Quotes of Wisdom (smallest, last).
- * Routes are left as-is via hrefs; no route changes.
- */
-const CategoryHub: React.FC = () => {
-  const box = "rounded-2xl p-4 text-left transition hover:opacity-95";
-  const neo = {
-    outer:
-      "bg-[#e9eef5] shadow-[9px_9px_18px_rgba(163,177,198,0.6),_-9px_-9px_18px_rgba(255,255,255,0.9)]",
-    inner:
-      "bg-[#e9eef5] shadow-[inset_6px_6px_12px_#cfd6e0,inset_-6px_-6px_12px_#ffffff]",
-  };
-  const title = "font-semibold text-slate-900";
-  const sub = "text-xs text-slate-600 mt-1";
-  const cta = "mt-2 inline-block text-xs underline text-slate-700";
-
-  return (
-    <div className="mt-4 grid grid-cols-12 gap-3">
-      {/* 1) Analyze Language â€” largest */}
-      <a
-        href="/analyze"
-        className={`col-span-12 md:col-span-8 ${box} ${neo.outer} h-40 flex items-start`}
-        aria-label="Analyze Language"
-      >
-        <div>
-          <div className={`${title} text-2xl`}>Analyze Language</div>
-          <div className={`${sub}`}>
-            The foundation: detect spin, omission, and manipulative patterns.
-          </div>
-          <span className={cta}>Open analyzer</span>
-        </div>
-      </a>
-
-      {/* 2) Education Hub â€” about half of Analyze */}
-      <a
-        href="/education"
-        className={`col-span-12 md:col-span-4 ${box} ${neo.outer} h-20 flex items-start`}
-        aria-label="Education Hub"
-      >
-        <div>
-          <div className={`${title} text-lg`}>Education Hub</div>
-          <div className={sub}>Lessons & walkthroughs on epistemic hygiene.</div>
-          <span className={cta}>Enter hub</span>
-        </div>
-      </a>
-
-      {/* 3) How to Train your AI to be Honest â€” smaller than Education, larger than Quotes */}
-      <a
-        href="/train"
-        className={`col-span-12 md:col-span-6 ${box} ${neo.outer} h-24 flex items-start`}
-        aria-label="How to Train your AI to be Honest"
-      >
-        <div>
-          <div className={`${title} text-base`}>How to Train your AI to be Honest</div>
-          <div className={sub}>
-            Copy the codex &amp; handshakes to teach AIs epistemic humility (v0.8 &amp; v0.9).
-          </div>
-          <span className={cta}>Open training tools</span>
-        </div>
-      </a>
-
-      {/* 4) Quotes of Wisdom â€” smallest, moved to last */}
-      <a
-        href="/quotes"
-        className={`col-span-12 md:col-span-6 ${box} ${neo.outer} h-16 flex items-start`}
-        aria-label="Quotes of Wisdom"
-      >
-        <div>
-          <div className={`${title} text-sm`}>Quotes of Wisdom</div>
-          <div className={sub}>Curated quotes from great thinkers</div>
-          <span className={cta}>Visit quotes and add your own</span>
-        </div>
-      </a>
-    </div>
-  );
-};
-
 const AnalyzePage = () => {
   const { reflexFrames, setReflexFrames, isAnalyzing, setIsAnalyzing } = useVXContext();
   const [input, setInput] = useState("");
@@ -119,14 +41,14 @@ const AnalyzePage = () => {
   const omission_scan: "auto" | boolean = omissionUI === "auto" ? "auto" : omissionUI === "true";
   const [reflexProfile, setReflexProfile] = useState<"default" | "strict" | "lenient">("default");
 
-  // Source toggle (for Analyze only; Chat always talks to Agent endpoint)
+  // Source toggle (Analyze can use Agent or Local)
   const hasAgent =
     !!(import.meta as any).env?.VITE_AGENT_API_BASE &&
     String((import.meta as any).env.VITE_AGENT_API_BASE).trim().length > 0;
   const [useAgent, setUseAgent] = useState<boolean>(hasAgent);
 
   // Long-Doc Mode
-  ï¿¼const [longDoc, setLongDoc] = useState(false);
+  const [longDoc, setLongDoc] = useState(false);
   const [chunkStrategy, setChunkStrategy] = useState<"headings" | "window">("headings");
   const [sectionScores, setSectionScores] = useState<Array<{ label: string; count: number }>>([]);
 
@@ -175,8 +97,25 @@ const AnalyzePage = () => {
     }
   };
 
-  // Analyze: frames produced locally (deterministic)
+  // Analyze: Agent when toggled, else Local deterministic frames
   const analyzeChunk = async (text: string) => {
+    if (useAgent && hasAgent) {
+      try {
+        const agentFrames = await callAgentAnalyze({
+          text,
+          mode,
+          stakes,
+          min_confidence: minConfidence,
+          cite_policy: citePolicy,
+          omission_scan,
+          reflex_profile: reflexProfile,
+        });
+        return agentFrames;
+      } catch {
+        // Fallback to local if agent errors
+        return await runReflexAnalysis(text);
+      }
+    }
     return await runReflexAnalysis(text);
   };
 
@@ -213,6 +152,7 @@ const AnalyzePage = () => {
 
         // Aggregate & scoreboard
         const allFrames = perSection.flatMap((s) => s.frames);
+        const _agg = aggregateFrames(allFrames);
         const scoreboard = perSection.map((s) => ({ label: s.label, count: s.frames.length }));
 
         frames = allFrames;
@@ -224,10 +164,18 @@ const AnalyzePage = () => {
         setSource(useAgent && hasAgent ? "agent" : "local");
       }
 
+      // If agent returned empty, try local as a graceful fallback
+      if ((!frames || frames.length === 0) && useAgent) {
+        const local = await runReflexAnalysis(input);
+        frames = local;
+        setSource("local");
+        setNotice("Agent returned no detections—showing local analysis instead.");
+      }
+
       setReflexFrames(frames);
       setAnalysisCount((n) => n + 1);
     } catch (err) {
-      console.error("ðŸš¨ Analysis failed:", err);
+      console.error("🚨 Analysis failed:", err);
       setReflexFrames([]);
       setSource(null);
       setNotice("Analysis failed. Please try again or switch source.");
@@ -281,21 +229,19 @@ const AnalyzePage = () => {
       <div className="relative max-w-6xl mx-auto px-4">
         <BackButton />
 
-        {/* Card shell */}
+        {/* Top header + tabs */}
         <div
           className="rounded-3xl p-8 md:p-10"
           style={{
             background: "#e9eef5",
-            boxShadow:
-              "9px 9px 18px rgba(163,177,198,0.6), -9px -9px 18px rgba(255,255,255,0.9)",
+            boxShadow: "9px 9px 18px rgba(163,177,198,0.6), -9px -9px 18px rgba(255,255,255,0.9)",
           }}
         >
-          {/* Header */}
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
               <h1 className="text-3xl font-bold text-slate-900">Analyze a Statement</h1>
               <p className="mt-2 text-slate-700">
-                Paste textâ€”or a URLâ€”to reveal assumptions, emotional manipulation, semantic patterns, and missing context.
+                Paste text—or a URL—to reveal assumptions, emotional manipulation, semantic patterns, and missing context.
                 This also handles <strong>Scientific Paper Checks</strong> and <strong>Link &amp; Article Audits</strong>.
               </p>
             </div>
@@ -303,11 +249,7 @@ const AnalyzePage = () => {
             {/* Tabs */}
             <div
               className="flex items-center gap-1 p-1 rounded-2xl"
-              style={{
-                background: "#e9eef5",
-                boxShadow:
-                  "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff",
-              }}
+              style={{ background: "#e9eef5", boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff" }}
             >
               {(["analyze", "chat"] as const).map((tab) => (
                 <button
@@ -318,10 +260,7 @@ const AnalyzePage = () => {
                   }`}
                   style={
                     activeTab !== tab
-                      ? {
-                          boxShadow:
-                            "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
-                        }
+                      ? { boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }
                       : {}
                   }
                 >
@@ -330,9 +269,6 @@ const AnalyzePage = () => {
               ))}
             </div>
           </div>
-
-          {/* Category hub (design fix) */}
-          <CategoryHub />
 
           {/* TAB: Analyze */}
           {activeTab === "analyze" && (
@@ -345,7 +281,7 @@ const AnalyzePage = () => {
                   disabled={isAnalyzing}
                   className="w-full border border-slate-300 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                   rows={6}
-                  placeholder="Paste a paragraph, a link to an article, or a snippet from a methods sectionâ€¦"
+                  placeholder="Paste a paragraph, a link to an article, or a snippet from a methods section…"
                 />
 
                 {/* PRESETS */}
@@ -358,11 +294,10 @@ const AnalyzePage = () => {
                   <button
                     onClick={() => applyPreset("quick")}
                     className="px-2 py-1 rounded-md"
-                    title="Low friction: --direct Â· low stakes Â· min_confâ‰ˆ0.55 Â· citations off Â· omission scan off Â· lenient profile"
+                    title="Low friction: --direct · low stakes · min_conf≈0.55 · citations off · omission scan off · lenient profile"
                     style={{
                       background: "#e9eef5",
-                      boxShadow:
-                        "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
                     }}
                   >
                     Quick
@@ -370,11 +305,10 @@ const AnalyzePage = () => {
                   <button
                     onClick={() => applyPreset("careful")}
                     className="px-2 py-1 rounded-md"
-                    title="Balanced: --careful Â· medium stakes Â· min_confâ‰ˆ0.60 Â· citations auto Â· omission scan auto Â· default profile"
+                    title="Balanced: --careful · medium stakes · min_conf≈0.60 · citations auto · omission scan auto · default profile"
                     style={{
                       background: "#e9eef5",
-                      boxShadow:
-                        "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
                     }}
                   >
                     Careful
@@ -382,11 +316,10 @@ const AnalyzePage = () => {
                   <button
                     onClick={() => applyPreset("audit")}
                     className="px-2 py-1 rounded-md"
-                    title="Strict: --careful Â· high stakes Â· min_confâ‰ˆ0.75 Â· citations force Â· omission scan on Â· strict profile"
+                    title="Strict: --careful · high stakes · min_conf≈0.75 · citations force · omission scan on · strict profile"
                     style={{
                       background: "#e9eef5",
-                      boxShadow:
-                        "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
                     }}
                   >
                     Audit
@@ -400,8 +333,7 @@ const AnalyzePage = () => {
                     className="rounded-2xl p-4"
                     style={{
                       background: "#e9eef5",
-                      boxShadow:
-                        "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
+                      boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
                     }}
                   >
                     <div className="flex items-center gap-3 flex-wrap">
@@ -413,10 +345,10 @@ const AnalyzePage = () => {
                           disabled={!hasAgent || isAnalyzing}
                         />
                         Use AWS Agent
-                        <Help text="Checked = consult the Agent in parallel later; frames remain deterministic from local VX. Unchecked = local VX only." />
+                        <Help text="Checked = call your Lambda for analysis; Unchecked = run local VX engine only." />
                         {!hasAgent && (
                           <span className="ml-1 text-xs text-slate-500">
-                            (no VITE_AGENT_API_BASE â€” using local engine)
+                            (no VITE_AGENT_API_BASE — using local engine)
                           </span>
                         )}
                       </label>
@@ -492,7 +424,7 @@ const AnalyzePage = () => {
                             disabled={isAnalyzing}
                           >
                             <option value="headings">by headings (##)</option>
-                            <option value="window">by window (â‰ˆ1800/200)</option>
+                            <option value="window">by window (≈1800/200)</option>
                           </select>
                         </label>
                       )}
@@ -504,8 +436,7 @@ const AnalyzePage = () => {
                     className="rounded-2xl p-4"
                     style={{
                       background: "#e9eef5",
-                      boxShadow:
-                        "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
+                      boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
                     }}
                   >
                     <div className="flex items-center gap-3 flex-wrap">
@@ -558,9 +489,9 @@ const AnalyzePage = () => {
                         onClick={handleAnalyze}
                         disabled={!input.trim() || isAnalyzing}
                         className="ml-auto px-6 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
-                        title="Run the selected source (Agent consulted in parallel later) using the current handshake settings."
+                        title="Run the selected source (Agent or Local) using the current handshake settings."
                       >
-                        {isAnalyzing ? "Analyzingâ€¦" : "Run Analysis"}
+                        {isAnalyzing ? "Analyzing…" : "Run Analysis"}
                       </button>
                     </div>
                   </div>
@@ -572,11 +503,11 @@ const AnalyzePage = () => {
                     Handshake
                     <Help text="Your runtime guardrails: mode, stakes, min confidence, cite policy, omission scan, and reflex profile. These control safety and evidence." />
                   </span>{" "}
-                  Â· mode=<code>{previewHandshake.mode}</code> Â· stakes=
-                  <code>{previewHandshake.stakes}</code> Â· min_confidence=
-                  <code>{previewHandshake.min_confidence}</code> Â· cite_policy=
-                  <code>{previewHandshake.cite_policy}</code> Â· omission_scan=
-                  <code>{String(previewHandshake.omission_scan)}</code> Â· reflex_profile=
+                  · mode=<code>{previewHandshake.mode}</code> · stakes=
+                  <code>{previewHandshake.stakes}</code> · min_confidence=
+                  <code>{previewHandshake.min_confidence}</code> · cite_policy=
+                  <code>{previewHandshake.cite_policy}</code> · omission_scan=
+                  <code>{String(previewHandshake.omission_scan)}</code> · reflex_profile=
                   <code>{previewHandshake.reflex_profile}</code>
                 </div>
 
@@ -584,16 +515,15 @@ const AnalyzePage = () => {
                 <div className="text-xs text-slate-600">
                   {analysisCount > 0 && (
                     <>
-                      Runs: {analysisCount} Â· Source:{" "}
+                      Runs: {analysisCount} · Source:{" "}
                       <span
                         className="px-2 py-[2px] rounded-md"
                         style={{
                           background: "#e9eef5",
-                          boxShadow:
-                            "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
+                          boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
                         }}
                       >
-                        {source ?? "â€”"}
+                        {source ?? "—"}
                       </span>
                     </>
                   )}
@@ -603,8 +533,7 @@ const AnalyzePage = () => {
                     className="mt-2 text-xs text-slate-700 px-3 py-2 rounded-lg"
                     style={{
                       background: "#e9eef5",
-                      boxShadow:
-                        "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff",
+                      boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff",
                     }}
                   >
                     {notice}
@@ -624,15 +553,10 @@ const AnalyzePage = () => {
                         <div
                           key={`${frame.reflexId}-${index}`}
                           className="p-4 rounded-2xl bg-[#e9eef5]"
-                          style={{
-                            boxShadow:
-                              "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
-                          }}
+                          style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
                         >
                           <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-lg">
-                              {frame.reflexLabel ?? frame.reflexId}
-                            </h3>
+                            <h3 className="font-semibold text-lg">{frame.reflexLabel ?? frame.reflexId}</h3>
                             {source && (
                               <span
                                 className="text-[10px] uppercase tracking-wide px-2 py-[2px] rounded-md"
@@ -647,13 +571,9 @@ const AnalyzePage = () => {
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-slate-700 mt-1">
-                            {frame.rationale ?? (frame as any).reason}
-                          </p>
+                          <p className="text-sm text-slate-700 mt-1">{frame.rationale ?? (frame as any).reason}</p>
                           <p className="text-xs text-slate-500 mt-2">
-                            Confidence:{" "}
-                            {Math.round(((frame.confidence ?? 0) as number) * 100)}% â€¢
-                            Reflex ID: {frame.reflexId}
+                            Confidence: {Math.round(((frame.confidence ?? 0) as number) * 100)}% • Reflex ID: {frame.reflexId}
                           </p>
                         </div>
                       ))}
@@ -678,9 +598,9 @@ const AnalyzePage = () => {
                     inputSample={input}
                     sectionScores={sectionScores}
                     reportText={reportText}
-                    handshakeLine={`Handshake Â· mode=${previewHandshake.mode} Â· stakes=${previewHandshake.stakes} Â· min_conf=${previewHandshake.min_confidence} Â· cite_policy=${previewHandshake.cite_policy} Â· omission_scan=${String(
+                    handshakeLine={`Handshake · mode=${previewHandshake.mode} · stakes=${previewHandshake.stakes} · min_conf=${previewHandshake.min_confidence} · cite_policy=${previewHandshake.cite_policy} · omission_scan=${String(
                       previewHandshake.omission_scan
-                    )} Â· profile=${previewHandshake.reflex_profile}`}
+                    )} · profile=${previewHandshake.reflex_profile}`}
                   />
                 </>
               )}
@@ -688,14 +608,11 @@ const AnalyzePage = () => {
               {analysisCount > 0 && reflexFrames.length === 0 && !isAnalyzing && (
                 <div
                   className="mt-8 p-4 rounded-2xl bg-[#e9eef5]"
-                  style={{
-                    boxShadow:
-                      "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
-                  }}
+                  style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
                 >
                   <p className="text-slate-700 text-center">
                     No reflexes detected. Try text with strong certainty, unnamed authorities,
-                    or sweeping claimsâ€”then see how the engine responds.
+                    or sweeping claims—then see how the engine responds.
                   </p>
                 </div>
               )}
@@ -727,9 +644,7 @@ const AnalyzePage = () => {
 const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) => {
   type ChatMsg = ChatMessage & { frames?: any[]; tools?: any[] };
   const [history, setHistory] = useState<ChatMsg[]>([]);
-  const [text, setText] = useState(
-    "Paste a URL or ask a question. The agent may call fetch-url."
-  );
+  const [text, setText] = useState("Paste a URL or ask a question. The agent may call fetch-url.");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -765,11 +680,7 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
       });
 
       const assistantText = String(resp?.message ?? "").trim() || "(no reply)";
-      const assistantMsg: ChatMsg = {
-        role: "assistant",
-        text: assistantText,
-        tools: resp?.tools ?? [],
-      };
+      const assistantMsg: ChatMsg = { role: "assistant", text: assistantText, tools: resp?.tools ?? [] };
 
       // VX on assistant reply
       const asFrames = await runReflexAnalysis(assistantText);
@@ -791,10 +702,7 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
     try {
       const data = await agentFetchUrl(url);
       const plain = String(data?.text ?? "").slice(0, 4000);
-      setHistory((h) => [
-        ...h,
-        { role: "tool", text: `fetch_url(${url}) â†’\n\n${plain}` },
-      ]);
+      setHistory((h) => [...h, { role: "tool", text: `fetch_url(${url}) →\n\n${plain}` }]);
     } catch (e: any) {
       setError(e?.message || "fetch-url error");
     } finally {
@@ -816,45 +724,26 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
 
       <div
         className="border rounded-2xl bg-[#e9eef5] p-3"
-        style={{
-          boxShadow:
-            "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
-        }}
+        style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
       >
         <div className="max-h-[50vh] overflow-auto space-y-3">
           {history.map((m, i) => (
             <div
               key={i}
               className="p-3 rounded-lg"
-              style={{
-                background:
-                  m.role === "user"
-                    ? "#f4f6fb"
-                    : m.role === "assistant"
-                    ? "#eef2f8"
-                    : "#fff7ed",
-              }}
+              style={{ background: m.role === "user" ? "#f4f6fb" : m.role === "assistant" ? "#eef2f8" : "#fff7ed" }}
             >
-              <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">
-                {m.role}
-              </div>
-              <pre className="whitespace-pre-wrap text-sm text-slate-800">
-                {m.text}
-              </pre>
+              <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">{m.role}</div>
+              <pre className="whitespace-pre-wrap text-sm text-slate-800">{m.text}</pre>
 
               {/* Tool chips for assistant turns */}
               {m.role === "assistant" && m.tools && m.tools.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {m.tools.map((t: any, idx: number) => (
-                    <span
-                      key={idx}
-                      className="text-[10px] px-2 py-1 rounded-md border bg-white/70"
-                    >
+                    <span key={idx} className="text-[10px] px-2 py-1 rounded-md border bg-white/70">
                       {t.name}
                       {t.args?.url ? `: ${t.args.url}` : ""}
-                      {typeof t.duration_ms === "number"
-                        ? ` Â· ${t.duration_ms}ms`
-                        : ""}
+                      {typeof t.duration_ms === "number" ? ` · ${t.duration_ms}ms` : ""}
                     </span>
                   ))}
                 </div>
@@ -862,9 +751,7 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
 
               {/* Frames count preview */}
               {m.frames && m.frames.length > 0 && (
-                <div className="mt-2 text-xs text-slate-600">
-                  Frames: {m.frames.length}
-                </div>
+                <div className="mt-2 text-xs text-slate-600">Frames: {m.frames.length}</div>
               )}
             </div>
           ))}
@@ -876,7 +763,7 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
           value={text}
           onChange={(e) => setText(e.target.value)}
           className="flex-1 border rounded-xl p-3 text-sm"
-          placeholder="Say somethingâ€¦ (URLs will trigger fetch-url)"
+          placeholder="Say something… (URLs will trigger fetch-url)"
           rows={3}
           disabled={busy}
         />
@@ -885,22 +772,13 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
           disabled={busy || !text.trim()}
           className="px-4 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
         >
-          {busy ? "Sendingâ€¦" : "Send"}
+          {busy ? "Sending…" : "Send"}
         </button>
       </div>
 
-      {error && (
-        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">
-          {error}
-        </div>
-      )}
+      {error && <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">{error}</div>}
     </div>
   );
-};
-
-export default AnalyzePage;
-
-
 };
 
 export default AnalyzePage;
