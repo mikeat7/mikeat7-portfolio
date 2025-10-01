@@ -1,9 +1,12 @@
 // src/pages/agent-demo.tsx
 import React, { useMemo, useState } from "react";
 import { agentChat, agentFetchUrl } from "@/lib/agentClient";
-import { buildHandshake, type Mode, type Stakes, type CitePolicy } from "@/lib/codex-runtime";
-import codex from "@/data/front-end-codex.v0.9.json";
+import { buildHandshake, type Mode, type Stakes, type CitePolicy, type Codex } from "@/lib/codex-runtime";
+import codexJson from "@/data/front-end-codex.v0.9.json";
 import "@/styles.css";
+
+// Narrow JSON to the Codex interface (compile-time only)
+const codex: Codex = codexJson as unknown as Codex;
 
 const AgentDemo: React.FC = () => {
   const [text, setText] = useState("Experts say we must act now or never.");
@@ -31,9 +34,17 @@ const AgentDemo: React.FC = () => {
   );
 
   async function onChat() {
-    setErr(null); setBusy(true); setResp(null);
+    setErr(null);
+    setBusy(true);
+    setResp(null);
     try {
-      const out = await agentChat(text, { mode, stakes, cite_policy: cite, omission_scan: omit, reflex_profile: profile });
+      const out = await agentChat(text, {
+        mode,
+        stakes,
+        cite_policy: cite,
+        omission_scan: omit,
+        reflex_profile: profile,
+      });
       setResp(out);
     } catch (e: any) {
       setErr(e.message || "Agent error");
@@ -43,7 +54,9 @@ const AgentDemo: React.FC = () => {
   }
 
   async function onFetch() {
-    setErr(null); setBusy(true); setFetchResp(null);
+    setErr(null);
+    setBusy(true);
+    setFetchResp(null);
     try {
       const out = await agentFetchUrl(url);
       setFetchResp(out);
@@ -64,7 +77,11 @@ const AgentDemo: React.FC = () => {
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="border rounded-lg p-3 space-y-2">
           <label className="text-sm font-medium">Text</label>
-          <textarea className="w-full min-h-32 border rounded p-2" value={text} onChange={(e) => setText(e.target.value)} />
+          <textarea
+            className="w-full min-h-32 border rounded p-2"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
           <button onClick={onChat} disabled={busy} className="px-3 py-2 border rounded hover:bg-gray-50">
             {busy ? "Running…" : "Agent Chat"}
           </button>
@@ -72,7 +89,11 @@ const AgentDemo: React.FC = () => {
 
         <div className="border rounded-lg p-3 space-y-2">
           <label className="text-sm font-medium">URL</label>
-          <input className="w-full border rounded p-2" value={url} onChange={(e) => setUrl(e.target.value)} />
+          <input
+            className="w-full border rounded p-2"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
           <button onClick={onFetch} disabled={busy} className="px-3 py-2 border rounded hover:bg-gray-50">
             {busy ? "Fetching…" : "fetch-url"}
           </button>
@@ -97,7 +118,11 @@ const AgentDemo: React.FC = () => {
             <option value="force">cite:force</option>
             <option value="off">cite:off</option>
           </select>
-          <select value={String(omit)} onChange={(e) => setOmit((e.target.value === "auto" ? "auto" : e.target.value === "true"))} className="border rounded px-2 py-1">
+          <select
+            value={String(omit)}
+            onChange={(e) => setOmit(e.target.value === "auto" ? "auto" : e.target.value === "true")}
+            className="border rounded px-2 py-1"
+          >
             <option value="auto">omission:auto</option>
             <option value="true">omission:true</option>
             <option value="false">omission:false</option>
