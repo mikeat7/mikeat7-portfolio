@@ -1,7 +1,7 @@
 // src/pages/index.tsx
 import React from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Beaker, Link2, Cpu, ArrowRight, Bot, GraduationCap } from "lucide-react";
+import { ShieldCheck, Beaker, Cpu, ArrowRight, Bot, GraduationCap, Quote } from "lucide-react";
 import { buildHandshake } from "@/lib/codex-runtime";
 import codex from "@/data/front-end-codex.v0.9.json";
 
@@ -42,7 +42,6 @@ const IndexPage: React.FC = () => {
               Truth Serum + Clarity Armor
             </h1>
 
-            {/* ⬇️ Removed "Voice-" per request */}
             <p className="text-base md:text-lg text-slate-700">
               AI-powered epistemic truth detection. Analyze language, detect manipulation,
               and build clarity—with agent-grade handshakes, context decay, and failure semantics.
@@ -54,7 +53,7 @@ const IndexPage: React.FC = () => {
           {/* CTA GRID */}
           {/* Row 1: Analyze (largest, spans 2 cols) + Education (medium) */}
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* ANALYZE */}
+            {/* ANALYZE — largest */}
             <Link
               to="/analyze"
               className="group md:col-span-2 block rounded-2xl p-8 md:p-10 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
@@ -79,7 +78,7 @@ const IndexPage: React.FC = () => {
               </div>
             </Link>
 
-            {/* EDUCATION */}
+            {/* EDUCATION — medium (half of Analyze) */}
             <Link
               to="/educate"
               className="group block rounded-2xl p-6 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
@@ -105,52 +104,50 @@ const IndexPage: React.FC = () => {
             </Link>
           </div>
 
-          {/* Row 2: Wisdom (small) + Train (small) */}
+          {/* Row 2 (reordered & resized by importance): Train (bigger) → Quotes (smallest) */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* WISDOM */}
+            {/* TRAIN — second from last; larger than Quotes, smaller than Education */}
             <Link
-              to="/wisdom"
-              className="group block rounded-2xl p-5 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
+              to="/train"
+              className="group block rounded-2xl p-6 md:p-7 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
               style={{
                 background: "#e9eef5",
                 boxShadow:
-                  "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
+                  "inset 7px 7px 14px #cfd6e0, inset -7px -7px 14px #ffffff",
               }}
-              aria-label="Visit Wisdom & Training"
+              aria-label="Open training tools"
             >
               <div className="flex items-center gap-3">
-                <Link2 className="w-5 h-5" />
-                <h3 className="text-lg font-semibold">Wisdom &amp; Training</h3>
+                <GraduationCap className="w-5 h-5" />
+                <h3 className="text-xl font-semibold">How to Train your AI to be Honest</h3>
               </div>
               <p className="mt-2 text-sm text-slate-700">
-                Curated quotes and drills for epistemic humility. Practice better questions and answers.
+                Copy the codex &amp; handshakes to teach AIs epistemic humility (v0.8 &amp; v0.9).
               </p>
               <div className="mt-3 inline-flex items-center text-sm font-medium text-slate-900">
-                Visit quotes
+                Open training tools
                 <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
               </div>
             </Link>
 
-            {/* TRAIN (separate small card) */}
+            {/* QUOTES — least important; last & smallest */}
             <Link
-              to="/train"
-              className="group block rounded-2xl p-5 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
+              to="/wisdom"
+              className="group block rounded-2xl p-4 md:p-5 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
               style={{
                 background: "#e9eef5",
                 boxShadow:
-                  "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
+                  "inset 5px 5px 10px #cfd6e0, inset -5px -5px 10px #ffffff",
               }}
-              aria-label="Open Train an AI page"
+              aria-label="Visit quotes of wisdom"
             >
               <div className="flex items-center gap-3">
-                <GraduationCap className="w-5 h-5" />
-                <h3 className="text-lg font-semibold">Train an AI</h3>
+                <Quote className="w-5 h-5" />
+                <h3 className="text-lg font-semibold">Quotes of Wisdom</h3>
               </div>
-              <p className="mt-2 text-sm text-slate-700">
-                Copy the codex & handshakes to teach AIs epistemic humility (v0.8 & v0.9).
-              </p>
+              <p className="mt-2 text-sm text-slate-700">Curated quotes from great thinkers</p>
               <div className="mt-3 inline-flex items-center text-sm font-medium text-slate-900">
-                Open training tools
+                Visit quotes and add your own
                 <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
               </div>
             </Link>
@@ -162,8 +159,7 @@ const IndexPage: React.FC = () => {
           </p>
         </div>
 
-        {/* (Optional) Core Analysis summary stays as static text below the hero
-            If you later want them to look less button-like, remove their boxes entirely. */}
+        {/* Static feature blurbs */}
         <div className="mt-12 max-w-6xl mx-auto px-2 md:px-0">
           <div className="grid md:grid-cols-3 gap-6 text-slate-700">
             <div>
