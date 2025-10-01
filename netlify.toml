@@ -5,3 +5,23 @@
 
 [build.environment]
   NODE_VERSION = "20.19.0"
+  [functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@aws-sdk/client-bedrock-runtime"]
+
+# Same-origin endpoints for your UI
+[[redirects]]
+  from = "/agent/chat"
+  to = "/.netlify/functions/agent-chat"
+  status = 200
+
+[[redirects]]
+  from = "/agent/fetch-url"
+  to = "/.netlify/functions/agent-fetch-url"
+  status = 200
+
+[[redirects]]
+  from = "/agent/summarize"
+  to = "/.netlify/functions/agent-summarize"
+  status = 200
+
