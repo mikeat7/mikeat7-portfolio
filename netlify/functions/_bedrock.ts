@@ -1,33 +1,52 @@
-import { BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime";
+import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 
-export const modelId =
-  process.env.BEDROCK_MODEL_ID || "anthropic.claude-3-5-sonnet-20240620-v1:0";
+export function makeBedrock() {
+  const region =
+    process.env.BEDROCK_REGION ||
+    process.env.AWS_REGION ||
+    "us-east-1";
 
-const region =
-  process.env.BEDROCK_REGION ||
-  process.env.AWS_REGION ||
-  "us-east-1";
+  const modelId = process.env.BEDROCK_MODEL_ID!;
+  if (!modelId) throw new Error("BEDROCK_MODEL_ID not set");
 
-// Use custom env var names because Netlify reserves AWS_* creds in UI
-const accessKeyId = process.env.CLARITY_AWS_ACCESS_KEY_ID;
-const secretAccessKey = process.env.CLARITY_AWS_SECRET_ACCESS_KEY;
-const sessionToken = process.env.CLARITY_AWS_SESSION_TOKEN; // optional
+  const ak = process.env.CLARITY_AWS_ACCESS_KEY_ID;
+  const sk = process.env.CLARITY_AWS_SECRET_ACCESS_KEY;
 
-export const bedrock = new BedrockRuntimeClient({
-  region,
-  ...(accessKeyId && secretAccessKey
-    ? {
-        credentials: {
-          accessKeyId,
-          secretAccessKey,
-          sessionToken,
-        },
-      }
-    : {}),
-});
+  const usingClarity = Boolean(ak && sk);
 
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+  const client = new BedrockRuntimeClient(
+    usingClarity
+      ? { region, credentials: { accessKeyId: ak!, secretAccessKey: sk! } }
+      : { region } // falls back to Netlify’s IAM role
+  );
+
+  return { client, modelId, region, usingClarity };
+}
+
+export async function bedrockChat(opts: {
+  client: BedrockRuntimeClient;
+  modelId: string;
+  messages: Array<{ role: "user" | "assistant"; content: { type: "text"; text: string }[] }>;
+  maxTokens?: number;
+  temperature?: number;
+}) {
+  const { client, modelId, messages, maxTokens = 1400, temperature = 0.2 } = opts;
+
+  const res = await client.send(
+    new InvokeModelCommand({
+      modelId,
+      contentType: "application/json",
+      accept: "application/json",
+      body: JSON.stringify({
+        anthropic_version: "bedrock-2023-05-31",
+        messages,
+        max_tokens: maxTokens,
+        temperature
+      }),
+    })
+  );
+
+  const out = JSON.parse(new TextDecoder().decode(res.body));
+  const text = out?.content?.[0]?.text ?? "";
+  return text;
+}
