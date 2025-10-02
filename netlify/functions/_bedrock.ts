@@ -1,52 +1,48 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 
-export function makeBedrock() {
-  const region =
-    process.env.BEDROCK_REGION ||
-    process.env.AWS_REGION ||
-    "us-east-1";
+// ---- config
+export const region =
+  process.env.BEDROCK_REGION ||
+  process.env.AWS_REGION ||
+  "us-east-1";
 
-  const modelId = process.env.BEDROCK_MODEL_ID!;
-  if (!modelId) throw new Error("BEDROCK_MODEL_ID not set");
+export const modelId =
+  process.env.BEDROCK_MODEL_ID ||
+  "anthropic.claude-3-5-sonnet-20240620-v1:0";
 
-  const ak = process.env.CLARITY_AWS_ACCESS_KEY_ID;
-  const sk = process.env.CLARITY_AWS_SECRET_ACCESS_KEY;
+export const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
 
-  const usingClarity = Boolean(ak && sk);
+// Prefer your custom creds. Fall back to BEDROCK_* or AWS_* if present.
+function resolveCreds() {
+  const accessKeyId =
+    process.env.CLARITY_AWS_ACCESS_KEY_ID ||
+    process.env.BEDROCK_ACCESS_KEY_ID ||
+    process.env.AWS_ACCESS_KEY_ID;
 
-  const client = new BedrockRuntimeClient(
-    usingClarity
-      ? { region, credentials: { accessKeyId: ak!, secretAccessKey: sk! } }
-      : { region } // falls back to Netlify’s IAM role
-  );
+  const secretAccessKey =
+    process.env.CLARITY_AWS_SECRET_ACCESS_KEY ||
+    process.env.BEDROCK_SECRET_ACCESS_KEY ||
+    process.env.AWS_SECRET_ACCESS_KEY;
 
-  return { client, modelId, region, usingClarity };
+  const sessionToken =
+    process.env.CLARITY_AWS_SESSION_TOKEN ||
+    process.env.AWS_SESSION_TOKEN;
+
+  if (accessKeyId && secretAccessKey) {
+    return { accessKeyId, secretAccessKey, sessionToken };
+  }
+  return undefined; // allow default provider chain if it exists
 }
 
-export async function bedrockChat(opts: {
-  client: BedrockRuntimeClient;
-  modelId: string;
-  messages: Array<{ role: "user" | "assistant"; content: { type: "text"; text: string }[] }>;
-  maxTokens?: number;
-  temperature?: number;
-}) {
-  const { client, modelId, messages, maxTokens = 1400, temperature = 0.2 } = opts;
+// ---- singleton client
+export const bedrock = new BedrockRuntimeClient({
+  region,
+  credentials: resolveCreds(),
+});
 
-  const res = await client.send(
-    new InvokeModelCommand({
-      modelId,
-      contentType: "application/json",
-      accept: "application/json",
-      body: JSON.stringify({
-        anthropic_version: "bedrock-2023-05-31",
-        messages,
-        max_tokens: maxTokens,
-        temperature
-      }),
-    })
-  );
-
-  const out = JSON.parse(new TextDecoder().decode(res.body));
-  const text = out?.content?.[0]?.text ?? "";
-  return text;
-}
+// Re-export command for callers
+export { InvokeModelCommand };
