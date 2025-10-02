@@ -1,29 +1,33 @@
-// netlify/functions/_bedrock.ts
 import { BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime";
 
-export function createBedrockClient() {
-  const region =
-    process.env.BEDROCK_REGION ||
-    process.env.AWS_REGION ||
-    "us-east-1";
+export const modelId =
+  process.env.BEDROCK_MODEL_ID || "anthropic.claude-3-5-sonnet-20240620-v1:0";
 
-  const accessKeyId =
-    process.env.AWS_ACCESS_KEY_ID ||
-    process.env.BEDROCK_ACCESS_KEY_ID; // optional aliases
+const region =
+  process.env.BEDROCK_REGION ||
+  process.env.AWS_REGION ||
+  "us-east-1";
 
-  const secretAccessKey =
-    process.env.AWS_SECRET_ACCESS_KEY ||
-    process.env.BEDROCK_SECRET_ACCESS_KEY;
+// Use custom env var names because Netlify reserves AWS_* creds in UI
+const accessKeyId = process.env.CLARITY_AWS_ACCESS_KEY_ID;
+const secretAccessKey = process.env.CLARITY_AWS_SECRET_ACCESS_KEY;
+const sessionToken = process.env.CLARITY_AWS_SESSION_TOKEN; // optional
 
-  if (!accessKeyId || !secretAccessKey) {
-    // Make the failure obvious instead of silently using Netlify's Lambda role
-    throw new Error(
-      "Missing AWS creds for Bedrock. Set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY in Netlify env."
-    );
-  }
+export const bedrock = new BedrockRuntimeClient({
+  region,
+  ...(accessKeyId && secretAccessKey
+    ? {
+        credentials: {
+          accessKeyId,
+          secretAccessKey,
+          sessionToken,
+        },
+      }
+    : {}),
+});
 
-  return new BedrockRuntimeClient({
-    region,
-    credentials: { accessKeyId, secretAccessKey },
-  });
-}
+export const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
