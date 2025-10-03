@@ -1,5 +1,6 @@
 import type { Handler } from "@netlify/functions";
-import { bedrock, modelId, corsHeaders, InvokeModelCommand } from "./_bedrock";
+import { InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+import { bedrock, modelId, corsHeaders } from "./_bedrock";
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers: corsHeaders, body: "" };
@@ -9,9 +10,9 @@ export const handler: Handler = async (event) => {
     const { inputText, frames, handshakeOverrides } = JSON.parse(event.body || "{}");
 
     const prompt = [
-      "You are Clarity Armor, an epistemic analysis agent.",
       "Write a concise analysis report based on FRAMES.",
       "Principles: epistemic humility; qualify uncertainty; avoid false precision; highlight omissions if present.",
+      "Bullet points are fine. If citations are required by policy, say which claims would need them.",
       "",
       "INPUT:",
       String(inputText || ""),
@@ -23,26 +24,30 @@ export const handler: Handler = async (event) => {
       JSON.stringify(handshakeOverrides || {}, null, 2),
     ].join("\n");
 
+    const payload = {
+      anthropic_version: "bedrock-2023-05-31",
+      messages: [{ role: "user", content: [{ type: "text", text: prompt }]}],
+      max_tokens: 1200,
+      temperature: 0.2,
+    };
+
     const res = await bedrock.send(new InvokeModelCommand({
       modelId,
       contentType: "application/json",
       accept: "application/json",
-      body: JSON.stringify({
-        anthropic_version: "bedrock-2023-05-31",
-        messages: [{ role: "user", content: [{ type: "text", text: prompt }]}],
-        max_tokens: 1600,
-        temperature: 0.2,
-      }),
+      body: JSON.stringify(payload),
     }));
 
-    const out = JSON.parse(new TextDecoder().decode(res.body));
+    const out = JSON.parse(new TextDecoder().decode(res.body as Uint8Array));
     const reportText = out?.content?.[0]?.text ?? "(no report)";
+
     return {
       statusCode: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      body: JSON.stringify({ reportText }),
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+      body: JSON.stringify({ reportText })
     };
   } catch (e: any) {
+    console.error("agent-summarize error:", e);
     return { statusCode: 500, headers: corsHeaders, body: e?.message || "agent-summarize error" };
   }
 };
