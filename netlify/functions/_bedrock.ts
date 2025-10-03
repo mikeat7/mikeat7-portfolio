@@ -1,10 +1,58 @@
-import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+import { BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime";
 
-// ---- config
-export const region =
+const region =
   process.env.BEDROCK_REGION ||
   process.env.AWS_REGION ||
   "us-east-1";
+
+type CredsChoice = {
+  accessKeyId?: string;
+  secretAccessKey?: string;
+  sessionToken?: string;
+  source: string;
+};
+
+function chooseCreds(): CredsChoice {
+  const candidates = [
+    {
+      ak: process.env.CLARITY_AWS_ACCESS_KEY_ID,
+      sk: process.env.CLARITY_AWS_SECRET_ACCESS_KEY,
+      st: process.env.CLARITY_AWS_SESSION_TOKEN,
+      src: "CLARITY_*",
+    },
+    {
+      ak: process.env.BEDROCK_ACCESS_KEY_ID,
+      sk: process.env.BEDROCK_SECRET_ACCESS_KEY,
+      st: process.env.BEDROCK_SESSION_TOKEN,
+      src: "BEDROCK_*",
+    },
+    {
+      ak: process.env.AWS_ACCESS_KEY_ID,
+      sk: process.env.AWS_SECRET_ACCESS_KEY,
+      st: process.env.AWS_SESSION_TOKEN,
+      src: "AWS_*",
+    },
+  ];
+  for (const c of candidates) {
+    if (c.ak && c.sk) {
+      return {
+        accessKeyId: c.ak,
+        secretAccessKey: c.sk,
+        sessionToken: c.st,
+        source: c.src,
+      };
+    }
+  }
+  return { source: "default-provider-chain" };
+}
+
+const creds = chooseCreds();
+
+export const bedrock = new BedrockRuntimeClient(
+  creds.accessKeyId && creds.secretAccessKey
+    ? { region, credentials: creds }
+    : { region } // falls back to Netlify's role (not preferred)
+);
 
 export const modelId =
   process.env.BEDROCK_MODEL_ID ||
@@ -12,37 +60,19 @@ export const modelId =
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
 };
 
-// Prefer your custom creds. Fall back to BEDROCK_* or AWS_* if present.
-function resolveCreds() {
-  const accessKeyId =
-    process.env.CLARITY_AWS_ACCESS_KEY_ID ||
-    process.env.BEDROCK_ACCESS_KEY_ID ||
-    process.env.AWS_ACCESS_KEY_ID;
-
-  const secretAccessKey =
-    process.env.CLARITY_AWS_SECRET_ACCESS_KEY ||
-    process.env.BEDROCK_SECRET_ACCESS_KEY ||
-    process.env.AWS_SECRET_ACCESS_KEY;
-
-  const sessionToken =
-    process.env.CLARITY_AWS_SESSION_TOKEN ||
-    process.env.AWS_SESSION_TOKEN;
-
-  if (accessKeyId && secretAccessKey) {
-    return { accessKeyId, secretAccessKey, sessionToken };
-  }
-  return undefined; // allow default provider chain if it exists
+if (process.env.DEBUG_BEDROCK) {
+  const mask = (s?: string) => (s ? `${s.slice(0, 4)}…${s.slice(-4)}` : "(none)");
+  console.log("[bedrock:init]", {
+    region,
+    modelId,
+    credSource: creds.source,
+    hasAK: Boolean(creds.accessKeyId),
+    hasSK: Boolean(creds.secretAccessKey),
+    akPreview: mask(creds.accessKeyId),
+  });
 }
 
-// ---- singleton client
-export const bedrock = new BedrockRuntimeClient({
-  region,
-  credentials: resolveCreds(),
-});
-
-// Re-export command for callers
-export { InvokeModelCommand };
