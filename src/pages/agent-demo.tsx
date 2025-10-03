@@ -38,10 +38,7 @@ const AgentDemo: React.FC = () => {
     setBusy(true);
     setResp(null);
     try {
-<<<<<<< HEAD
-      // IMPORTANT: pass empty history [] as 2nd arg
-=======
->>>>>>> 53fbbfc (fix(agent-demo): pass history arg to agentChat)
+      // Pass empty history [] as 2nd arg
       const out = await agentChat(text, [], {
         mode,
         stakes,
@@ -87,7 +84,7 @@ const AgentDemo: React.FC = () => {
             onChange={(e) => setText(e.target.value)}
           />
           <button onClick={onChat} disabled={busy} className="px-3 py-2 border rounded hover:bg-gray-50">
-            {busy ? "Runningâ€¦" : "Agent Chat"}
+            {busy ? "Running..." : "Agent Chat"}
           </button>
         </div>
 
@@ -99,7 +96,7 @@ const AgentDemo: React.FC = () => {
             onChange={(e) => setUrl(e.target.value)}
           />
           <button onClick={onFetch} disabled={busy} className="px-3 py-2 border rounded hover:bg-gray-50">
-            {busy ? "Fetchingâ€¦" : "fetch-url"}
+            {busy ? "Fetching..." : "fetch-url"}
           </button>
         </div>
       </section>
@@ -156,5 +153,3 @@ const AgentDemo: React.FC = () => {
 };
 
 export default AgentDemo;
-
-
