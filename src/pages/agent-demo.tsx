@@ -34,27 +34,29 @@ const AgentDemo: React.FC = () => {
   );
 
   async function onChat() {
-    setErr(null);
-    setBusy(true);
-    setResp(null);
-    try {
-      const out = await agentChat(
-        text,
-        {
-          mode,
-          stakes,
-          cite_policy: cite,
-          omission_scan: omit,
-          reflex_profile: profile,
-        }
-      );
-      setResp(out);
-    } catch (e: any) {
-      setErr(e.message || "Agent error");
-    } finally {
-      setBusy(false);
-    }
+  setErr(null);
+  setBusy(true);
+  setResp(null);
+  try {
+    const out = await agentChat(
+      text,
+      [], // no prior history in this demo
+      {
+        mode,
+        stakes,
+        cite_policy: cite,
+        omission_scan: omit,
+        reflex_profile: profile,
+      }
+    );
+    setResp(out);
+  } catch (e: any) {
+    setErr(e.message || "Agent error");
+  } finally {
+    setBusy(false);
   }
+}
+
 
   async function onFetch() {
     setErr(null);
