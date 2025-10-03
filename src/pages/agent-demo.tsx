@@ -38,17 +38,13 @@ const AgentDemo: React.FC = () => {
   setBusy(true);
   setResp(null);
   try {
-    const out = await agentChat(
-      text,
-      [], // <-- empty history
-      {
-        mode,
-        stakes,
-        cite_policy: cite,
-        omission_scan: omit,
-        reflex_profile: profile,
-      }
-    );
+    const out = await agentChat(text, [], {
+  mode,
+  stakes,
+  cite_policy: cite,
+  omission_scan: omit,
+  reflex_profile: profile,
+});
     setResp(out);
   } catch (e: any) {
     setErr(e?.message || "Agent error");
