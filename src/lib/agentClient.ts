@@ -1,5 +1,14 @@
 // src/lib/agentClient.ts
-type Role = "user" | "assistant";
+
+/**
+ * Agent client for calling your Netlify functions under /agent/*
+ * - Supports both signatures:
+ *     agentChat("text", history?, opts?)
+ *     agentChat({ text, history?, ...opts })
+ * - Exports ChatMessage type with 'tool' role to support tool traces in UI
+ */
+
+export type Role = "user" | "assistant" | "tool";
 
 export type ChatMessage = {
   role: Role;
@@ -9,83 +18,112 @@ export type ChatMessage = {
 export type Mode = "--direct" | "--careful" | "--recap";
 export type Stakes = "low" | "medium" | "high";
 export type CitePolicy = "auto" | "force" | "off";
-export type OmissionScan = "auto" | boolean;
-export type ReflexProfile = "default" | "strict" | "lenient";
 
-export type ChatOptions = {
+type AgentChatOptions = {
   mode?: Mode;
   stakes?: Stakes;
+  min_confidence?: number;
   cite_policy?: CitePolicy;
-  omission_scan?: OmissionScan;
-  reflex_profile?: ReflexProfile;
-  history?: ChatMessage[];
+  omission_scan?: "auto" | boolean;
+  reflex_profile?: "default" | "strict" | "lenient";
+  codex_version?: string | number;
 };
 
-// Choose the API base: Netlify Functions path by default
-const RAW_BASE =
-  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_AGENT_API_BASE) ||
-  (typeof process !== "undefined" && (process as any).env?.VITE_AGENT_API_BASE) ||
-  "/.netlify/functions";
+type AgentChatArgs = {
+  text: string;
+  history?: ChatMessage[];
+} & AgentChatOptions;
 
-const API_BASE = String(RAW_BASE).replace(/\/+$/, "");
+export type ToolTrace = {
+  name: string;
+  args?: Record<string, unknown>;
+  duration_ms?: number;
+  [k: string]: unknown;
+};
 
-async function fetchJSON(input: RequestInfo | URL, init?: RequestInit) {
-  const res = await fetch(input, init);
-  const text = await res.text();
+export type AgentChatResponse = {
+  message: string;
+  tools?: ToolTrace[];
+  [k: string]: unknown;
+};
+
+// Resolve base once; default to "/agent"
+const AGENT_BASE: string = String(
+  (import.meta as any)?.env?.VITE_AGENT_API_BASE ?? "/agent"
+).replace(/\/$/, "");
+
+// Generic JSON POST with friendly errors
+async function jsonPost<T>(path: string, body: unknown): Promise<T> {
+  const url = `${AGENT_BASE}${path}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body ?? {}),
+  });
+
+  const txt = await res.text();
   if (!res.ok) {
-    // surface server error text to caller
-    throw new Error(text || `HTTP ${res.status}`);
+    // Surface server error bodies to help debugging
+    const msg = txt || `HTTP ${res.status} ${res.statusText}`;
+    throw new Error(msg);
   }
+
   try {
-    return JSON.parse(text);
+    return JSON.parse(txt) as T;
   } catch {
-    throw new Error("Non-JSON response from server");
+    // If function returns plain text, coerce to { message }
+    return { message: txt } as unknown as T;
   }
 }
 
-/** Chat with the Clarity Armor function */
+/**
+ * agentChat — OVERLOADED
+ * 1) agentChat("text", history?, opts?)
+ * 2) agentChat({ text, history?, ...opts })
+ */
 export async function agentChat(
   text: string,
-  opts: ChatOptions = {}
-): Promise<{ message: string; tools?: any[] }> {
-  const body = {
-    text,
-    // pass-through optional handshake + history
-    ...(opts.history ? { history: opts.history } : {}),
-    ...(opts.mode ? { mode: opts.mode } : {}),
-    ...(opts.stakes ? { stakes: opts.stakes } : {}),
-    ...(opts.cite_policy ? { cite_policy: opts.cite_policy } : {}),
-    ...(typeof opts.omission_scan !== "undefined" ? { omission_scan: opts.omission_scan } : {}),
-    ...(opts.reflex_profile ? { reflex_profile: opts.reflex_profile } : {}),
+  history?: ChatMessage[],
+  opts?: AgentChatOptions
+): Promise<AgentChatResponse>;
+export async function agentChat(args: AgentChatArgs): Promise<AgentChatResponse>;
+export async function agentChat(
+  a: string | AgentChatArgs,
+  b?: ChatMessage[],
+  c?: AgentChatOptions
+): Promise<AgentChatResponse> {
+  const args: AgentChatArgs =
+    typeof a === "string" ? { text: a, history: b ?? [], ...(c ?? {}) } : a;
+
+  // Shape expected by the Netlify function /agent/chat
+  const payload = {
+    text: args.text,
+    history: args.history ?? [],
+    mode: args.mode,
+    stakes: args.stakes,
+    min_confidence: args.min_confidence,
+    cite_policy: args.cite_policy,
+    omission_scan: args.omission_scan,
+    reflex_profile: args.reflex_profile,
+    codex_version: args.codex_version,
   };
 
-  return fetchJSON(`${API_BASE}/agent-chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  return jsonPost<AgentChatResponse>("/chat", payload);
 }
 
-/** Fetch a URL and return plain text (server strips HTML) */
+/**
+ * Back-compat alias: some older code imported agentChatTurn.
+ * Keep it pointing to agentChat so nothing breaks.
+ */
+export const agentChatTurn = agentChat;
+
+/**
+ * Fetch and clean text content from a URL via your function.
+ * Returns: { text: string }
+ */
 export async function agentFetchUrl(url: string): Promise<{ text: string }> {
-  return fetchJSON(`${API_BASE}/agent-fetch-url`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url }),
-  });
+  if (!url || !/^https?:\/\//i.test(url)) {
+    throw new Error("Please provide a valid http(s) URL.");
+  }
+  return jsonPost<{ text: string }>("/fetch-url", { url });
 }
-
-/** Summarize/assess frames + input text with the same model */
-export async function agentSummarize(
-  inputText: string,
-  frames: any[] = [],
-  handshakeOverrides: Partial<ChatOptions> = {}
-): Promise<{ reportText: string }> {
-  return fetchJSON(`${API_BASE}/agent-summarize`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ inputText, frames, handshakeOverrides }),
-  });
-}
-
-export default { agentChat, agentFetchUrl, agentSummarize };
