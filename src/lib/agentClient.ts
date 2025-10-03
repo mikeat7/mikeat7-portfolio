@@ -1,129 +1,56 @@
 // src/lib/agentClient.ts
+export type Role = "system" | "user" | "assistant" | "tool";
+export interface ChatMessage { role: Role; text: string }
 
-/**
- * Agent client for calling your Netlify functions under /agent/*
- * - Supports both signatures:
- *     agentChat("text", history?, opts?)
- *     agentChat({ text, history?, ...opts })
- * - Exports ChatMessage type with 'tool' role to support tool traces in UI
- */
-
-export type Role = "user" | "assistant" | "tool";
-
-export type ChatMessage = {
-  role: Role;
-  text: string;
+const PRETTY = {
+  chat: "/agent/chat",
+  fetch: "/agent/fetch-url",
+  summarize: "/agent/summarize",
 };
 
-export type Mode = "--direct" | "--careful" | "--recap";
-export type Stakes = "low" | "medium" | "high";
-export type CitePolicy = "auto" | "force" | "off";
-
-type AgentChatOptions = {
-  mode?: Mode;
-  stakes?: Stakes;
-  min_confidence?: number;
-  cite_policy?: CitePolicy;
-  omission_scan?: "auto" | boolean;
-  reflex_profile?: "default" | "strict" | "lenient";
-  codex_version?: string | number;
+const RAW = {
+  chat: "/.netlify/functions/agent-chat",
+  fetch: "/.netlify/functions/agent-fetch-url",
+  summarize: "/.netlify/functions/agent-summarize",
 };
 
-type AgentChatArgs = {
-  text: string;
-  history?: ChatMessage[];
-} & AgentChatOptions;
+async function postJsonWithFallback<T>(prettyUrl: string, rawUrl: string, body: any): Promise<T> {
+  const headers = { "Content-Type": "application/json" };
 
-export type ToolTrace = {
-  name: string;
-  args?: Record<string, unknown>;
-  duration_ms?: number;
-  [k: string]: unknown;
-};
-
-export type AgentChatResponse = {
-  message: string;
-  tools?: ToolTrace[];
-  [k: string]: unknown;
-};
-
-// Resolve base once; default to "/agent"
-const AGENT_BASE: string = String(
-  (import.meta as any)?.env?.VITE_AGENT_API_BASE ?? "/agent"
-).replace(/\/$/, "");
-
-// Generic JSON POST with friendly errors
-async function jsonPost<T>(path: string, body: unknown): Promise<T> {
-  const url = `${AGENT_BASE}${path}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body ?? {}),
-  });
-
-  const txt = await res.text();
+  // 1) Try pretty route
+  let res = await fetch(prettyUrl, { method: "POST", headers, body: JSON.stringify(body) });
+  // If Netlify didn’t rewrite it, you’ll get a 404 HTML page here
   if (!res.ok) {
-    // Surface server error bodies to help debugging
-    const msg = txt || `HTTP ${res.status} ${res.statusText}`;
-    throw new Error(msg);
+    // 2) Try raw function path
+    res = await fetch(rawUrl, { method: "POST", headers, body: JSON.stringify(body) });
   }
-
-  try {
-    return JSON.parse(txt) as T;
-  } catch {
-    // If function returns plain text, coerce to { message }
-    return { message: txt } as unknown as T;
+  // Throw if still bad
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Agent HTTP ${res.status}: ${text.slice(0, 300)}`);
   }
+  return res.json();
 }
 
-/**
- * agentChat — OVERLOADED
- * 1) agentChat("text", history?, opts?)
- * 2) agentChat({ text, history?, ...opts })
- */
 export async function agentChat(
   text: string,
-  history?: ChatMessage[],
-  opts?: AgentChatOptions
-): Promise<AgentChatResponse>;
-export async function agentChat(args: AgentChatArgs): Promise<AgentChatResponse>;
-export async function agentChat(
-  a: string | AgentChatArgs,
-  b?: ChatMessage[],
-  c?: AgentChatOptions
-): Promise<AgentChatResponse> {
-  const args: AgentChatArgs =
-    typeof a === "string" ? { text: a, history: b ?? [], ...(c ?? {}) } : a;
-
-  // Shape expected by the Netlify function /agent/chat
-  const payload = {
-    text: args.text,
-    history: args.history ?? [],
-    mode: args.mode,
-    stakes: args.stakes,
-    min_confidence: args.min_confidence,
-    cite_policy: args.cite_policy,
-    omission_scan: args.omission_scan,
-    reflex_profile: args.reflex_profile,
-    codex_version: args.codex_version,
-  };
-
-  return jsonPost<AgentChatResponse>("/chat", payload);
+  history: ChatMessage[] = [],
+  opts?: {
+    mode?: string; stakes?: "low" | "medium" | "high";
+    cite_policy?: "auto" | "force" | "off";
+    omission_scan?: "auto" | boolean;
+    reflex_profile?: "default" | "strict" | "lenient";
+    min_confidence?: number; codex_version?: string;
+  }
+) {
+  const body = { text, history, ...(opts ?? {}) };
+  return postJsonWithFallback(PRETTY.chat, RAW.chat, body);
 }
 
-/**
- * Back-compat alias: some older code imported agentChatTurn.
- * Keep it pointing to agentChat so nothing breaks.
- */
-export const agentChatTurn = agentChat;
+export async function agentFetchUrl(url: string) {
+  return postJsonWithFallback(PRETTY.fetch, RAW.fetch, { url });
+}
 
-/**
- * Fetch and clean text content from a URL via your function.
- * Returns: { text: string }
- */
-export async function agentFetchUrl(url: string): Promise<{ text: string }> {
-  if (!url || !/^https?:\/\//i.test(url)) {
-    throw new Error("Please provide a valid http(s) URL.");
-  }
-  return jsonPost<{ text: string }>("/fetch-url", { url });
+export async function callAgentSummarize(payload: any) {
+  return postJsonWithFallback(PRETTY.summarize, RAW.summarize, payload);
 }
