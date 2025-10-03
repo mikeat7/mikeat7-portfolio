@@ -83,7 +83,7 @@ const EducationHub: React.FC = () => {
     "Information overload ≠ understanding.",
     "It’s a feature, not a bug.",
     "Which claims demand citations?",
-    "What are the base rates?",
+    "How certain am I anyway?",
     "Is certainty doing work here?",
     "What’s the strongest counterexample?",
   ];
