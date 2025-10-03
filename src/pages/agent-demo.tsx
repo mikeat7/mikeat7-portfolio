@@ -34,29 +34,29 @@ const AgentDemo: React.FC = () => {
   );
 
   async function onChat() {
-  setErr(null);
-  setBusy(true);
-  setResp(null);
-  try {
-    const out = await agentChat(
-      text,
-      [], // no prior history in this demo
-      {
-        mode,
-        stakes,
-        cite_policy: cite,
-        omission_scan: omit,
-        reflex_profile: profile,
-      }
-    );
-    setResp(out);
-  } catch (e: any) {
-    setErr(e.message || "Agent error");
-  } finally {
-    setBusy(false);
+    setErr(null);
+    setBusy(true);
+    setResp(null);
+    try {
+      // IMPORTANT: 3-argument form => (text, history[], options)
+      const out = await agentChat(
+        text,
+        [], // no prior history in this demo
+        {
+          mode,
+          stakes,
+          cite_policy: cite,
+          omission_scan: omit,
+          reflex_profile: profile,
+        }
+      );
+      setResp(out);
+    } catch (e: any) {
+      setErr(e?.message || "Agent error");
+    } finally {
+      setBusy(false);
+    }
   }
-}
-
 
   async function onFetch() {
     setErr(null);
@@ -66,7 +66,7 @@ const AgentDemo: React.FC = () => {
       const out = await agentFetchUrl(url);
       setFetchResp(out);
     } catch (e: any) {
-      setErr(e.message || "fetch-url error");
+      setErr(e?.message || "fetch-url error");
     } finally {
       setBusy(false);
     }
@@ -76,7 +76,8 @@ const AgentDemo: React.FC = () => {
     <div className="max-w-4xl mx-auto p-4 space-y-4">
       <h1 className="text-2xl font-semibold">Agent Demo</h1>
       <p className="text-sm text-gray-600">
-        This page hits <code>/agent/chat</code> and <code>/agent/fetch-url</code> using your codex v0.9 handshake. Use it to confirm your AWS Agent Core.
+        This page hits <code>/agent/chat</code> and <code>/agent/fetch-url</code> using your codex v0.9 handshake.
+        Use it to confirm your AWS Agent Core.
       </p>
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -157,3 +158,4 @@ const AgentDemo: React.FC = () => {
 };
 
 export default AgentDemo;
+
