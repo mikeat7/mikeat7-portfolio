@@ -580,17 +580,20 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
       setHistory([...nextHist]);
 
       const hs = buildHandshake();
-      const resp = await agentChat({
-        text,
-        history: priorHistory,
-        mode: hs.mode,
-        stakes: hs.stakes,
-        min_confidence: hs.min_confidence,
-        cite_policy: hs.cite_policy,
-        omission_scan: hs.omission_scan,
-        reflex_profile: hs.reflex_profile,
-        codex_version: hs.codex_version,
-      });
+      const resp = await agentChat(
+  text,
+  priorHistory,
+  {
+    mode: hs.mode,
+    stakes: hs.stakes,
+    min_confidence: hs.min_confidence,
+    cite_policy: hs.cite_policy,
+    omission_scan: hs.omission_scan,
+    reflex_profile: hs.reflex_profile,
+    codex_version: hs.codex_version,
+  }
+);
+
 
       const assistantText = String(resp?.message ?? "").trim() || "(no reply)";
       const assistantMsg: ChatMsg = { role: "assistant", text: assistantText, tools: resp?.tools ?? [] };
