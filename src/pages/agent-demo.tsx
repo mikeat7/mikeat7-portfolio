@@ -1,4 +1,4 @@
-// src/pages/agent-demo.tsx
+﻿// src/pages/agent-demo.tsx
 import React, { useMemo, useState } from "react";
 import { agentChat, agentFetchUrl } from "@/lib/agentClient";
 import { buildHandshake, type Mode, type Stakes, type CitePolicy, type Codex } from "@/lib/codex-runtime";
@@ -38,7 +38,10 @@ const AgentDemo: React.FC = () => {
     setBusy(true);
     setResp(null);
     try {
+<<<<<<< HEAD
       // IMPORTANT: pass empty history [] as 2nd arg
+=======
+>>>>>>> 53fbbfc (fix(agent-demo): pass history arg to agentChat)
       const out = await agentChat(text, [], {
         mode,
         stakes,
@@ -84,7 +87,7 @@ const AgentDemo: React.FC = () => {
             onChange={(e) => setText(e.target.value)}
           />
           <button onClick={onChat} disabled={busy} className="px-3 py-2 border rounded hover:bg-gray-50">
-            {busy ? "Running…" : "Agent Chat"}
+            {busy ? "Runningâ€¦" : "Agent Chat"}
           </button>
         </div>
 
@@ -96,7 +99,7 @@ const AgentDemo: React.FC = () => {
             onChange={(e) => setUrl(e.target.value)}
           />
           <button onClick={onFetch} disabled={busy} className="px-3 py-2 border rounded hover:bg-gray-50">
-            {busy ? "Fetching…" : "fetch-url"}
+            {busy ? "Fetchingâ€¦" : "fetch-url"}
           </button>
         </div>
       </section>
@@ -153,4 +156,5 @@ const AgentDemo: React.FC = () => {
 };
 
 export default AgentDemo;
+
 
