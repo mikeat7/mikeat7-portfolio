@@ -1,60 +1,54 @@
-// src/styles.css
+/* src/styles.css */
+
+/* === Rising text bubbles === */
 .bubble-bg {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   overflow: hidden;
-  z-index: -1;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0; /* content panels can sit above with z-10 */
 }
 
 .bubble-text {
   position: absolute;
-  font-size: 1rem;
-  color: rgba(100, 100, 100, 0.7);
-  animation: float 10s linear infinite;
+  bottom: -10vh;                 /* start slightly below viewport */
+  left: var(--left, 50%);        /* set via inline style */
+  transform: translateX(-50%);
   white-space: nowrap;
-  transform: translateY(100vh); /* Ensure initial position at bottom */
-  opacity: 0.7;
+  opacity: 0;
+  font-size: var(--fs, 0.95rem); /* set via inline style */
+  color: rgba(30, 41, 59, 0.35); /* slate-ish */
+  text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+  filter: blur(var(--blur, 0px));
+  animation: bubble-rise var(--duration, 28s) linear infinite;
+  animation-delay: var(--delay, 0s);
 }
 
-@keyframes float {
-  0% {
-    transform: translateY(100vh);
-    opacity: 0.7;
-  }
-  75% {
-    transform: translateY(25vh);
-    opacity: 0.7;
-  }
-  85% {
-    transform: translateY(15vh);
-    opacity: 0.4;
-  }
-  95% {
-    transform: translateY(5vh);
-    opacity: 0.1;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 0;
+@keyframes bubble-rise {
+  0%   { transform: translate(-50%, 10vh);  opacity: 0; }
+  6%   { opacity: 0.7; }
+  90%  { opacity: 0.35; }
+  100% { transform: translate(-50%, -115vh); opacity: 0; }
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .bubble-text {
+    animation: none;
+    opacity: 0.15;
   }
 }
 
-.bubble-text:nth-child(1) { left: 10%; animation-delay: 0s; }
-.bubble-text:nth-child(2) { left: 20%; animation-delay: 2s; }
-.bubble-text:nth-child(3) { left: 30%; animation-delay: 4s; }
-.bubble-text:nth-child(4) { left: 40%; animation-delay: 6s; }
-.bubble-text:nth-child(5) { left: 50%; animation-delay: 8s; }
-.bubble-text:nth-child(6) { left: 60%; animation-delay: 10s; }
-.bubble-text:nth-child(7) { left: 70%; animation-delay: 12s; }
-
+/* === Small utility kept from your file === */
 .animate-fade-in {
   animation: fadeIn 1s ease-in;
 }
 
 @keyframes fadeIn {
-  0% { opacity: 0; }
+  0%   { opacity: 0; }
   100% { opacity: 1; }
 }
+
+/* (Removed the old nth-child left/animation-delay rules;
+   React now sets unique CSS variables per bubble.) */
