@@ -13,6 +13,7 @@ import { chunkByHeadings, chunkByWindow, aggregateFrames, type DocChunk } from "
 // NOTE: bubbles removed from Analyze page (moved to Education Hub)
 // import "@/styles.css";
 
+// Tiny inline "?" help chip that shows tooltip on hover
 const Help = ({ text }: { text: string }) => (
   <span
     title={text}
@@ -41,6 +42,7 @@ const AnalyzePage = () => {
   const omission_scan: "auto" | boolean = omissionUI === "auto" ? "auto" : omissionUI === "true";
   const [reflexProfile, setReflexProfile] = useState<"default" | "strict" | "lenient">("default");
 
+  // Source toggle (Analyze can use Agent or Local)
   const hasAgent =
     !!(import.meta as any).env?.VITE_AGENT_API_BASE &&
     String((import.meta as any).env.VITE_AGENT_API_BASE).trim().length > 0;
@@ -51,6 +53,7 @@ const AnalyzePage = () => {
   const [chunkStrategy, setChunkStrategy] = useState<"headings" | "window">("headings");
   const [sectionScores, setSectionScores] = useState<Array<{ label: string; count: number }>>([]);
 
+  // Report text (from agent summarize)
   const [reportText, setReportText] = useState<string>("");
 
   const [notice, setNotice] = useState<string | null>(null);
@@ -69,6 +72,7 @@ const AnalyzePage = () => {
     [mode, stakes, minConfidence, citePolicy, omission_scan, reflexProfile]
   );
 
+  // Presets
   const applyPreset = (p: "quick" | "careful" | "audit") => {
     if (p === "quick") {
       setMode("--direct");
@@ -94,6 +98,7 @@ const AnalyzePage = () => {
     }
   };
 
+  // Analyze: Agent when toggled, else Local deterministic frames
   const analyzeChunk = async (text: string) => {
     if (useAgent && hasAgent) {
       try {
@@ -108,6 +113,7 @@ const AnalyzePage = () => {
         });
         return agentFrames;
       } catch {
+        // Fallback to local if agent errors
         return await runReflexAnalysis(text);
       }
     }
@@ -133,6 +139,7 @@ const AnalyzePage = () => {
             ? chunkByHeadings(input)
             : chunkByWindow(input, { windowSize: 1800, overlap: 200 });
 
+        // Per-section analysis, attach chunkId for aggregation
         const perSection: Array<{ label: string; frames: any[]; chunkId: string }> = [];
         for (const c of chunks) {
           const f = await analyzeChunk(c.text);
@@ -144,6 +151,7 @@ const AnalyzePage = () => {
           });
         }
 
+        // Aggregate & scoreboard
         const allFrames = perSection.flatMap((s) => s.frames);
         const _agg = aggregateFrames(allFrames);
         const scoreboard = perSection.map((s) => ({ label: s.label, count: s.frames.length }));
@@ -157,6 +165,7 @@ const AnalyzePage = () => {
         setSource(useAgent && hasAgent ? "agent" : "local");
       }
 
+      // If agent returned empty, try local as a graceful fallback
       if ((!frames || frames.length === 0) && useAgent) {
         const local = await runReflexAnalysis(input);
         frames = local;
@@ -245,6 +254,7 @@ const AnalyzePage = () => {
             </div>
           </div>
 
+          {/* TAB: Analyze */}
           {activeTab === "analyze" && (
             <>
               {/* INPUT */}
@@ -261,26 +271,40 @@ const AnalyzePage = () => {
                 {/* PRESETS */}
                 <div className="flex items-center gap-2 text-xs">
                   <span className="text-slate-700">
-                    Presets<Help text="Quick = low stakes, permissive; Careful = balanced defaults; Audit = strict, high-stakes guardrails." />:
+                    Presets
+                    <Help text="Quick = low stakes, permissive; Careful = balanced defaults; Audit = strict, high-stakes guardrails." />
+                    :
                   </span>
                   <button
                     onClick={() => applyPreset("quick")}
                     className="px-2 py-1 rounded-md"
-                    style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
+                    title="Low friction: --direct · low stakes · min_conf≈0.55 · citations off · omission scan off · lenient profile"
+                    style={{
+                      background: "#e9eef5",
+                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                    }}
                   >
                     Quick
                   </button>
                   <button
                     onClick={() => applyPreset("careful")}
                     className="px-2 py-1 rounded-md"
-                    style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
+                    title="Balanced: --careful · medium stakes · min_conf≈0.60 · citations auto · omission scan auto · default profile"
+                    style={{
+                      background: "#e9eef5",
+                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                    }}
                   >
                     Careful
                   </button>
                   <button
                     onClick={() => applyPreset("audit")}
                     className="px-2 py-1 rounded-md"
-                    style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
+                    title="Strict: --careful · high stakes · min_conf≈0.75 · citations force · omission scan on · strict profile"
+                    style={{
+                      background: "#e9eef5",
+                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                    }}
                   >
                     Audit
                   </button>
@@ -291,7 +315,10 @@ const AnalyzePage = () => {
                   {/* Left: source + basics */}
                   <div
                     className="rounded-2xl p-4"
-                    style={{ background: "#e9eef5", boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
+                    style={{
+                      background: "#e9eef5",
+                      boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
+                    }}
                   >
                     <div className="flex items-center gap-3 flex-wrap">
                       <label className="flex items-center gap-2 text-sm text-slate-600">
@@ -302,7 +329,11 @@ const AnalyzePage = () => {
                           disabled={!hasAgent || isAnalyzing}
                         />
                         Use AWS Agent
-                        {!hasAgent && <span className="ml-1 text-xs text-slate-500">(no VITE_AGENT_API_BASE — using local engine)</span>}
+                        {!hasAgent && (
+                          <span className="ml-1 text-xs text-slate-500">
+                            (no VITE_AGENT_API_BASE — using local engine)
+                          </span>
+                        )}
                       </label>
 
                       <label className="text-sm text-slate-600">
@@ -381,7 +412,10 @@ const AnalyzePage = () => {
                   {/* Right: policy */}
                   <div
                     className="rounded-2xl p-4"
-                    style={{ background: "#e9eef5", boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
+                    style={{
+                      background: "#e9eef5",
+                      boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
+                    }}
                   >
                     <div className="flex items-center gap-3 flex-wrap">
                       <label className="text-sm text-slate-600">
@@ -455,7 +489,10 @@ const AnalyzePage = () => {
                       Runs: {analysisCount} · Source:{" "}
                       <span
                         className="px-2 py-[2px] rounded-md"
-                        style={{ background: "#e9eef5", boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff" }}
+                        style={{
+                          background: "#e9eef5",
+                          boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
+                        }}
                       >
                         {source ?? "—"}
                       </span>
@@ -465,7 +502,10 @@ const AnalyzePage = () => {
                 {notice && (
                   <div
                     className="mt-2 text-xs text-slate-700 px-3 py-2 rounded-lg"
-                    style={{ background: "#e9eef5", boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff" }}
+                    style={{
+                      background: "#e9eef5",
+                      boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff",
+                    }}
                   >
                     {notice}
                   </div>
@@ -491,7 +531,11 @@ const AnalyzePage = () => {
                             {source && (
                               <span
                                 className="text-[10px] uppercase tracking-wide px-2 py-[2px] rounded-md"
-                                style={{ background: "#e9eef5", boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff" }}
+                                style={{
+                                  background: "#e9eef5",
+                                  boxShadow:
+                                    "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
+                                }}
                                 title={`Frames from ${source} engine`}
                               >
                                 {source}
@@ -514,6 +558,7 @@ const AnalyzePage = () => {
                     <button
                       onClick={handleGenerateReport}
                       className="px-5 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition"
+                      title="Ask the agent to compose a narrative summary from detected frames + your handshake."
                     >
                       Generate Report
                     </button>
@@ -545,13 +590,28 @@ const AnalyzePage = () => {
             </>
           )}
 
-          {activeTab === "chat" && <ChatPanel buildHandshake={() => previewHandshake} />}
+          {/* TAB: Chat */}
+          {activeTab === "chat" && (
+            <ChatPanel
+              buildHandshake={() =>
+                buildHandshake(codex as any, {
+                  mode,
+                  stakes,
+                  min_confidence: minConfidence,
+                  cite_policy: citePolicy,
+                  omission_scan,
+                  reflex_profile: reflexProfile,
+                })
+              }
+            />
+          )}
         </div>
       </div>
     </div>
   );
 };
 
+// Inline Chat panel keeps file self-contained and styling consistent
 const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) => {
   type RolePlus = ChatMessage["role"] | "tool"; // allow local tool messages
   type ChatMsg = { role: RolePlus; text: string; frames?: any[]; tools?: any[] };
@@ -566,37 +626,42 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
     setBusy(true);
     setError(null);
 
+    // Prepare prior history only with user/assistant roles
     const priorHistory = history
       .filter((m) => m.role === "user" || m.role === "assistant")
       .map(({ role, text }) => ({ role: role as ChatMessage["role"], text }));
 
+    // Add user turn locally for display + VX analysis
     const userMsg: ChatMsg = { role: "user", text };
     const nextHist: ChatMsg[] = [...history, userMsg];
     setHistory(nextHist);
 
     try {
+      // VX on user's message (transparency)
       const userFrames = await runReflexAnalysis(text);
       nextHist[nextHist.length - 1] = { ...userMsg, frames: userFrames };
       setHistory([...nextHist]);
 
+      // Call agent with prior turns + current text
       const hs = buildHandshake();
       const resp = await agentChat(
-  text,
-  priorHistory,
-  {
-    mode: hs.mode,
-    stakes: hs.stakes,
-    min_confidence: hs.min_confidence,
-    cite_policy: hs.cite_policy,
-    omission_scan: hs.omission_scan,
-    reflex_profile: hs.reflex_profile,
-    codex_version: hs.codex_version,
-  }
-);
-
+        text,
+        priorHistory,
+        {
+          mode: hs.mode,
+          stakes: hs.stakes,
+          min_confidence: hs.min_confidence,
+          cite_policy: hs.cite_policy,
+          omission_scan: hs.omission_scan,
+          reflex_profile: hs.reflex_profile,
+          codex_version: hs.codex_version,
+        }
+      );
 
       const assistantText = String(resp?.message ?? "").trim() || "(no reply)";
       const assistantMsg: ChatMsg = { role: "assistant", text: assistantText, tools: resp?.tools ?? [] };
+
+      // VX on assistant reply
       const asFrames = await runReflexAnalysis(assistantText);
       assistantMsg.frames = asFrames;
 
@@ -650,6 +715,7 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
               <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">{m.role}</div>
               <pre className="whitespace-pre-wrap text-sm text-slate-800">{m.text}</pre>
 
+              {/* Tool chips for assistant turns */}
               {m.role === "assistant" && m.tools && m.tools.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {m.tools.map((t: any, idx: number) => (
@@ -662,6 +728,7 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
                 </div>
               )}
 
+              {/* Frames count preview */}
               {m.frames && m.frames.length > 0 && (
                 <div className="mt-2 text-xs text-slate-600">Frames: {m.frames.length}</div>
               )}
