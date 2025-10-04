@@ -1,7 +1,7 @@
 // src/pages/analyze.tsx
 import React, { useState } from "react";
 import { useVXContext } from "@/context/VXProvider";
-import runReflexAnalysis from "@/lib/analysis/runReflexAnalysis";
+import runReflexAnalysis from "@/lib/analysis/runReflexAnalysis.js"; // ← explicit .js (important)
 import { callAgentSummarize } from "@/lib/llmClient";
 import { agentChat, agentFetchUrl, type ChatMessage } from "@/lib/agentClient";
 import { buildHandshake, type Mode, type Stakes, type CitePolicy } from "@/lib/codex-runtime";
@@ -9,6 +9,7 @@ import codex from "@/data/front-end-codex.v0.9.json";
 import CoFirePanel from "@/components/CoFirePanel";
 import BackButton from "@/components/BackButton";
 import AnalysisReport from "@/components/AnalysisReport";
+
 
 // Small help chip (kept for tooltips in Chat tab)
 const Help = ({ text }: { text: string }) => (
