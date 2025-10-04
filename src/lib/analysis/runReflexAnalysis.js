@@ -1,6 +1,6 @@
-// src/lib/analysis/runReflexAnalysis.ts
+// src/lib/analysis/runReflexAnalysis.js
 
-// --- Detectors (unchanged in spirit; import JS with explicit .js so Vite hits the real files) ---
+// --- Detectors (JS modules) ---
 import { detectEmotionalManipulation }      from "@/lib/vx/vx-em08.js";
 import { detectSpeculativeOverreach }       from "@/lib/vx/vx-so01.js";
 import { detectHallucination }              from "@/lib/vx/vx-ha01.js";
@@ -24,7 +24,7 @@ import { detectPseudoInquiry }              from "@/lib/vx/vx-inquiry-protection
 import { detectAIGeneratedContent }         from "@/lib/vx/vx-ai01.js";
 import { detectNarrativeFraming }           from "@/lib/vx/vx-nf01.js";
 
-// --- Codex v0.9 policy helpers ---
+// --- Codex v0.9 policy helpers (JS) ---
 import codex from "@/data/front-end-codex.v0.9.json";
 import {
   buildHandshake,
@@ -33,66 +33,45 @@ import {
   emitTelemetry,
 } from "@/lib/codex-runtime.js";
 
-// Minimal frame shape (so TS is happy under strict mode)
-type VXFrame = {
-  reflexId: string;
-  reflexLabel?: string;
-  rationale?: string;
-  reason?: string;
-  confidence?: number;
-  tags?: string[];
-  priority?: number;
-};
-
 const DEFAULT_OPTS = {
-  mode: "--careful" as "--careful" | "--direct" | "--recap",
-  stakes: "medium" as "low" | "medium" | "high",
-  useAgent: true,
+  mode: "--careful",
+  stakes: "medium",
+  useAgent: true, // can be toggled off by caller
 };
 
-/**
- * Main reflex analysis runner.
- * - Runs local detectors
- * - (Optionally) merges frames from AWS agent if VITE_AGENT_API_BASE is set
- * - Gates & sorts frames via Codex v0.9 (thresholds, block rules, profile order)
- * - Emits lightweight telemetry (console)
- */
-const runReflexAnalysis = async (
-  input: string,
-  opts: Partial<typeof DEFAULT_OPTS> = {}
-): Promise<VXFrame[]> => {
+export default async function runReflexAnalysis(input, opts = {}) {
   const { mode, stakes, useAgent } = { ...DEFAULT_OPTS, ...opts };
 
-  if (!input || input.trim().length < 3) {
+  if (!input || String(input).trim().length < 3) {
     console.log("🔍 Analysis skipped: input too short");
     return [];
   }
 
   const timestamp = new Date().toLocaleTimeString();
-  const handshake = buildHandshake(codex as any, { mode, stakes });
+  const handshake = buildHandshake(codex, { mode, stakes });
 
-  // 1) Local detectors (in parallel)
-  let localFrames: VXFrame[] = [];
+  // 1) Local detectors (parallel)
+  let localFrames = [];
   try {
     const [
-      confidenceFrames,        // VX-CO01
-      dataLessFrames,          // VX-DA01
-      ethicalFrames,           // VX-ED01
-      emotionalFrames,         // VX-EM08
-      entrapmentFrames,        // VX-EM09
-      urgencyFrames,           // VX-FO01
-      precisionFrames,         // VX-FP01
-      hallucinationFrames,     // VX-HA01
-      jargonFrames,            // VX-JU01
-      oversimplificationFrames,// VX-NS01
-      omissionFrames,          // VX-OS01
-      consensusFrames,         // VX-PC01
-      interruptionFrames,      // VX-RI01
-      speculativeFrames,       // VX-SO01
-      toneFrames,              // VX-TU01
-      vaguenessFrames,         // VX-VG01
-      aiContentFrames,         // VX-AI01
-      narrativeFrames          // VX-NF01
+      confidenceFrames,         // VX-CO01
+      dataLessFrames,           // VX-DA01
+      ethicalFrames,            // VX-ED01
+      emotionalFrames,          // VX-EM08
+      entrapmentFrames,         // VX-EM09
+      urgencyFrames,            // VX-FO01
+      precisionFrames,          // VX-FP01
+      hallucinationFrames,      // VX-HA01
+      jargonFrames,             // VX-JU01
+      oversimplificationFrames, // VX-NS01
+      omissionFrames,           // VX-OS01
+      consensusFrames,          // VX-PC01
+      interruptionFrames,       // VX-RI01
+      speculativeFrames,        // VX-SO01
+      toneFrames,               // VX-TU01
+      vaguenessFrames,          // VX-VG01
+      aiContentFrames,          // VX-AI01
+      narrativeFrames           // VX-NF01
     ] = await Promise.all([
       Promise.resolve(detectConfidenceIllusion(input)),
       Promise.resolve(detectDataLessClaims(input)),
@@ -114,12 +93,11 @@ const runReflexAnalysis = async (
       Promise.resolve(detectNarrativeFraming(input)),
     ]);
 
-    const semanticFrames           = detectSemanticPatterns(input);
-    const enhancedSemanticFrames   = detectEnhancedSemanticPatterns(input);
-    const comprehensiveFrames      = detectComprehensiveManipulation(input);
-    const pseudoInquiryFrames      = detectPseudoInquiry(input);
+    const semanticFrames         = detectSemanticPatterns(input);
+    const enhancedSemanticFrames = detectEnhancedSemanticPatterns(input);
+    const comprehensiveFrames    = detectComprehensiveManipulation(input);
+    const pseudoInquiryFrames    = detectPseudoInquiry(input);
 
-    // Accumulate locally
     localFrames = [
       ...confidenceFrames,
       ...dataLessFrames,
@@ -143,41 +121,41 @@ const runReflexAnalysis = async (
       ...enhancedSemanticFrames,
       ...comprehensiveFrames,
       ...pseudoInquiryFrames,
-    ] as VXFrame[];
+    ];
 
     console.log(`🔍 [${timestamp}] Local VX detections:`, {
-      confidence:           (confidenceFrames as VXFrame[]).length,
-      dataLess:             (dataLessFrames   as VXFrame[]).length,
-      ethical:              (ethicalFrames    as VXFrame[]).length,
-      emotional:            (emotionalFrames  as VXFrame[]).length,
-      entrapment:           (entrapmentFrames as VXFrame[]).length,
-      urgency:              (urgencyFrames    as VXFrame[]).length,
-      precision:            (precisionFrames  as VXFrame[]).length,
-      hallucination:        (hallucinationFrames as VXFrame[]).length,
-      jargon:               (jargonFrames     as VXFrame[]).length,
-      oversimplification:   (oversimplificationFrames as VXFrame[]).length,
-      omission:             (omissionFrames   as VXFrame[]).length,
-      consensus:            (consensusFrames  as VXFrame[]).length,
-      interruption:         (interruptionFrames as VXFrame[]).length,
-      speculative:          (speculativeFrames as VXFrame[]).length,
-      tone:                 (toneFrames       as VXFrame[]).length,
-      vagueness:            (vaguenessFrames  as VXFrame[]).length,
-      aiContent:            (aiContentFrames  as VXFrame[]).length,
-      narrative:            (narrativeFrames  as VXFrame[]).length,
-      semantic:             (semanticFrames   as VXFrame[]).length,
-      enhancedSemantic:     (enhancedSemanticFrames as VXFrame[]).length,
-      comprehensive:        (comprehensiveFrames as VXFrame[]).length,
-      pseudoInquiry:        (pseudoInquiryFrames as VXFrame[]).length,
+      confidence:           confidenceFrames.length,
+      dataLess:             dataLessFrames.length,
+      ethical:              ethicalFrames.length,
+      emotional:            emotionalFrames.length,
+      entrapment:           entrapmentFrames.length,
+      urgency:              urgencyFrames.length,
+      precision:            precisionFrames.length,
+      hallucination:        hallucinationFrames.length,
+      jargon:               jargonFrames.length,
+      oversimplification:   oversimplificationFrames.length,
+      omission:             omissionFrames.length,
+      consensus:            consensusFrames.length,
+      interruption:         interruptionFrames.length,
+      speculative:          speculativeFrames.length,
+      tone:                 toneFrames.length,
+      vagueness:            vaguenessFrames.length,
+      aiContent:            aiContentFrames.length,
+      narrative:            narrativeFrames.length,
+      semantic:             semanticFrames.length,
+      enhancedSemantic:     enhancedSemanticFrames.length,
+      comprehensive:        comprehensiveFrames.length,
+      pseudoInquiry:        pseudoInquiryFrames.length,
     });
   } catch (err) {
     console.error(`🚨 [${timestamp}] Local detector error:`, err);
   }
 
-  // 2) Optional: AWS Agent frames  (will be skipped if endpoint is absent)
-  let agentFrames: VXFrame[] = [];
-  if (useAgent && typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_AGENT_API_BASE) {
+  // 2) Optional: AWS Agent frames (skips if no endpoint)
+  let agentFrames = [];
+  if (useAgent && typeof import.meta !== "undefined" && import.meta.env?.VITE_AGENT_API_BASE) {
     try {
-      const base = (import.meta as any).env.VITE_AGENT_API_BASE;
+      const base = import.meta.env.VITE_AGENT_API_BASE;
       const res = await fetch(`${base}/agent/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -187,13 +165,13 @@ const runReflexAnalysis = async (
         const data = await res.json();
         const frames = Array.isArray(data?.frames) ? data.frames : (data?.frames?.items ?? []);
         if (Array.isArray(frames)) {
-          agentFrames = (frames as any[]).map((f) => ({
-            reflexId: String((f as any).reflexId ?? (f as any).id ?? "agent-unknown"),
-            reflexLabel: String((f as any).reflexLabel ?? (f as any).label ?? "Agent Reflex"),
-            confidence: Number((f as any).confidence ?? 0.5),
-            rationale: String((f as any).rationale ?? (f as any).reason ?? ""),
-            tags: Array.isArray((f as any).tags) ? (f as any).tags : [],
-            priority: typeof (f as any).priority === "number" ? (f as any).priority : undefined,
+          agentFrames = frames.map((f) => ({
+            reflexId:   String(f.reflexId ?? f.id ?? "agent-unknown"),
+            reflexLabel:String(f.reflexLabel ?? f.label ?? "Agent Reflex"),
+            confidence: Number(f.confidence ?? 0.5),
+            rationale:  String(f.rationale ?? f.reason ?? ""),
+            tags:       Array.isArray(f.tags) ? f.tags : [],
+            priority:   typeof f.priority === "number" ? f.priority : undefined,
           }));
           agentFrames.forEach((f) => (f.tags = [ ...(f.tags ?? []), "agent" ]));
         }
@@ -205,16 +183,16 @@ const runReflexAnalysis = async (
     }
   }
 
-  // 3) Merge + de-duplicate frames
+  // 3) Merge + de-duplicate
   const merged = dedupeFrames([...localFrames, ...agentFrames]);
 
   // 4) Codex gating (thresholds & blockers)
-  const gated: VXFrame[] = [];
-  let blockedBy: string | null = null;
+  const gated = [];
+  let blockedBy = null;
 
   for (const f of merged) {
     const conf = typeof f.confidence === "number" ? f.confidence : 0;
-    const { trigger, block } = shouldTriggerReflex(codex as any, f.reflexId, conf, stakes);
+    const { trigger, block } = shouldTriggerReflex(codex, f.reflexId, conf, stakes);
     if (block && !blockedBy) blockedBy = f.reflexId;
     if (trigger) gated.push(f);
   }
@@ -232,12 +210,12 @@ const runReflexAnalysis = async (
     });
   }
 
-  // 5) Cluster detection (existing UX)
+  // 5) Cluster detection
   const clustered = detectReflexClusters(gated, input);
 
   // 6) Sort: profile order first, then confidence
-  const profileOrder = getReflexOrder(codex as any, (handshake as any).reflex_profile);
-  const rank = (id: string) => {
+  const profileOrder = getReflexOrder(codex, handshake.reflex_profile);
+  const rank = (id) => {
     const i = profileOrder.indexOf(id);
     return i === -1 ? Number.MAX_SAFE_INTEGER : i;
   };
@@ -250,7 +228,7 @@ const runReflexAnalysis = async (
 
   // 7) Telemetry (console only)
   emitTelemetry(
-    codex as any,
+    codex,
     {
       name: "analysis_complete",
       data: {
@@ -261,20 +239,18 @@ const runReflexAnalysis = async (
         used_agent: agentFrames.length > 0,
       },
     },
-    (e: unknown) => console.log("[telemetry]", e)
+    (e) => console.log("[telemetry]", e)
   );
 
   console.log(`🔍 [${timestamp}] Analysis finished, returning ${clustered.length} frames`);
   return clustered;
-};
+}
 
-// -------------------------------------------
-// Helpers
-// -------------------------------------------
+// ----------------- Helpers -----------------
 
-function dedupeFrames(frames: VXFrame[]): VXFrame[] {
-  const seen = new Set<string>();
-  const out: VXFrame[] = [];
+function dedupeFrames(frames) {
+  const seen = new Set();
+  const out = [];
   for (const f of frames) {
     const key = `${f.reflexId}::${(f.rationale ?? f.reason ?? "").slice(0, 160)}::${f.reflexLabel ?? ""}`;
     if (!seen.has(key)) {
@@ -285,15 +261,12 @@ function dedupeFrames(frames: VXFrame[]): VXFrame[] {
   return out;
 }
 
-/** Cluster detection (co-firing reflexes) */
-function detectReflexClusters(frames: VXFrame[], originalInput: string): VXFrame[] {
+function detectReflexClusters(frames, originalInput) {
   const hasLegitSci =
-    /requires further study|needs investigation|warrants research|seems plausible|appears to suggest/i.test(
-      originalInput
-    );
+    /requires further study|needs investigation|warrants research|seems plausible|appears to suggest/i.test(originalInput);
 
-  const high = frames.filter((f) => (f.confidence ?? 0) >= 0.75).length;
-  const med  = frames.filter((f) => (f.confidence ?? 0) >= 0.55).length;
+  const high  = frames.filter((f) => (f.confidence ?? 0) >= 0.75).length;
+  const med   = frames.filter((f) => (f.confidence ?? 0) >= 0.55).length;
   const total = frames.length;
 
   const threshold = hasLegitSci
@@ -318,10 +291,7 @@ function detectReflexClusters(frames: VXFrame[], originalInput: string): VXFrame
     frames.unshift({
       reflexId: "cluster-alert",
       reflexLabel: `⚠️ ${clusterType} Manipulation Cluster Detected`,
-      rationale: `🔥 ${clusterType} CLUSTER ALERT: ${clusterCount} reflexes triggered on "${originalInput.substring(
-        0,
-        50
-      )}..."`,
+      rationale: `🔥 ${clusterType} CLUSTER ALERT: ${clusterCount} reflexes triggered on "${originalInput.substring(0, 50)}..."`,
       confidence: Math.max(...frames.map((f) => f.confidence ?? 0)),
       tags: ["cluster", "alert", clusterType.toLowerCase()],
       priority: 4,
@@ -330,5 +300,3 @@ function detectReflexClusters(frames: VXFrame[], originalInput: string): VXFrame
 
   return frames;
 }
-
-export default runReflexAnalysis;
