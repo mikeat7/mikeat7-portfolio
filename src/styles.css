@@ -27,10 +27,12 @@
 
 @keyframes bubble-rise {
   0%   { transform: translate(-50%, 10vh);  opacity: 0; }
-  6%   { opacity: 0.7; }
-  90%  { opacity: 0.35; }
+  8%   { opacity: 0.9; }      /* quickly ramp up */
+  90%  { opacity: 0.9; }      /* stay bright until the last ~10% of travel */
+  96%  { opacity: 0.25; }     /* fast fade near the very top */
   100% { transform: translate(-50%, -115vh); opacity: 0; }
 }
+
 
 /* Respect prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
