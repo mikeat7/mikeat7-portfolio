@@ -1,19 +1,16 @@
 // src/pages/analyze.tsx
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useVXContext } from "@/context/VXProvider";
 import runReflexAnalysis from "@/lib/analysis/runReflexAnalysis";
-import { callAgentSummarize, callAgentAnalyze } from "@/lib/llmClient";
-import { agentChat, agentFetchUrl, type ChatMessage } from "@/lib/agentClient"; // ← use agentChat
+import { callAgentSummarize } from "@/lib/llmClient";
+import { agentChat, agentFetchUrl, type ChatMessage } from "@/lib/agentClient";
 import { buildHandshake, type Mode, type Stakes, type CitePolicy } from "@/lib/codex-runtime";
 import codex from "@/data/front-end-codex.v0.9.json";
 import CoFirePanel from "@/components/CoFirePanel";
 import BackButton from "@/components/BackButton";
 import AnalysisReport from "@/components/AnalysisReport";
-import { chunkByHeadings, chunkByWindow, aggregateFrames, type DocChunk } from "@/lib/longdoc";
-// NOTE: bubbles removed from Analyze page (moved to Education Hub)
-// import "@/styles.css";
 
-// Tiny inline "?" help chip that shows tooltip on hover
+// Small help chip (kept for tooltips in Chat tab)
 const Help = ({ text }: { text: string }) => (
   <span
     title={text}
@@ -25,178 +22,56 @@ const Help = ({ text }: { text: string }) => (
   </span>
 );
 
-type SourceKind = "agent" | "local" | null;
-
-const AnalyzePage = () => {
+const AnalyzePage: React.FC = () => {
   const { reflexFrames, setReflexFrames, isAnalyzing, setIsAnalyzing } = useVXContext();
-  const [input, setInput] = useState("");
-  const [analysisCount, setAnalysisCount] = useState(0);
+
   const [activeTab, setActiveTab] = useState<"analyze" | "chat">("analyze");
 
-  // Handshake state
-  const [mode, setMode] = useState<Mode>("--careful");
-  const [stakes, setStakes] = useState<Stakes>("medium");
-  const [minConfidence, setMinConfidence] = useState<number>(0.6);
-  const [citePolicy, setCitePolicy] = useState<CitePolicy>("auto");
-  const [omissionUI, setOmissionUI] = useState<"auto" | "true" | "false">("auto");
-  const omission_scan: "auto" | boolean = omissionUI === "auto" ? "auto" : omissionUI === "true";
-  const [reflexProfile, setReflexProfile] = useState<"default" | "strict" | "lenient">("default");
-
-  // Source toggle (Analyze can use Agent or Local)
-  const hasAgent =
-    !!(import.meta as any).env?.VITE_AGENT_API_BASE &&
-    String((import.meta as any).env.VITE_AGENT_API_BASE).trim().length > 0;
-  const [useAgent, setUseAgent] = useState<boolean>(hasAgent);
-
-  // Long-Doc Mode
-  const [longDoc, setLongDoc] = useState(false);
-  const [chunkStrategy, setChunkStrategy] = useState<"headings" | "window">("headings");
-  const [sectionScores, setSectionScores] = useState<Array<{ label: string; count: number }>>([]);
-
-  // Report text (from agent summarize)
+  // ANALYZE tab state
+  const [input, setInput] = useState("");
+  const [analysisCount, setAnalysisCount] = useState(0);
+  const [notice, setNotice] = useState<string | null>(null);
   const [reportText, setReportText] = useState<string>("");
 
-  const [notice, setNotice] = useState<string | null>(null);
-  const [source, setSource] = useState<SourceKind>(null);
-
-  const previewHandshake = useMemo(
-    () =>
-      buildHandshake(codex as any, {
-        mode,
-        stakes,
-        min_confidence: minConfidence,
-        cite_policy: citePolicy,
-        omission_scan,
-        reflex_profile: reflexProfile,
-      }),
-    [mode, stakes, minConfidence, citePolicy, omission_scan, reflexProfile]
-  );
-
-  // Presets
-  const applyPreset = (p: "quick" | "careful" | "audit") => {
-    if (p === "quick") {
-      setMode("--direct");
-      setStakes("low");
-      setMinConfidence(0.55);
-      setCitePolicy("off");
-      setOmissionUI("false");
-      setReflexProfile("lenient");
-    } else if (p === "careful") {
-      setMode("--careful");
-      setStakes("medium");
-      setMinConfidence(0.6);
-      setCitePolicy("auto");
-      setOmissionUI("auto");
-      setReflexProfile("default");
-    } else {
-      setMode("--careful");
-      setStakes("high");
-      setMinConfidence(0.75);
-      setCitePolicy("force");
-      setOmissionUI("true");
-      setReflexProfile("strict");
-    }
-  };
-
-  // Analyze: Agent when toggled, else Local deterministic frames
-  const analyzeChunk = async (text: string) => {
-    if (useAgent && hasAgent) {
-      try {
-        const agentFrames = await callAgentAnalyze({
-          text,
-          mode,
-          stakes,
-          min_confidence: minConfidence,
-          cite_policy: citePolicy,
-          omission_scan,
-          reflex_profile: reflexProfile,
-        });
-        return agentFrames;
-      } catch {
-        // Fallback to local if agent errors
-        return await runReflexAnalysis(text);
-      }
-    }
-    return await runReflexAnalysis(text);
-  };
-
-  const handleAnalyze = async () => {
+  async function handleAnalyze() {
     if (!input.trim()) return;
-
     setIsAnalyzing(true);
     setReflexFrames([]);
-    setSectionScores([]);
     setReportText("");
     setNotice(null);
-    setSource(null);
 
     try {
-      let frames: any[] = [];
-
-      if (longDoc) {
-        const chunks: DocChunk[] =
-          chunkStrategy === "headings"
-            ? chunkByHeadings(input)
-            : chunkByWindow(input, { windowSize: 1800, overlap: 200 });
-
-        // Per-section analysis, attach chunkId for aggregation
-        const perSection: Array<{ label: string; frames: any[]; chunkId: string }> = [];
-        for (const c of chunks) {
-          const f = await analyzeChunk(c.text);
-          const labeled = f.map((fr) => ({ ...fr, chunkId: c.id }));
-          perSection.push({
-            label: c.title ?? `Section ${perSection.length + 1}`,
-            frames: labeled,
-            chunkId: c.id,
-          });
-        }
-
-        // Aggregate & scoreboard
-        const allFrames = perSection.flatMap((s) => s.frames);
-        const _agg = aggregateFrames(allFrames);
-        const scoreboard = perSection.map((s) => ({ label: s.label, count: s.frames.length }));
-
-        frames = allFrames;
-        setSectionScores(scoreboard);
-        setSource(useAgent && hasAgent ? "agent" : "local");
-      } else {
-        const f = await analyzeChunk(input);
-        frames = f;
-        setSource(useAgent && hasAgent ? "agent" : "local");
-      }
-
-      // If agent returned empty, try local as a graceful fallback
-      if ((!frames || frames.length === 0) && useAgent) {
-        const local = await runReflexAnalysis(input);
-        frames = local;
-        setSource("local");
-        setNotice("Agent returned no detections—showing local analysis instead.");
-      }
-
+      // Local deterministic analysis (no agent in Analyze tab)
+      const frames = await runReflexAnalysis(input);
       setReflexFrames(frames);
+
+      if (!frames || frames.length === 0) {
+        setNotice("No detections found. Try stronger certainty claims, unnamed authorities, or sweeping generalizations.");
+      }
       setAnalysisCount((n) => n + 1);
-    } catch (err) {
-      console.error("🚨 Analysis failed:", err);
+    } catch (e) {
+      console.error("🚨 Analysis failed:", e);
       setReflexFrames([]);
-      setSource(null);
-      setNotice("Analysis failed. Please try again or switch source.");
+      setNotice("Analysis failed. Please try again.");
     } finally {
       setIsAnalyzing(false);
     }
-  };
+  }
 
-  const handleGenerateReport = async () => {
+  async function handleGenerateReport() {
+    // Optional: agent summary from frames; will show a friendly message if unavailable
     try {
       const { reportText } = await callAgentSummarize({
         inputText: input,
         frames: reflexFrames,
+        // Use a careful/strict handshake by default for summaries
         handshakeOverrides: {
-          mode,
-          stakes,
-          min_confidence: minConfidence,
-          cite_policy: citePolicy,
-          omission_scan,
-          reflex_profile: reflexProfile,
+          mode: "--careful",
+          stakes: "high",
+          min_confidence: 0.75,
+          cite_policy: "force",
+          omission_scan: true,
+          reflex_profile: "strict",
         },
       });
       setReportText(reportText);
@@ -206,14 +81,14 @@ const AnalyzePage = () => {
         "Report service unavailable. (Tip: you can still export frames and use the on-page summary.)"
       );
     }
-  };
+  }
 
   return (
     <div className="relative min-h-screen bg-[#e9eef5] py-10">
       <div className="relative max-w-6xl mx-auto px-4">
         <BackButton />
 
-        {/* Top header + tabs */}
+        {/* Header + Tabs */}
         <div
           className="rounded-3xl p-8 md:p-10"
           style={{
@@ -225,12 +100,13 @@ const AnalyzePage = () => {
             <div>
               <h1 className="text-3xl font-bold text-slate-900">Analyze a Statement</h1>
               <p className="mt-2 text-slate-700">
-                Paste text—or a URL—to reveal assumptions, emotional manipulation, semantic patterns, and missing context.
-                This also handles <strong>Scientific Paper Checks</strong> and <strong>Link &amp; Article Audits</strong>.
+                Paste text under <strong>Analyze</strong> to reveal logical fallacies such as assumptions, emotional
+                manipulation, and troubling semantic patterns. Our <strong>AI agent</strong> also, independently,
+                dissects <strong>Scientific Papers</strong> for invalid methods and faulty conclusions — or paste a URL —
+                for <strong>Article Audits</strong>.
               </p>
             </div>
 
-            {/* Tabs */}
             <div
               className="flex items-center gap-1 p-1 rounded-2xl"
               style={{ background: "#e9eef5", boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff" }}
@@ -248,16 +124,15 @@ const AnalyzePage = () => {
                       : {}
                   }
                 >
-                  {tab === "analyze" ? "Analyze" : "Chat"}
+                  {tab === "analyze" ? "Analyze" : "Chat with Our Agent"}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* TAB: Analyze */}
+          {/* TAB: Analyze (simple: textarea + run) */}
           {activeTab === "analyze" && (
             <>
-              {/* INPUT */}
               <div className="mt-6 space-y-3">
                 <textarea
                   value={input}
@@ -268,244 +143,25 @@ const AnalyzePage = () => {
                   placeholder="Paste a paragraph, a link to an article, or a snippet from a methods section…"
                 />
 
-                {/* PRESETS */}
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-slate-700">
-                    Presets
-                    <Help text="Quick = low stakes, permissive; Careful = balanced defaults; Audit = strict, high-stakes guardrails." />
-                    :
-                  </span>
+                <div className="flex justify-end">
                   <button
-                    onClick={() => applyPreset("quick")}
-                    className="px-2 py-1 rounded-md"
-                    title="Low friction: --direct · low stakes · min_conf≈0.55 · citations off · omission scan off · lenient profile"
-                    style={{
-                      background: "#e9eef5",
-                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
-                    }}
+                    onClick={handleAnalyze}
+                    disabled={!input.trim() || isAnalyzing}
+                    className="px-6 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
+                    title="Run local analysis with stringent fallacy/reflex detection."
                   >
-                    Quick
-                  </button>
-                  <button
-                    onClick={() => applyPreset("careful")}
-                    className="px-2 py-1 rounded-md"
-                    title="Balanced: --careful · medium stakes · min_conf≈0.60 · citations auto · omission scan auto · default profile"
-                    style={{
-                      background: "#e9eef5",
-                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
-                    }}
-                  >
-                    Careful
-                  </button>
-                  <button
-                    onClick={() => applyPreset("audit")}
-                    className="px-2 py-1 rounded-md"
-                    title="Strict: --careful · high stakes · min_conf≈0.75 · citations force · omission scan on · strict profile"
-                    style={{
-                      background: "#e9eef5",
-                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
-                    }}
-                  >
-                    Audit
+                    {isAnalyzing ? "Analyzing…" : "Run Analysis"}
                   </button>
                 </div>
 
-                {/* CONTROLS */}
-                <div className="grid md:grid-cols-2 gap-4">
-                  {/* Left: source + basics */}
-                  <div
-                    className="rounded-2xl p-4"
-                    style={{
-                      background: "#e9eef5",
-                      boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
-                    }}
-                  >
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <label className="flex items-center gap-2 text-sm text-slate-600">
-                        <input
-                          type="checkbox"
-                          checked={useAgent}
-                          onChange={(e) => setUseAgent(e.target.checked)}
-                          disabled={!hasAgent || isAnalyzing}
-                        />
-                        Use AWS Agent
-                        {!hasAgent && (
-                          <span className="ml-1 text-xs text-slate-500">
-                            (no VITE_AGENT_API_BASE — using local engine)
-                          </span>
-                        )}
-                      </label>
-
-                      <label className="text-sm text-slate-600">
-                        Mode{" "}
-                        <select
-                          value={mode}
-                          onChange={(e) => setMode(e.target.value as Mode)}
-                          className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
-                          disabled={isAnalyzing}
-                        >
-                          <option value="--direct">--direct</option>
-                          <option value="--careful">--careful</option>
-                          <option value="--recap">--recap</option>
-                        </select>
-                      </label>
-
-                      <label className="text-sm text-slate-600">
-                        Stakes{" "}
-                        <select
-                          value={stakes}
-                          onChange={(e) => setStakes(e.target.value as Stakes)}
-                          className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
-                          disabled={isAnalyzing}
-                        >
-                          <option value="low">low</option>
-                          <option value="medium">medium</option>
-                          <option value="high">high</option>
-                        </select>
-                      </label>
-                    </div>
-
-                    <div className="mt-3">
-                      <label className="block text-sm text-slate-600">
-                        Min confidence: <strong>{minConfidence.toFixed(2)}</strong>
-                      </label>
-                      <input
-                        type="range"
-                        min="0.45"
-                        max="0.95"
-                        step="0.05"
-                        value={minConfidence}
-                        onChange={(e) => setMinConfidence(Number(e.target.value))}
-                        className="w-full"
-                        disabled={isAnalyzing}
-                      />
-                    </div>
-
-                    {/* Long-Doc */}
-                    <div className="mt-3 flex items-center gap-3 text-sm text-slate-600">
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={longDoc}
-                          onChange={(e) => setLongDoc(e.target.checked)}
-                          disabled={isAnalyzing}
-                        />
-                        Long-Doc Mode
-                      </label>
-                      {longDoc && (
-                        <label>
-                          Strategy{" "}
-                          <select
-                            value={chunkStrategy}
-                            onChange={(e) => setChunkStrategy(e.target.value as any)}
-                            className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
-                            disabled={isAnalyzing}
-                          >
-                            <option value="headings">by headings (##)</option>
-                            <option value="window">by window (≈1800/200)</option>
-                          </select>
-                        </label>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Right: policy */}
-                  <div
-                    className="rounded-2xl p-4"
-                    style={{
-                      background: "#e9eef5",
-                      boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
-                    }}
-                  >
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <label className="text-sm text-slate-600">
-                        Cite policy{" "}
-                        <select
-                          value={citePolicy}
-                          onChange={(e) => setCitePolicy(e.target.value as CitePolicy)}
-                          className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
-                          disabled={isAnalyzing}
-                        >
-                          <option value="auto">auto</option>
-                          <option value="force">force</option>
-                          <option value="off">off</option>
-                        </select>
-                      </label>
-
-                      <label className="text-sm text-slate-600">
-                        Omission scan{" "}
-                        <select
-                          value={omissionUI}
-                          onChange={(e) => setOmissionUI(e.target.value as "auto" | "true" | "false")}
-                          className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
-                          disabled={isAnalyzing}
-                        >
-                          <option value="auto">auto</option>
-                          <option value="true">true</option>
-                          <option value="false">false</option>
-                        </select>
-                      </label>
-
-                      <label className="text-sm text-slate-600">
-                        Reflex profile{" "}
-                        <select
-                          value={reflexProfile}
-                          onChange={(e) => setReflexProfile(e.target.value as "default" | "strict" | "lenient")}
-                          className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
-                          disabled={isAnalyzing}
-                        >
-                          <option value="default">default</option>
-                          <option value="strict">strict</option>
-                          <option value="lenient">lenient</option>
-                        </select>
-                      </label>
-
-                      <button
-                        onClick={handleAnalyze}
-                        disabled={!input.trim() || isAnalyzing}
-                        className="ml-auto px-6 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
-                        title="Run the selected source (Agent or Local) using the current handshake settings."
-                      >
-                        {isAnalyzing ? "Analyzing…" : "Run Analysis"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Handshake summary */}
-                <div className="text-xs text-slate-700 mt-2">
-                  <span className="font-medium">Handshake</span> · mode=<code>{previewHandshake.mode}</code> · stakes=
-                  <code>{previewHandshake.stakes}</code> · min_confidence=
-                  <code>{previewHandshake.min_confidence}</code> · cite_policy=
-                  <code>{previewHandshake.cite_policy}</code> · omission_scan=
-                  <code>{String(previewHandshake.omission_scan)}</code> · profile=
-                  <code>{previewHandshake.reflex_profile}</code>
-                </div>
-
-                {/* Status + notices */}
+                {/* Status + notice */}
                 <div className="text-xs text-slate-600">
-                  {analysisCount > 0 && (
-                    <>
-                      Runs: {analysisCount} · Source:{" "}
-                      <span
-                        className="px-2 py-[2px] rounded-md"
-                        style={{
-                          background: "#e9eef5",
-                          boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
-                        }}
-                      >
-                        {source ?? "—"}
-                      </span>
-                    </>
-                  )}
+                  {analysisCount > 0 && <>Runs: {analysisCount}</>}
                 </div>
                 {notice && (
                   <div
                     className="mt-2 text-xs text-slate-700 px-3 py-2 rounded-lg"
-                    style={{
-                      background: "#e9eef5",
-                      boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff",
-                    }}
+                    style={{ background: "#e9eef5", boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff" }}
                   >
                     {notice}
                   </div>
@@ -528,19 +184,13 @@ const AnalyzePage = () => {
                         >
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold text-lg">{frame.reflexLabel ?? frame.reflexId}</h3>
-                            {source && (
-                              <span
-                                className="text-[10px] uppercase tracking-wide px-2 py-[2px] rounded-md"
-                                style={{
-                                  background: "#e9eef5",
-                                  boxShadow:
-                                    "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
-                                }}
-                                title={`Frames from ${source} engine`}
-                              >
-                                {source}
-                              </span>
-                            )}
+                            <span
+                              className="text-[10px] uppercase tracking-wide px-2 py-[2px] rounded-md"
+                              style={{ background: "#e9eef5", boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff" }}
+                              title="Frames from local analysis engine"
+                            >
+                              local
+                            </span>
                           </div>
                           <p className="text-sm text-slate-700 mt-1">{frame.rationale ?? (frame as any).reason}</p>
                           <p className="text-xs text-slate-500 mt-2">
@@ -553,12 +203,12 @@ const AnalyzePage = () => {
                     <CoFirePanel reflexes={reflexFrames} />
                   </div>
 
-                  {/* REPORT */}
+                  {/* REPORT (optional agent summarize) */}
                   <div className="mt-6 flex items-center gap-3">
                     <button
                       onClick={handleGenerateReport}
                       className="px-5 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition"
-                      title="Ask the agent to compose a narrative summary from detected frames + your handshake."
+                      title="Ask the agent to compose a narrative summary from detected frames."
                     >
                       Generate Report
                     </button>
@@ -567,11 +217,9 @@ const AnalyzePage = () => {
                   <AnalysisReport
                     frames={reflexFrames}
                     inputSample={input}
-                    sectionScores={sectionScores}
+                    sectionScores={[]} // minimal Analyze tab
                     reportText={reportText}
-                    handshakeLine={`Handshake · mode=${previewHandshake.mode} · stakes=${previewHandshake.stakes} · min_conf=${previewHandshake.min_confidence} · cite_policy=${previewHandshake.cite_policy} · omission_scan=${String(
-                      previewHandshake.omission_scan
-                    )} · profile=${previewHandshake.reflex_profile}`}
+                    handshakeLine={`(Summary uses careful/strict defaults)`}
                   />
                 </>
               )}
@@ -590,117 +238,284 @@ const AnalyzePage = () => {
             </>
           )}
 
-          {/* TAB: Chat */}
-          {activeTab === "chat" && (
-            <ChatPanel
-              buildHandshake={() =>
-                buildHandshake(codex as any, {
-                  mode,
-                  stakes,
-                  min_confidence: minConfidence,
-                  cite_policy: citePolicy,
-                  omission_scan,
-                  reflex_profile: reflexProfile,
-                })
-              }
-            />
-          )}
+          {/* TAB: Chat with Our Agent (handshake controls live here) */}
+          {activeTab === "chat" && <ChatPanel />}
         </div>
       </div>
     </div>
   );
 };
 
-// Inline Chat panel keeps file self-contained and styling consistent
-const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) => {
-  type RolePlus = ChatMessage["role"] | "tool"; // allow local tool messages
+/** Chat panel with strict defaults + URL auto-fetch + clearer errors */
+const ChatPanel: React.FC = () => {
+  type RolePlus = ChatMessage["role"] | "tool";
   type ChatMsg = { role: RolePlus; text: string; frames?: any[]; tools?: any[] };
 
+  // Robust/strict defaults per your request
+  const [mode, setMode] = useState<Mode>("--careful");
+  const [stakes, setStakes] = useState<Stakes>("high");
+  const [minConfidence, setMinConfidence] = useState<number>(0.75);
+  const [citePolicy, setCitePolicy] = useState<CitePolicy>("force");
+  const [omissionUI, setOmissionUI] = useState<"auto" | "true" | "false">("true");
+  const omission_scan: "auto" | boolean = omissionUI === "auto" ? "auto" : omissionUI === "true";
+  const [reflexProfile, setReflexProfile] = useState<"default" | "strict" | "lenient">("strict");
+
   const [history, setHistory] = useState<ChatMsg[]>([]);
-  const [text, setText] = useState("Paste a URL or ask a question. The agent may call fetch-url.");
+  const [text, setText] = useState(""); // start empty, use placeholder
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function send() {
-    if (!text.trim()) return;
+  const looksLikeUrl = (s: string) => /^https?:\/\/\S+/i.test(s.trim());
+
+  function formatError(e: any) {
+    const msg = e?.message || e?.toString?.() || "Unknown error";
+    if (/Failed to fetch|NetworkError|TypeError/i.test(msg)) {
+      return `${msg}. Tip: open the app on http://localhost:8888 (Netlify Dev) or your live Netlify URL so the /agent/* functions work.`;
+    }
+    const status = e?.response?.status ? ` (${e.response.status} ${e.response.statusText || ""})` : "";
+    return `${msg}${status}`;
+  }
+
+  async function fetchUrlToHistory(url: string) {
     setBusy(true);
     setError(null);
-
-    // Prepare prior history only with user/assistant roles
-    const priorHistory = history
-      .filter((m) => m.role === "user" || m.role === "assistant")
-      .map(({ role, text }) => ({ role: role as ChatMessage["role"], text }));
-
-    // Add user turn locally for display + VX analysis
-    const userMsg: ChatMsg = { role: "user", text };
-    const nextHist: ChatMsg[] = [...history, userMsg];
-    setHistory(nextHist);
-
     try {
-      // VX on user's message (transparency)
-      const userFrames = await runReflexAnalysis(text);
-      nextHist[nextHist.length - 1] = { ...userMsg, frames: userFrames };
-      setHistory([...nextHist]);
-
-      // Call agent with prior turns + current text
-      const hs = buildHandshake();
-      const resp = await agentChat(
-        text,
-        priorHistory,
-        {
-          mode: hs.mode,
-          stakes: hs.stakes,
-          min_confidence: hs.min_confidence,
-          cite_policy: hs.cite_policy,
-          omission_scan: hs.omission_scan,
-          reflex_profile: hs.reflex_profile,
-          codex_version: hs.codex_version,
-        }
-      );
-
-      const assistantText = String(resp?.message ?? "").trim() || "(no reply)";
-      const assistantMsg: ChatMsg = { role: "assistant", text: assistantText, tools: resp?.tools ?? [] };
-
-      // VX on assistant reply
-      const asFrames = await runReflexAnalysis(assistantText);
-      assistantMsg.frames = asFrames;
-
-      setHistory((h) => [...h, assistantMsg]);
+      const data = await agentFetchUrl(url);
+      const plain = String(data?.text ?? "").slice(0, 4000);
+      setHistory((h) => [...h, { role: "tool", text: `fetch_url(${url}) →\n\n${plain}` }]);
     } catch (e: any) {
-      setError(e?.message || "Agent error");
+      setError(formatError(e));
     } finally {
       setBusy(false);
       setText("");
     }
   }
 
-  async function fetchUrlFromBox() {
-    const url = prompt("Enter a URL to fetch via /agent/fetch-url:");
-    if (!url) return;
+  async function send() {
+    const content = text.trim();
+    if (!content) return;
+
+    // Auto-run fetch-url if input is a URL
+    if (looksLikeUrl(content)) {
+      await fetchUrlToHistory(content);
+      return;
+    }
+
     setBusy(true);
+    setError(null);
+
+    // Prior convo history (user/assistant only)
+    const priorHistory = history
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map(({ role, text }) => ({ role: role as ChatMessage["role"], text }));
+
+    // Add user message and run VX on it
+    const userMsg: ChatMsg = { role: "user", text: content };
+    const nextHist: ChatMsg[] = [...history, userMsg];
+    setHistory(nextHist);
+
     try {
-      const data = await agentFetchUrl(url);
-      const plain = String(data?.text ?? "").slice(0, 4000);
-      setHistory((h) => [...h, { role: "tool", text: `fetch_url(${url}) →\n\n${plain}` }]);
+      const userFrames = await runReflexAnalysis(content);
+      nextHist[nextHist.length - 1] = { ...userMsg, frames: userFrames };
+      setHistory([...nextHist]);
+
+      // Build handshake using strict defaults
+      const hs = buildHandshake(codex as any, {
+        mode,
+        stakes,
+        min_confidence: minConfidence,
+        cite_policy: citePolicy,
+        omission_scan,
+        reflex_profile: reflexProfile,
+      });
+
+      const resp = await agentChat(content, priorHistory, {
+        mode: hs.mode,
+        stakes: hs.stakes,
+        min_confidence: hs.min_confidence,
+        cite_policy: hs.cite_policy,
+        omission_scan: hs.omission_scan,
+        reflex_profile: hs.reflex_profile,
+        codex_version: hs.codex_version,
+      });
+
+      const assistantText = String(resp?.message ?? "").trim() || "(no reply)";
+      const assistantMsg: ChatMsg = { role: "assistant", text: assistantText, tools: resp?.tools ?? [] };
+      assistantMsg.frames = await runReflexAnalysis(assistantText);
+      setHistory((h) => [...h, assistantMsg]);
     } catch (e: any) {
-      setError(e?.message || "fetch-url error");
+      setError(formatError(e));
     } finally {
       setBusy(false);
+      setText("");
+    }
+  }
+
+  // Presets for the Chat tab only
+  function applyPreset(p: "quick" | "careful" | "audit") {
+    if (p === "quick") {
+      setMode("--direct");
+      setStakes("low");
+      setMinConfidence(0.55);
+      setCitePolicy("off");
+      setOmissionUI("false");
+      setReflexProfile("lenient");
+    } else if (p === "careful") {
+      setMode("--careful");
+      setStakes("medium");
+      setMinConfidence(0.6);
+      setCitePolicy("auto");
+      setOmissionUI("auto");
+      setReflexProfile("default");
+    } else {
+      setMode("--careful");
+      setStakes("high");
+      setMinConfidence(0.75);
+      setCitePolicy("force");
+      setOmissionUI("true");
+      setReflexProfile("strict");
     }
   }
 
   return (
     <div className="mt-6 grid gap-4">
+      {/* Controls live here (not in Analyze) */}
+      <div
+        className="rounded-2xl p-4"
+        style={{ background: "#e9eef5", boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
+      >
+        <div className="flex items-center gap-2 text-xs flex-wrap">
+          <span className="text-slate-700">
+            Presets
+            <Help text="Quick = low stakes, permissive; Careful = balanced defaults; Audit = strict, high-stakes guardrails." />
+            :
+          </span>
+          <button
+            onClick={() => applyPreset("quick")}
+            className="px-2 py-1 rounded-md"
+            style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
+          >
+            Quick
+          </button>
+          <button
+            onClick={() => applyPreset("careful")}
+            className="px-2 py-1 rounded-md"
+            style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
+          >
+            Careful
+          </button>
+          <button
+            onClick={() => applyPreset("audit")}
+            className="px-2 py-1 rounded-md"
+            style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
+          >
+            Audit
+          </button>
+        </div>
+
+        <div className="mt-3 flex items-center gap-3 flex-wrap text-sm text-slate-600">
+          <label>
+            Mode{" "}
+            <select
+              value={mode}
+              onChange={(e) => setMode(e.target.value as Mode)}
+              className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
+              disabled={busy}
+            >
+              <option value="--direct">--direct</option>
+              <option value="--careful">--careful</option>
+              <option value="--recap">--recap</option>
+            </select>
+          </label>
+
+          <label>
+            Stakes{" "}
+            <select
+              value={stakes}
+              onChange={(e) => setStakes(e.target.value as Stakes)}
+              className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
+              disabled={busy}
+            >
+              <option value="low">low</option>
+              <option value="medium">medium</option>
+              <option value="high">high</option>
+            </select>
+          </label>
+
+          <label className="flex items-center gap-2">
+            Min conf: <strong>{minConfidence.toFixed(2)}</strong>
+            <input
+              type="range"
+              min="0.45"
+              max="0.95"
+              step="0.05"
+              value={minConfidence}
+              onChange={(e) => setMinConfidence(Number(e.target.value))}
+              className="align-middle"
+              disabled={busy}
+            />
+          </label>
+
+          <label>
+            Cite{" "}
+            <select
+              value={citePolicy}
+              onChange={(e) => setCitePolicy(e.target.value as CitePolicy)}
+              className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
+              disabled={busy}
+            >
+              <option value="auto">auto</option>
+              <option value="force">force</option>
+              <option value="off">off</option>
+            </select>
+          </label>
+
+          <label>
+            Omission{" "}
+            <select
+              value={omissionUI}
+              onChange={(e) => setOmissionUI(e.target.value as "auto" | "true" | "false")}
+              className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
+              disabled={busy}
+            >
+              <option value="auto">auto</option>
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          </label>
+
+          <label>
+            Profile{" "}
+            <select
+              value={reflexProfile}
+              onChange={(e) => setReflexProfile(e.target.value as "default" | "strict" | "lenient")}
+              className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
+              disabled={busy}
+            >
+              <option value="default">default</option>
+              <option value="strict">strict</option>
+              <option value="lenient">lenient</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      {/* Quick actions */}
       <div className="flex items-center gap-2">
         <button
-          onClick={fetchUrlFromBox}
+          onClick={async () => {
+            const url = prompt("Enter a URL to fetch via /agent/fetch-url:");
+            if (url) await fetchUrlToHistory(url);
+          }}
           className="px-3 py-2 rounded-xl border hover:bg-gray-50"
           title="Invoke /agent/fetch-url and append the cleaned text as a tool message."
+          disabled={busy}
         >
           fetch-url
         </button>
       </div>
 
+      {/* Conversation */}
       <div
         className="border rounded-2xl bg-[#e9eef5] p-3"
         style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
@@ -715,7 +530,6 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
               <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">{m.role}</div>
               <pre className="whitespace-pre-wrap text-sm text-slate-800">{m.text}</pre>
 
-              {/* Tool chips for assistant turns */}
               {m.role === "assistant" && m.tools && m.tools.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {m.tools.map((t: any, idx: number) => (
@@ -728,7 +542,6 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
                 </div>
               )}
 
-              {/* Frames count preview */}
               {m.frames && m.frames.length > 0 && (
                 <div className="mt-2 text-xs text-slate-600">Frames: {m.frames.length}</div>
               )}
@@ -737,12 +550,13 @@ const ChatPanel: React.FC<{ buildHandshake: () => any }> = ({ buildHandshake }) 
         </div>
       </div>
 
+      {/* Input */}
       <div className="flex items-start gap-2">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           className="flex-1 border rounded-xl p-3 text-sm"
-          placeholder="Say something… (URLs will trigger fetch-url)"
+          placeholder="Paste a URL or ask a question. (Typing a URL here will auto-run fetch-url.)"
           rows={3}
           disabled={busy}
         />
