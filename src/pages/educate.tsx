@@ -100,9 +100,33 @@ const EducationHub: React.FC = () => {
           zIndex: 0, // content gets zIndex:1+
         }}
       >
-        {thoughts.map((t, i) => (
-          <span key={i} className="bubble-text">{t}</span>
-        ))}
+        {thoughts.map((t, i) => {
+          // deterministic spread so bubbles don’t overlap
+          const left = 8 + ((i * 17) % 84);           // 8..92%
+          const fs = 0.9 + (((i * 7) % 5) * 0.06);    // ~0.9rem..1.2rem
+          const blur = ((i * 13) % 3) * 0.6;          // 0, 0.6, 1.2px
+          const delay = ((i * 3.7) % 14).toFixed(2) + "s";
+          const dur = (22 + ((i * 5) % 14)) + "s";    // 22..35s
+
+          return (
+            <span
+              key={i}
+              className="bubble-text"
+              style={
+                {
+                  // consumed by CSS as var(--left) etc.
+                  "--left": `${left}%`,
+                  "--fs": `${fs}rem`,
+                  "--blur": `${blur}px`,
+                  "--delay": delay,
+                  "--duration": dur,
+                } as React.CSSProperties
+              }
+            >
+              {t}
+            </span>
+          );
+        })}
       </div>
 
       {/* Content wrapper (raised, above bubbles) */}
@@ -275,3 +299,4 @@ const EducationHub: React.FC = () => {
 };
 
 export default EducationHub;
+
