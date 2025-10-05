@@ -4,3 +4,9 @@
 .env.local
 *.env
 
+
+# forbid JS source under src
+src/**/*.js
+src/**/*.cjs
+src/**/*.mjs
+
