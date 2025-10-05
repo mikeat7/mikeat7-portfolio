@@ -1,7 +1,7 @@
 // src/pages/analyze.tsx
 import React, { useState } from "react";
 import { useVXContext } from "@/context/VXProvider";
-import runReflexAnalysis from "@/lib/analysis/runReflexAnalysis.js"; // ← explicit .js (important)
+import runReflexAnalysis from "@/lib/analysis/runReflexAnalysis";
 import { callAgentSummarize } from "@/lib/llmClient";
 import { agentChat, agentFetchUrl, type ChatMessage } from "@/lib/agentClient";
 import { buildHandshake, type Mode, type Stakes, type CitePolicy } from "@/lib/codex-runtime";
@@ -35,15 +35,22 @@ const AnalyzePage: React.FC = () => {
   const [reportText, setReportText] = useState<string>("");
 
   async function handleAnalyze() {
-    if (!input.trim()) return;
+    console.log("🔍 handleAnalyze called with input:", input.substring(0, 50));
+
+    if (!input.trim()) {
+      console.log("⚠️ Input is empty, returning");
+      return;
+    }
+
     setIsAnalyzing(true);
     setReflexFrames([]);
     setReportText("");
     setNotice(null);
 
     try {
-      // Local deterministic analysis (no agent in Analyze tab)
+      console.log("🔍 Calling runReflexAnalysis...");
       const frames = await runReflexAnalysis(input);
+      console.log("✅ runReflexAnalysis returned", frames.length, "frames");
       setReflexFrames(frames);
 
       if (!frames || frames.length === 0) {
@@ -52,9 +59,11 @@ const AnalyzePage: React.FC = () => {
       setAnalysisCount((n) => n + 1);
     } catch (e) {
       console.error("🚨 Analysis failed:", e);
+      console.error("🚨 Error stack:", (e as Error).stack);
       setReflexFrames([]);
-      setNotice("Analysis failed. Please try again.");
+      setNotice(`Analysis failed: ${(e as Error).message}. Check console for details.`);
     } finally {
+      console.log("🔍 Analysis complete, setting isAnalyzing to false");
       setIsAnalyzing(false);
     }
   }
