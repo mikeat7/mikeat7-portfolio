@@ -1,4 +1,4 @@
-﻿// src/pages/agent-demo.tsx
+// src/pages/agent-demo.tsx
 import React, { useMemo, useState } from "react";
 import { agentChat, agentFetchUrl } from "@/lib/agentClient";
 import { buildHandshake, type Mode, type Stakes, type CitePolicy, type Codex } from "@/lib/codex-runtime";
