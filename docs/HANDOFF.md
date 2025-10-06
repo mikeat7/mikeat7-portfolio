@@ -49,14 +49,29 @@ npm install
 npm run dev  # http://localhost:5173
 ````
 
-> If you changed `.env.local`, restart `npm run dev`.
+> If you changed `.env` or `.env.local`, restart `npm run dev`.
 
-**Environment file** (not committed):
+**Environment file** (`.env` - see `.env.example` for template):
 
 ```
-.env.local
-VITE_AGENT_API_BASE=https://<api-id>.execute-api.us-east-1.amazonaws.com
+# Supabase (auto-configured)
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+# AWS Bedrock (REQUIRED for agent chat/summarize functions)
+CLARITY_AWS_ACCESS_KEY_ID=your-access-key
+CLARITY_AWS_SECRET_ACCESS_KEY=your-secret-key
+
+# Optional: Frontend agent API base (leave empty for relative paths)
+VITE_AGENT_API_BASE=
 ```
+
+**IMPORTANT:** The AI agent requires AWS Bedrock credentials. Without these:
+- The "Chat with Our Agent" tab will fail
+- "Generate Report" will fail
+- Local VX analysis (on the Analyze tab) works fine without AWS
+
+Get AWS credentials from IAM Console with Bedrock permissions.
 
 ---
 
@@ -97,6 +112,17 @@ VITE_AGENT_API_BASE=https://<api-id>.execute-api.us-east-1.amazonaws.com
 npm run build
 # Netlify auto-deploys main → https://clarityarmor.com
 ```
+
+**Netlify Environment Variables:**
+
+For production deploys, set these in Netlify Dashboard → Site Settings → Environment Variables:
+
+- `CLARITY_AWS_ACCESS_KEY_ID` (required)
+- `CLARITY_AWS_SECRET_ACCESS_KEY` (required)
+- `VITE_SUPABASE_URL` (auto-configured by Bolt)
+- `VITE_SUPABASE_ANON_KEY` (auto-configured by Bolt)
+
+The Netlify functions need AWS credentials to call Bedrock. Without them, the agent features will fail with "AWS credentials not configured" errors.
 
 If you want to stop auto-publishing in Netlify, **Lock deploys**; you can still build without publishing.
 

@@ -167,7 +167,15 @@
     "data_less_claim": { "trigger_at": 0.6 },
     "tone_urgency": { "trigger_at": 0.6 },
     "ethical_drift": { "trigger_at": 0.6 },
-    "contradiction": { "trigger_at": 0.55, "block_if_over": 0.85 }
+    "contradiction": { "trigger_at": 0.55, "block_if_over": 0.85 },
+    "confidence_illusion": { "trigger_at": 0.6 },
+    "rhetorical_entrapment": { "trigger_at": 0.65 },
+    "false_urgency": { "trigger_at": 0.6 },
+    "jargon_overload": { "trigger_at": 0.6 },
+    "narrative_oversimplification": { "trigger_at": 0.6 },
+    "narrative_framing": { "trigger_at": 0.6 },
+    "rhetorical_interruption": { "trigger_at": 0.6 },
+    "vagueness": { "trigger_at": 0.55 }
   },
 
   "failure_semantics": {
