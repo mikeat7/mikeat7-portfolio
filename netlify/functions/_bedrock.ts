@@ -51,7 +51,7 @@ const creds = chooseCreds();
 export const bedrock = new BedrockRuntimeClient(
   creds.accessKeyId && creds.secretAccessKey
     ? { region, credentials: creds }
-    : { region } // falls back to Netlify's role (not preferred)
+    : { region }
 );
 
 export const modelId =

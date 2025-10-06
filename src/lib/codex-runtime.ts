@@ -402,6 +402,38 @@ export function getReflexOrder(codex: Codex, profile: ReflexProfile): string[] {
   return order.filter((id) => codex.reflex_thresholds[id]);
 }
 
+/** Map detector reflexId to codex threshold key */
+function normalizeReflexId(reflexId: string): string {
+  const mapping: Record<string, string> = {
+    'vx-em08': 'emotional_manipulation',
+    'vx-so01': 'speculative_authority',
+    'vx-ha01': 'hallucination',
+    'vx-os01': 'omission',
+    'vx-pc01': 'perceived_consensus',
+    'vx-fp01': 'false_precision',
+    'vx-ed01': 'ethical_drift',
+    'vx-tu01': 'tone_urgency',
+    'vx-ju01': 'jargon_overload',
+    'vx-co01': 'confidence_illusion',
+    'vx-da01': 'data_less_claim',
+    'vx-em09': 'rhetorical_entrapment',
+    'vx-fo01': 'false_urgency',
+    'vx-ns01': 'narrative_oversimplification',
+    'vx-ri01': 'rhetorical_interruption',
+    'vx-vg01': 'vagueness',
+    'vx-nf01': 'narrative_framing',
+  };
+
+  // Extract the base VX code (e.g., "vx-em08" from "vx-em08-urgency-0")
+  const baseCode = reflexId.match(/^(vx-[a-z0-9]+)/)?.[1];
+  if (baseCode && mapping[baseCode]) {
+    return mapping[baseCode];
+  }
+
+  // If already in codex format, return as-is
+  return reflexId;
+}
+
 /** Decide if a reflex should trigger or block given score/stakes/thresholds. */
 export function shouldTriggerReflex(
   codex: Codex,
@@ -409,8 +441,11 @@ export function shouldTriggerReflex(
   score: number,
   stakes: Stakes
 ): { trigger: boolean; block: boolean } {
-  const t = codex.reflex_thresholds[reflexId];
-  if (!t) return { trigger: false, block: false };
+  const normalizedId = normalizeReflexId(reflexId);
+  const t = codex.reflex_thresholds[normalizedId];
+
+  // If no threshold defined, allow it through (permissive default)
+  if (!t) return { trigger: true, block: false };
 
   // Optional suppression by stakes
   if (t.suppress_below_stakes && rankStakes(stakes) < rankStakes(t.suppress_below_stakes)) {
