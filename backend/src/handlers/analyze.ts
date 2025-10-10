@@ -2,12 +2,11 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { cors } from "../lib/cors.js";
 import { maybeInvokeBedrock } from "../lib/bedrock.js";
-import type { Message } from "../lib/types.js";
+// If you actually need Message, re-enable the import; otherwise remove it to avoid TS unused import warnings.
+// import type { Message } from "../lib/types.js";
 
 interface AnalyzeRequestBody {
-  input: {
-    text: string;
-  };
+  input: { text: string };
   handshake: {
     mode: "--direct" | "--careful" | "--recap";
     stakes: "low" | "medium" | "high";
@@ -43,6 +42,7 @@ interface AnalyzeResponse {
     total_tokens?: number;
     processing_time_ms?: number;
   };
+  notice?: string;
 }
 
 function validateHandshake(h: any): h is AnalyzeRequestBody["handshake"] {
@@ -58,7 +58,7 @@ function validateHandshake(h: any): h is AnalyzeRequestBody["handshake"] {
 }
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
-  const startTime = Date.now();
+  const t0 = Date.now();
 
   try {
     if (event.requestContext.http.method === "OPTIONS") {
@@ -72,14 +72,14 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
         headers: cors(),
         body: JSON.stringify({
           ok: false,
-          message: "Invalid payload. Required: { input: { text: string }, handshake: {...} }"
+          message:
+            "Invalid payload. Required: { input: { text: string }, handshake: {...} }",
         }),
       };
     }
 
     const { input, handshake } = body;
-    const text = input.text.trim();
-
+    const text = (input.text ?? "").trim();
     if (!text) {
       return {
         statusCode: 400,
@@ -88,56 +88,53 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       };
     }
 
-    // Build analysis prompt following codex v0.9 policies
+    // Build prompt (codex v0.9)
     const prompt = buildAnalysisPrompt(text, handshake);
 
-    // Call Bedrock for deep reasoning
-    let bedrockResponse: string | null = null;
+    // Try Bedrock first
+    let bedrockText: string | null = null;
+    let frames: VXFrame[] = [];
+    let summary: string | undefined;
+    let notice: string | undefined;
+
     try {
-      bedrockResponse = await maybeInvokeBedrock(prompt);
-    } catch (e: any) {
-      console.error("Bedrock invocation failed:", e);
-      // Soft fail - return empty frames with notice
-      return {
-        statusCode: 200,
-        headers: cors(),
-        body: JSON.stringify({
-          ok: true,
-          frames: [],
-          summary: "AWS Bedrock analysis unavailable. Please check BEDROCK_MODEL_ID configuration.",
-          handshake,
-          telemetry: {
-            mode: handshake.mode,
-            stakes: handshake.stakes,
-            processing_time_ms: Date.now() - startTime,
-          },
-        } as AnalyzeResponse),
-      };
+      bedrockText = await maybeInvokeBedrock(prompt);
+      frames = parseBedrockToFrames(bedrockText, text, handshake);
+      summary = extractSummary(bedrockText);
+    } catch (err) {
+      console.error("Bedrock invocation failed:", err);
+      notice = "AWS Bedrock analysis unavailable. Using heuristic fallback.";
+      frames = []; // will be populated by fallback below
     }
 
-    // Parse Bedrock response into VX frames
-    const frames = parseBedrockToFrames(bedrockResponse, text, handshake);
-    const summary = extractSummary(bedrockResponse);
+    // Fallback: if no frames from Bedrock, emit a tiny heuristic frame
+    if (!Array.isArray(frames) || frames.length === 0) {
+      const fallback = minimalHeuristicFrames(text, handshake);
+      frames = fallback;
+      if (!notice) {
+        notice = "No frames returned by model. Emitting heuristic signal.";
+      }
+    }
 
-    const response: AnalyzeResponse = {
+    const resp: AnalyzeResponse = {
       ok: true,
-      frames,
+      frames: Array.isArray(frames) ? frames : [],
       summary,
       handshake,
       telemetry: {
         mode: handshake.mode,
         stakes: handshake.stakes,
-        processing_time_ms: Date.now() - startTime,
+        processing_time_ms: Date.now() - t0,
       },
+      ...(notice ? { notice } : {}),
     };
 
     return {
       statusCode: 200,
       headers: cors(),
-      body: JSON.stringify(response)
+      body: JSON.stringify(resp),
     };
-
-  } catch (err: any) {
+  } catch (err) {
     console.error("analyze handler error:", err);
     return {
       statusCode: 500,
@@ -169,15 +166,15 @@ CRITICAL RULES:
 6. For each detection, provide: reflex_id, score (0-1), severity, rationale, snippet
 
 REFLEX PATTERNS TO DETECT:
-- vx-ai01: Speculative Authority ("experts say" without names)
-- vx-pc01: Perceived Consensus ("everyone agrees")
-- vx-fp01: False Precision (overconfident statistics)
-- vx-ha01: Hallucination (unverifiable claims)
-- vx-os01: Omission (missing context/caveats)
-- vx-em08: Emotional Manipulation (fear/urgency)
-- vx-da01: Data-less Claims (assertions without evidence)
-- vx-fo01: False Options (false dichotomies)
-- vx-vg01: Vague Generalization (weasel words)
+- vx-ai01: Speculative Authority
+- vx-pc01: Perceived Consensus
+- vx-fp01: False Precision
+- vx-ha01: Hallucination
+- vx-os01: Omission
+- vx-em08: Emotional Manipulation
+- vx-da01: Data-less Claims
+- vx-fo01: False Options
+- vx-vg01: Vague Generalization
 
 TEXT TO ANALYZE:
 """
@@ -209,35 +206,30 @@ function parseBedrockToFrames(
   handshake: AnalyzeRequestBody["handshake"]
 ): VXFrame[] {
   if (!response) return [];
-
   try {
-    // Try to extract JSON from response
+    // Extract JSON payload defensively
     const jsonMatch = response.match(/\{[\s\S]*"frames"[\s\S]*\}/);
     if (!jsonMatch) {
       console.warn("No JSON structure found in Bedrock response");
       return [];
     }
-
     const parsed = JSON.parse(jsonMatch[0]);
-    const frames = Array.isArray(parsed.frames) ? parsed.frames : [];
-
-    // Filter by min_confidence threshold
-    return frames
-      .filter((f: any) => typeof f.score === "number" && f.score >= handshake.min_confidence)
-      .map((f: any) => ({
+    const arr = Array.isArray(parsed.frames) ? parsed.frames : [];
+    return arr
+      .filter((f: any) => typeof f?.score === "number" && f.score >= handshake.min_confidence)
+      .map((f: any): VXFrame => ({
         reflex_id: f.reflex_id || "vx-unknown",
         reflex_name: f.reflex_name || "Unknown Pattern",
-        score: f.score || 0.5,
-        severity: f.severity || "medium",
+        score: f.score ?? 0.5,
+        severity: (f.severity as VXFrame["severity"]) || "medium",
         rationale: f.rationale || "",
         context: f.context || originalText.slice(0, 200),
         snippet: f.snippet || "",
         suggestion: f.suggestion || "",
-        start_pos: f.start_pos,
-        end_pos: f.end_pos,
+        start_pos: typeof f.start_pos === "number" ? f.start_pos : undefined,
+        end_pos: typeof f.end_pos === "number" ? f.end_pos : undefined,
       }));
-
-  } catch (e: any) {
+  } catch (e) {
     console.error("Failed to parse Bedrock response as JSON:", e);
     return [];
   }
@@ -245,14 +237,37 @@ function parseBedrockToFrames(
 
 function extractSummary(response: string | null): string | undefined {
   if (!response) return undefined;
-
   try {
     const jsonMatch = response.match(/\{[\s\S]*"summary"[\s\S]*\}/);
     if (!jsonMatch) return undefined;
-
     const parsed = JSON.parse(jsonMatch[0]);
-    return parsed.summary || undefined;
+    return typeof parsed.summary === "string" ? parsed.summary : undefined;
   } catch {
     return undefined;
   }
 }
+
+// Heuristic fallback so the UI always shows at least one agent frame
+function minimalHeuristicFrames(
+  text: string,
+  handshake: AnalyzeRequestBody["handshake"]
+): VXFrame[] {
+  const urgency = /\b(now|must act|urgent|immediately|never)\b/i.exec(text || "");
+  const score = urgency ? 0.72 : 0.38;
+  if (score < (handshake.min_confidence ?? 0)) return [];
+  return [
+    {
+      reflex_id: "vx-em08",
+      reflex_name: "Emotional Manipulation",
+      score,
+      severity: score >= 0.75 ? "high" : score >= 0.55 ? "medium" : "low",
+      rationale: urgency
+        ? `Detected urgency cue "${urgency[0]}".`
+        : "Low-signal emotional/urgency heuristic.",
+      context: text.slice(0, 200),
+      snippet: urgency ? urgency.input.slice(Math.max(0, urgency.index - 30), urgency.index + urgency[0].length + 30) : text.slice(0, 120),
+      suggestion: 'Ask: "What is the concrete evidence and timeline?"',
+    },
+  ];
+}
+
