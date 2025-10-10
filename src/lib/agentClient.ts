@@ -1,5 +1,3 @@
-// src/lib/agentClient.ts
-
 export type Role = "system" | "user" | "assistant" | "tool";
 
 export interface ChatMessage {
@@ -22,102 +20,89 @@ type HandshakeOpts = {
   codex_version?: string;
 };
 
-const BASE =
+// Normalize base from Vite env once at module load
+const RAW_BASE =
   (typeof import.meta !== "undefined" &&
     (import.meta as any).env &&
     (import.meta as any).env.VITE_AGENT_API_BASE) ||
   "";
 
-function join(base: string, path: string): string {
-  if (!base) return path;
-  const b = base.endsWith("/") ? base.slice(0, -1) : base;
-  const p = path.startsWith("/") ? path : `/${path}`;
-  return `${b}${p}`;
-}
+const BASE = (RAW_BASE as string).trim().replace(/\/+$/, "");
 
-const PRETTY = {
-  chat: "/agent/chat",
-  fetch: "/agent/fetch-url",
-  summarize: "/agent/summarize",
-};
+// If BASE is set → use AWS API Gateway paths.
+// If BASE is empty → use Netlify Functions paths.
+export const ENDPOINTS = BASE
+  ? {
+      chat:    `${BASE}/agent/chat`,
+      analyze: `${BASE}/agent/analyze`,
+      fetch:   `${BASE}/agent/fetch-url`,
+      summarize: `${BASE}/agent/summarize`,
+    }
+  : {
+      chat:    `/.netlify/functions/agent-chat`,
+      analyze: `/.netlify/functions/agent-analyze`,
+      fetch:   `/.netlify/functions/agent-fetch-url`,
+      summarize: `/.netlify/functions/agent-summarize`,
+    };
 
-const RAW = {
-  chat: "/.netlify/functions/agent-chat",
-  fetch: "/.netlify/functions/agent-fetch-url",
-  summarize: "/.netlify/functions/agent-summarize",
-};
+// Helpful console breadcrumb during debugging
+// eslint-disable-next-line no-console
+console.log("[TSCA] VITE_AGENT_API_BASE =", BASE || "(missing → using Netlify Functions)");
 
 async function parseJsonOrThrow(res: Response): Promise<any> {
   const ct = res.headers.get("content-type") || "";
-  if (ct.includes("application/json")) {
-    return res.json();
-  }
-  // Try to read text for diagnostics
+  if (ct.includes("application/json")) return res.json();
+
   const text = await res.text().catch(() => "");
-  // If it *looks* like JSON, try to parse
   if (text.trim().startsWith("{") || text.trim().startsWith("[")) {
-    try {
-      return JSON.parse(text);
-    } catch {
-      /* ignore */
-    }
+    try { return JSON.parse(text); } catch { /* noop */ }
   }
   throw new Error(
-    `Expected JSON but got ${res.status} ${res.statusText}. First 300 chars:\n` +
-      text.slice(0, 300)
+    `Expected JSON but got ${res.status} ${res.statusText}. First 300 chars:\n${text.slice(0, 300)}`
   );
 }
 
-async function postJson(prettyPath: string, rawPath: string, body: any): Promise<any> {
-  const headers = { "Content-Type": "application/json", Accept: "application/json" };
-
-  // 1) Pretty route (works when redirects are correct)
-  let res = await fetch(join(BASE, prettyPath), {
+async function postJson(url: string, body: any): Promise<any> {
+  const res = await fetch(url, {
     method: "POST",
-    headers,
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(body),
   });
-
-  // If pretty route failed (404 to HTML, draft deploy quirks, etc), try RAW
-  if (!res.ok) {
-    res = await fetch(join(BASE, rawPath), {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
-  }
-
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`Agent HTTP ${res.status}: ${text.slice(0, 300)}`);
   }
-
   return parseJsonOrThrow(res);
 }
 
-/** History-aware chat.
- * Usage:
- *   const out = await agentChat("hello", [], { mode: "--careful", stakes: "medium" });
- */
+/** History-aware chat. */
 export async function agentChat(
   text: string,
   history: ChatMessage[] = [],
   opts?: HandshakeOpts
 ): Promise<any> {
   const payload = { text, history, ...(opts || {}) };
-  return postJson(PRETTY.chat, RAW.chat, payload);
+  return postJson(ENDPOINTS.chat, payload);
+}
+
+/** Analyze (bedrock-enhanced). Prefer using callAgentAnalyze in llmClient for handshake building. */
+export async function agentAnalyze(payload: {
+  input: { text: string };
+  handshake: Required<HandshakeOpts> & { mode: Mode; stakes: Stakes; cite_policy: CitePolicy; reflex_profile: ReflexProfile };
+}): Promise<any> {
+  return postJson(ENDPOINTS.analyze, payload);
 }
 
 /** Simple fetch-url helper. */
 export async function agentFetchUrl(url: string): Promise<{ text: string }> {
-  return postJson(PRETTY.fetch, RAW.fetch, { url });
+  return postJson(ENDPOINTS.fetch, { url });
 }
 
-/** Summarize frames + input into a report (your /agent/summarize function). */
+/** Summarize frames + input into a report. */
 export async function callAgentSummarize(payload: {
   inputText: string;
   frames: any[];
   handshakeOverrides?: HandshakeOpts;
 }): Promise<{ reportText: string }> {
-  return postJson(PRETTY.summarize, RAW.summarize, payload);
+  return postJson(ENDPOINTS.summarize, payload);
 }
