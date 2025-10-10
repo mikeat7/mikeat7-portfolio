@@ -1,10 +1,7 @@
-// src/lib/llmClient.ts
 import codex from "@/data/front-end-codex.v0.9.json";
 import { buildHandshake, type Mode, type Stakes, type CitePolicy } from "@/lib/codex-runtime";
 import type { VXFrame } from "@/types/VXTypes";
-
-const BASE =
-  (import.meta as any).env?.VITE_AGENT_API_BASE?.replace(/\/$/, "") || "";
+import { ENDPOINTS } from "@/lib/agentClient";
 
 type ReflexProfile = "default" | "strict" | "lenient";
 type OmissionScan = "auto" | boolean;
@@ -25,8 +22,7 @@ function makeHandshake(overrides: HandshakeOverrides = {}) {
 export async function callAgentAnalyze(
   params: { text: string } & HandshakeOverrides
 ): Promise<VXFrame[]> {
-  if (!BASE) throw new Error("VITE_AGENT_API_BASE is not set");
-
+  // If ENDPOINTS points to Netlify paths, it means VITE_AGENT_API_BASE was empty at build time.
   const handshake = makeHandshake({
     mode: params.mode,
     stakes: params.stakes,
@@ -36,7 +32,7 @@ export async function callAgentAnalyze(
     reflex_profile: params.reflex_profile,
   });
 
-  const res = await fetch(`${BASE}/agent/analyze`, {
+  const res = await fetch(ENDPOINTS.analyze, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ input: { text: params.text }, handshake }),
@@ -56,10 +52,8 @@ export async function callAgentSummarize(args: {
   frames: VXFrame[];
   handshakeOverrides?: HandshakeOverrides;
 }): Promise<{ reportText: string }> {
-  if (!BASE) throw new Error("VITE_AGENT_API_BASE is not set");
-
   const handshake = makeHandshake(args.handshakeOverrides ?? {});
-  const res = await fetch(`${BASE}/agent/summarize`, {
+  const res = await fetch(ENDPOINTS.summarize, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -83,16 +77,14 @@ export async function callAgentChat(args: {
   handshakeOverrides?: HandshakeOverrides;
   sessionId?: string;
 }): Promise<{ reply: string; sessionId?: string }> {
-  if (!BASE) throw new Error("VITE_AGENT_API_BASE is not set");
-
   const handshake = makeHandshake(args.handshakeOverrides ?? {});
-  const res = await fetch(`${BASE}/agent/chat`, {
+  const res = await fetch(ENDPOINTS.chat, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       messages: args.messages,
       handshake,
-      sessionId: args.sessionId
+      sessionId: args.sessionId,
     }),
   });
 
@@ -104,6 +96,6 @@ export async function callAgentChat(args: {
   const data = await res.json();
   return {
     reply: String(data?.reply ?? data?.message ?? ""),
-    sessionId: data?.sessionId
+    sessionId: data?.sessionId,
   };
 }
