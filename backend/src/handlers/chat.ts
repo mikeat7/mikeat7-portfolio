@@ -17,6 +17,51 @@ function validateHandshake(h: any): h is ChatRequestBody["handshake"] {
   return true;
 }
 
+// Accept both modern and legacy shapes by normalizing into { input, history }
+function normalizeBody(raw: any): ChatRequestBody | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  // Clone shallow so we can assign safely
+  const b: any = { ...raw };
+
+  // Case A: modern "messages" array → build history[] and input.text
+  if (Array.isArray(b.messages)) {
+    const msgs = b.messages;
+    const history: Message[] = [];
+
+    for (const m of msgs) {
+      const role = m?.role;
+      const text = typeof m?.text === "string" ? m.text :
+                   typeof m?.content === "string" ? m.content : "";
+      if (!text) continue;
+      if (role === "system" || role === "user" || role === "assistant" || role === "tool") {
+        history.push({ role, text });
+      }
+    }
+
+    // If no explicit input provided, infer last user as the current input
+    if (!b.input) {
+      const lastUser = [...history].reverse().find((m) => m.role === "user");
+      if (lastUser) {
+        b.input = { text: lastUser.text };
+      }
+    }
+
+    b.history = Array.isArray(b.history) ? b.history : history;
+  }
+
+  // Case B: legacy quick shape: top-level text/history without input
+  if (!b.input && typeof b.text === "string") {
+    b.input = { text: b.text };
+  }
+
+  // Ensure required containers exist
+  if (!b.input || typeof b.input !== "object") b.input = { text: "" };
+  if (!Array.isArray(b.history)) b.history = [];
+
+  return b as ChatRequestBody;
+}
+
 // Return the most recent URL from any of the last N user messages
 function detectRecentUrl(history: Message[], lookback = 5): string | null {
   const urlRe = /https?:\/\/[^\s<>"'()]+/gi;
@@ -42,8 +87,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       return { statusCode: 200, headers: cors(), body: "" };
     }
 
-    const body = event.body ? (JSON.parse(event.body) as ChatRequestBody) : null;
-    if (!body?.input || !validateHandshake(body.handshake)) {
+    const raw = event.body ? JSON.parse(event.body) : null;
+    const body = normalizeBody(raw);
+
+    if (!body || !validateHandshake((body as any).handshake)) {
       return {
         statusCode: 400,
         headers: cors(),
@@ -53,7 +100,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
 
     // Build conversation state
     const history: Message[] = Array.isArray(body.history) ? body.history : [];
-    const userText = (body.input.text || body.input.query || "").trim();
+    const userText = (body.input?.text || (body as any).input?.query || "").trim();
 
     // Append the new user turn if not present
     if (userText) {
@@ -88,7 +135,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
         });
       }
     } else {
-      // Leave a breadcrumb so tests clearly show why tools may be empty
+      // Breadcrumb for tests
       toolTraces.push({
         name: "fetch_url",
         args: {},
