@@ -18,6 +18,8 @@ type HandshakeOpts = {
   reflex_profile?: ReflexProfile;
   min_confidence?: number;
   codex_version?: string;
+  /** Optional chat session affinity */
+  sessionId?: string;
 };
 
 // Normalize base from Vite env once at module load
@@ -33,15 +35,15 @@ const BASE = (RAW_BASE as string).trim().replace(/\/+$/, "");
 // If BASE is empty → use Netlify Functions paths.
 export const ENDPOINTS = BASE
   ? {
-      chat:    `${BASE}/agent/chat`,
+      chat: `${BASE}/agent/chat`,
       analyze: `${BASE}/agent/analyze`,
-      fetch:   `${BASE}/agent/fetch-url`,
+      fetch: `${BASE}/agent/fetch-url`,
       summarize: `${BASE}/agent/summarize`,
     }
   : {
-      chat:    `/.netlify/functions/agent-chat`,
+      chat: `/.netlify/functions/agent-chat`,
       analyze: `/.netlify/functions/agent-analyze`,
-      fetch:   `/.netlify/functions/agent-fetch-url`,
+      fetch: `/.netlify/functions/agent-fetch-url`,
       summarize: `/.netlify/functions/agent-summarize`,
     };
 
@@ -55,7 +57,11 @@ async function parseJsonOrThrow(res: Response): Promise<any> {
 
   const text = await res.text().catch(() => "");
   if (text.trim().startsWith("{") || text.trim().startsWith("[")) {
-    try { return JSON.parse(text); } catch { /* noop */ }
+    try {
+      return JSON.parse(text);
+    } catch {
+      /* noop */
+    }
   }
   throw new Error(
     `Expected JSON but got ${res.status} ${res.statusText}. First 300 chars:\n${text.slice(0, 300)}`
@@ -75,20 +81,47 @@ async function postJson(url: string, body: any): Promise<any> {
   return parseJsonOrThrow(res);
 }
 
-/** History-aware chat. */
+/** History-aware chat (conforms to backend chat contract). */
 export async function agentChat(
   text: string,
   history: ChatMessage[] = [],
   opts?: HandshakeOpts
 ): Promise<any> {
-  const payload = { text, history, ...(opts || {}) };
+  // Convert (text, history) to backend messages format
+  const messages = [
+    ...history.map((h) => ({
+      role: (h.role as "system" | "user" | "assistant" | "tool"),
+      content: h.text,
+    })),
+    { role: "user" as const, content: text },
+  ];
+
+  // Safe handshake defaults aligned with Codex v0.9
+  const handshake = {
+    mode: opts?.mode ?? "--careful",
+    stakes: opts?.stakes ?? "medium",
+    min_confidence: opts?.min_confidence ?? 0.4,
+    cite_policy: opts?.cite_policy ?? "auto",
+    omission_scan: typeof opts?.omission_scan === "undefined" ? "auto" : opts.omission_scan,
+    reflex_profile: opts?.reflex_profile ?? "default",
+    codex_version: opts?.codex_version ?? "0.9.0",
+  };
+
+  const payload: any = { messages, handshake };
+  if (opts?.sessionId) payload.sessionId = opts.sessionId;
+
   return postJson(ENDPOINTS.chat, payload);
 }
 
 /** Analyze (bedrock-enhanced). Prefer using callAgentAnalyze in llmClient for handshake building. */
 export async function agentAnalyze(payload: {
   input: { text: string };
-  handshake: Required<HandshakeOpts> & { mode: Mode; stakes: Stakes; cite_policy: CitePolicy; reflex_profile: ReflexProfile };
+  handshake: Required<HandshakeOpts> & {
+    mode: Mode;
+    stakes: Stakes;
+    cite_policy: CitePolicy;
+    reflex_profile: ReflexProfile;
+  };
 }): Promise<any> {
   return postJson(ENDPOINTS.analyze, payload);
 }
@@ -102,6 +135,11 @@ export async function agentFetchUrl(url: string): Promise<{ text: string }> {
 export async function callAgentSummarize(payload: {
   inputText: string;
   frames: any[];
+  handshakeOverrides?: HandshakeOpts;
+}): Promise<{ reportText: string }> {
+  return postJson(ENDPOINTS.summarize, payload);
+}
+
   handshakeOverrides?: HandshakeOpts;
 }): Promise<{ reportText: string }> {
   return postJson(ENDPOINTS.summarize, payload);
