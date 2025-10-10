@@ -1,3 +1,5 @@
+// src/lib/agentClient.ts
+
 export type Role = "system" | "user" | "assistant" | "tool";
 
 export interface ChatMessage {
@@ -68,7 +70,7 @@ async function parseJsonOrThrow(res: Response): Promise<any> {
   );
 }
 
-async function postJson(url: string, body: any): Promise<any> {
+async function postJson(url: string, body: unknown): Promise<any> {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -88,13 +90,18 @@ export async function agentChat(
   opts?: HandshakeOpts
 ): Promise<any> {
   // Convert (text, history) to backend messages format
-  const messages = [
-    ...history.map((h) => ({
+  const messages: Array<{
+    role: "system" | "user" | "assistant" | "tool";
+    content: string;
+  }> = [];
+
+  for (const h of history) {
+    messages.push({
       role: (h.role as "system" | "user" | "assistant" | "tool"),
       content: h.text,
-    })),
-    { role: "user" as const, content: text },
-  ];
+    });
+  }
+  messages.push({ role: "user", content: text });
 
   // Safe handshake defaults aligned with Codex v0.9
   const handshake = {
@@ -107,7 +114,12 @@ export async function agentChat(
     codex_version: opts?.codex_version ?? "0.9.0",
   };
 
-  const payload: any = { messages, handshake };
+  const payload: {
+    messages: typeof messages;
+    handshake: typeof handshake;
+    sessionId?: string;
+  } = { messages, handshake };
+
   if (opts?.sessionId) payload.sessionId = opts.sessionId;
 
   return postJson(ENDPOINTS.chat, payload);
@@ -116,11 +128,14 @@ export async function agentChat(
 /** Analyze (bedrock-enhanced). Prefer using callAgentAnalyze in llmClient for handshake building. */
 export async function agentAnalyze(payload: {
   input: { text: string };
-  handshake: Required<HandshakeOpts> & {
+  handshake: {
     mode: Mode;
     stakes: Stakes;
     cite_policy: CitePolicy;
+    omission_scan: "auto" | boolean;
     reflex_profile: ReflexProfile;
+    min_confidence: number;
+    codex_version: string;
   };
 }): Promise<any> {
   return postJson(ENDPOINTS.analyze, payload);
@@ -135,11 +150,6 @@ export async function agentFetchUrl(url: string): Promise<{ text: string }> {
 export async function callAgentSummarize(payload: {
   inputText: string;
   frames: any[];
-  handshakeOverrides?: HandshakeOpts;
-}): Promise<{ reportText: string }> {
-  return postJson(ENDPOINTS.summarize, payload);
-}
-
   handshakeOverrides?: HandshakeOpts;
 }): Promise<{ reportText: string }> {
   return postJson(ENDPOINTS.summarize, payload);
