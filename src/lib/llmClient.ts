@@ -81,14 +81,19 @@ export async function callAgentSummarize(args: {
 export async function callAgentChat(args: {
   messages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
   handshakeOverrides?: HandshakeOverrides;
-}): Promise<{ reply: string }> {
+  sessionId?: string;
+}): Promise<{ reply: string; sessionId?: string }> {
   if (!BASE) throw new Error("VITE_AGENT_API_BASE is not set");
 
   const handshake = makeHandshake(args.handshakeOverrides ?? {});
   const res = await fetch(`${BASE}/agent/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages: args.messages, handshake }),
+    body: JSON.stringify({
+      messages: args.messages,
+      handshake,
+      sessionId: args.sessionId
+    }),
   });
 
   if (!res.ok) {
@@ -97,5 +102,8 @@ export async function callAgentChat(args: {
   }
 
   const data = await res.json();
-  return { reply: String(data?.reply ?? "") };
+  return {
+    reply: String(data?.reply ?? data?.message ?? ""),
+    sessionId: data?.sessionId
+  };
 }

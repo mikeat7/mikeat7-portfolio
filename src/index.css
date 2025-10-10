@@ -25,6 +25,13 @@ html, body, #root {
   height: 100%;
   background: var(--neo-bg);
   color: var(--neo-fg);
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 /* Base surface for pages using the new style */
@@ -71,6 +78,7 @@ html, body, #root {
   border-radius: 14px;
   padding: 0.9rem 1rem;
   width: 100%;
+  max-width: 100%;
   box-shadow: var(--neo-inset-dark), var(--neo-inset-light);
   transition: box-shadow var(--neo-transition);
   color: var(--neo-fg);
@@ -100,6 +108,8 @@ html, body, #root {
     8px 8px 18px rgba(0, 0, 0, 0.12),
     -8px -8px 18px rgba(255, 255, 255, 0.9);
   transition: transform var(--neo-transition), box-shadow var(--neo-transition);
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .neo-btn:hover {
@@ -146,4 +156,21 @@ html.dark {
   letter-spacing: .12em;
   text-transform: uppercase;
   opacity: .8;
+}
+
+/* Mobile viewport fix for Firefox and all browsers */
+@media screen and (max-width: 768px) {
+  body, #root {
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  input, textarea, button, select {
+    max-width: 100%;
+  }
+
+  /* Ensure flex containers don't overflow */
+  div[class*="flex"], div[class*="grid"] {
+    max-width: 100%;
+  }
 }

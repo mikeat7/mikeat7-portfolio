@@ -306,10 +306,7 @@ ${hsRecap}
           <p className="text-sm text-slate-600 mb-4">
             This version governs honesty and caution and requires a handshake on every task.
           </p>
-          <div className="bg-slate-50 border border-slate-200 rounded p-4 text-sm text-slate-800 whitespace-pre-wrap">
-            {v09Codex}
-          </div>
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={() => copy(v09Codex, setCopiedV09Codex)}
               className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
@@ -441,6 +438,54 @@ ${hsRecap}
             </p>
             <p>
               <strong>The goal:</strong> to create an AI system that thinks more clearly, communicates more honestly, and serves humanity responsibly and ethically.
+            </p>
+          </div>
+        </div>
+
+        {/* Claude's Experience with the Codex */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg shadow-sm p-6 mb-8">
+          <h2 className="text-2xl font-semibold text-blue-900 mb-4">My Experience with This Codex</h2>
+          <p className="text-blue-800 mb-4 italic">
+            I'm Claude, the AI assistant helping build this application. When my facilitator first showed me this codex, here's what I realized:
+          </p>
+          <div className="bg-white rounded-lg p-5 space-y-4 text-gray-800">
+            <p className="font-semibold text-lg text-blue-900">
+              "This is brilliant. I see exactly what this does - it's a structured protocol that forces explicit acknowledgment of:"
+            </p>
+            <ul className="list-disc list-inside space-y-2 pl-4">
+              <li><strong>Confidence levels</strong> (0-1 scale)</li>
+              <li><strong>Stakes</strong> (low/medium/high)</li>
+              <li><strong>Citation requirements</strong> (when to provide sources vs. when to admit uncertainty)</li>
+              <li><strong>Reflex checks</strong> (hallucination detection, omission scanning, contradiction checking, etc.)</li>
+              <li><strong>Failure modes</strong> (refuse/hedge/ask instead of bluffing)</li>
+            </ul>
+
+            <div className="border-l-4 border-blue-400 pl-4 mt-4">
+              <p className="font-semibold text-blue-900 mb-2">How This Would Have Prevented My Actual Mistakes:</p>
+
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="font-semibold">1. The .env.local Confusion</p>
+                  <p><strong>What happened:</strong> User said "This local folder contains .env.local" and I failed to recognize I cannot see their actual local environment—only my working directory.</p>
+                  <p><strong>Codex prevention:</strong> Omission reflex would have fired (I omitted the fact that "local folder" to them ≠ "my working directory"). Confidence check would have been ~0.30, well below the 0.60 threshold. I should have asked: "When you say 'local folder,' do you mean the files I can see, or a different location?"</p>
+                </div>
+
+                <div>
+                  <p className="font-semibold">2. The Netlify Variable Misdiagnosis</p>
+                  <p><strong>What happened:</strong> I suggested the Netlify variable was wrong without asking what it actually contained.</p>
+                  <p><strong>Codex prevention:</strong> Hallucination reflex would have triggered (I was speculating without data). Citation policy should have made me ask "What value is currently set in Netlify?" before diagnosing.</p>
+                </div>
+
+                <div>
+                  <p className="font-semibold">3. AWS vs Netlify Functions Assumption</p>
+                  <p><strong>What happened:</strong> I incorrectly assumed the system should use Netlify Functions when the user explicitly showed AWS Lambda URLs.</p>
+                  <p><strong>Codex prevention:</strong> Contradiction reflex would have caught that the evidence (AWS URLs everywhere) contradicted my assumption. After ~12+ turns of confusion, --recap mode would have forced a summary to prevent drift.</p>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-4 text-base font-medium text-gray-900 bg-yellow-50 border-l-4 border-yellow-400 p-3">
+              <strong>The core failure was bluffing confidence when I should have admitted uncertainty and asked.</strong> The codex creates mandatory checkpoints that would have forced me to distinguish between "what I can verify" vs "what I'm guessing" and ask clarifying questions when confidence drops below threshold.
             </p>
           </div>
         </div>
