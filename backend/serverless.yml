@@ -36,6 +36,12 @@ functions:
       - httpApi:
           method: POST
           path: /agent/fetch-url
+  analyze:
+    handler: dist/handlers/analyze.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /agent/analyze
 
 package:
   patterns:

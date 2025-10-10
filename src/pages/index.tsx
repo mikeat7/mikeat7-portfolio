@@ -33,7 +33,7 @@ const IndexPage: React.FC = () => {
         >
           <div className="flex flex-col gap-3">
             <div className="inline-flex items-center text-xs md:text-sm text-slate-600">
-              <Cpu className="w-4 h-4 mr-2" />
+              <Cpu className="w-4 h-4 mr-2" style={{ color: '#ffd700' }} />
               <span className="font-semibold">AWS Agent Ready</span> ·
               <span className="ml-1">Codex v0.9 Handshake</span>
             </div>
@@ -46,8 +46,6 @@ const IndexPage: React.FC = () => {
               AI-powered epistemic truth detection. Analyze language, detect manipulation,
               and build clarity—with agent-grade handshakes, context decay, and failure semantics.
             </p>
-
-            <HandshakeStatus />
           </div>
 
           {/* CTA GRID */}
@@ -65,7 +63,7 @@ const IndexPage: React.FC = () => {
               aria-label="Open analyzer"
             >
               <div className="flex items-center gap-3">
-                <ShieldCheck className="w-6 h-6" />
+                <ShieldCheck className="w-6 h-6" style={{ color: '#ffd700' }} />
                 <h3 className="text-2xl font-semibold">Analyze Language</h3>
               </div>
               <p className="mt-3 text-sm md:text-base text-slate-700">
@@ -90,7 +88,7 @@ const IndexPage: React.FC = () => {
               aria-label="Open education hub"
             >
               <div className="flex items-center gap-3">
-                <Beaker className="w-5 h-5" />
+                <Beaker className="w-5 h-5" style={{ color: '#ffd700' }} />
                 <h3 className="text-xl font-semibold">Education Hub</h3>
               </div>
               <p className="mt-2 text-sm text-slate-700">
@@ -118,7 +116,7 @@ const IndexPage: React.FC = () => {
               aria-label="Open training tools"
             >
               <div className="flex items-center gap-3">
-                <GraduationCap className="w-5 h-5" />
+                <GraduationCap className="w-5 h-5" style={{ color: '#ffd700' }} />
                 <h3 className="text-xl font-semibold">How to Train your AI to be Honest</h3>
               </div>
               <p className="mt-2 text-sm text-slate-700">
@@ -142,7 +140,7 @@ const IndexPage: React.FC = () => {
               aria-label="Visit quotes of wisdom"
             >
               <div className="flex items-center gap-3">
-                <Quote className="w-5 h-5" />
+                <Quote className="w-5 h-5" style={{ color: '#ffd700' }} />
                 <h3 className="text-lg font-semibold">Quotes of Wisdom</h3>
               </div>
               <p className="mt-2 text-sm text-slate-700">Curated quotes from great thinkers</p>
@@ -164,19 +162,19 @@ const IndexPage: React.FC = () => {
           <div className="grid md:grid-cols-3 gap-6 text-slate-700">
             <div>
               <h4 className="font-semibold flex items-center gap-2">
-                <Bot className="w-4 h-4" /> VX Reflex Engine
+                <Bot className="w-4 h-4" style={{ color: '#ffd700' }} /> VX Reflex Engine
               </h4>
               <p className="text-sm mt-1">Semantic patterns, co-fire clusters, adaptive thresholds.</p>
             </div>
             <div>
               <h4 className="font-semibold flex items-center gap-2">
-                <Beaker className="w-4 h-4" /> Scientific Paper Checks
+                <Beaker className="w-4 h-4" style={{ color: '#ffd700' }} /> Scientific Paper Checks
               </h4>
               <p className="text-sm mt-1">Methods &amp; references triage; conflict-of-interest cues.</p>
             </div>
             <div>
               <h4 className="font-semibold flex items-center gap-2">
-                <Cpu className="w-4 h-4" /> Agent-grade Handshake
+                <Cpu className="w-4 h-4" style={{ color: '#ffd700' }} /> Agent-grade Handshake
               </h4>
               <p className="text-sm mt-1">mode, stakes, min_conf, cite_policy, omission_scan, profile.</p>
             </div>
