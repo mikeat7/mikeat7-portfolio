@@ -2,8 +2,6 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { cors } from "../lib/cors.js";
 import { maybeInvokeBedrock } from "../lib/bedrock.js";
-// If you actually need Message, re-enable the import; otherwise remove it to avoid TS unused import warnings.
-// import type { Message } from "../lib/types.js";
 
 interface AnalyzeRequestBody {
   input: { text: string };
@@ -99,6 +97,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
 
     try {
       bedrockText = await maybeInvokeBedrock(prompt);
+      // DIAGNOSTIC: show what Bedrock returned (visible in CloudWatch)
+      console.log("[analyze] Bedrock returned:", bedrockText ? bedrockText.slice(0, 200) : "(null)");
       frames = parseBedrockToFrames(bedrockText, text, handshake);
       summary = extractSummary(bedrockText);
     } catch (err) {
@@ -270,4 +270,3 @@ function minimalHeuristicFrames(
     },
   ];
 }
-
