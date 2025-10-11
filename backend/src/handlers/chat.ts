@@ -157,10 +157,12 @@ ${convo}
 TASK:
 Respond briefly with what you know, what you don't, and what you would fetch or check next. If a URL was provided, incorporate the fetched snippet when relevant.`;
 
-    let bedrockNote: string | null = null;
+  let bedrockNote: string | null = null;
     try {
       bedrockNote = await maybeInvokeBedrock(modelPrompt);
-    } catch {
+    } catch (e: any) {
+      console.error("[chat] Bedrock invocation failed:", e.message || e);
+      console.error("[chat] Stack:", e.stack);
       bedrockNote = null; // soft-fail: still return 200
     }
 
@@ -182,3 +184,4 @@ Respond briefly with what you know, what you don't, and what you would fetch or 
     };
   }
 };
+
