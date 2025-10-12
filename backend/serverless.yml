@@ -9,9 +9,9 @@ provider:
   timeout: 15
   httpApi:
     cors: true
-  environment:
+   environment:
     NODE_OPTIONS: --enable-source-maps
-    BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, ''}
+    BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, 'anthropic.claude-3-5-sonnet-20240620-v1:0'}
     BEDROCK_REGION: ${env:BEDROCK_REGION, 'us-east-1'}
   iam:
     role:
