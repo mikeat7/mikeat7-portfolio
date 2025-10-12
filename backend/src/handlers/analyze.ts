@@ -37,7 +37,6 @@ interface AnalyzeResponse {
   telemetry?: {
     mode: string;
     stakes: string;
-    total_tokens?: number;
     processing_time_ms?: number;
   };
   notice?: string;
@@ -89,28 +88,31 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     // Build prompt (codex v0.9)
     const prompt = buildAnalysisPrompt(text, handshake);
 
-    // Try Bedrock first
-    let bedrockText: string | null = null;
+    // Call Bedrock (returns plain TEXT from model per bedrock.ts)
     let frames: VXFrame[] = [];
     let summary: string | undefined;
     let notice: string | undefined;
 
     try {
-      bedrockText = await maybeInvokeBedrock(prompt);
-      // DIAGNOSTIC: show what Bedrock returned (visible in CloudWatch)
-      console.log("[analyze] Bedrock returned:", bedrockText ? bedrockText.slice(0, 200) : "(null)");
-      frames = parseBedrockToFrames(bedrockText, text, handshake);
-      summary = extractSummary(bedrockText);
-    } catch (err) {
-      console.error("Bedrock invocation failed:", err);
+      console.info("[analyze] invoking Bedrock…");
+      const bedrockText = await maybeInvokeBedrock(prompt);
+      console.info(
+        "[analyze] Bedrock returned:",
+        bedrockText ? bedrockText.slice(0, 200) : "(null)"
+      );
+
+      if (bedrockText) {
+        frames = parseBedrockToFrames(bedrockText, text, handshake);
+        summary = extractSummary(bedrockText);
+      }
+    } catch (e: any) {
+      console.error("[analyze] Bedrock invocation failed:", e?.message || e);
       notice = "AWS Bedrock analysis unavailable. Using heuristic fallback.";
-      frames = []; // will be populated by fallback below
     }
 
-    // Fallback: if no frames from Bedrock, emit a tiny heuristic frame
+    // Fallback if model gave nothing usable
     if (!Array.isArray(frames) || frames.length === 0) {
-      const fallback = minimalHeuristicFrames(text, handshake);
-      frames = fallback;
+      frames = minimalHeuristicFrames(text, handshake);
       if (!notice) {
         notice = "No frames returned by model. Emitting heuristic signal.";
       }
@@ -118,7 +120,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
 
     const resp: AnalyzeResponse = {
       ok: true,
-      frames: Array.isArray(frames) ? frames : [],
+      frames,
       summary,
       handshake,
       telemetry: {
@@ -134,7 +136,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       headers: cors(),
       body: JSON.stringify(resp),
     };
-  } catch (err) {
+  } catch (err: any) {
     console.error("analyze handler error:", err);
     return {
       statusCode: 500,
@@ -144,7 +146,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   }
 };
 
-function buildAnalysisPrompt(text: string, handshake: AnalyzeRequestBody["handshake"]): string {
+function buildAnalysisPrompt(
+  text: string,
+  handshake: AnalyzeRequestBody["handshake"]
+): string {
   return `SYSTEM: You are a manipulation detection agent governed by FRONT-END CODEX v0.9.
 
 HANDSHAKE PARAMETERS:
@@ -207,10 +212,10 @@ function parseBedrockToFrames(
 ): VXFrame[] {
   if (!response) return [];
   try {
-    // Extract JSON payload defensively
+    // Pull out the JSON block if the model wrapped it in prose
     const jsonMatch = response.match(/\{[\s\S]*"frames"[\s\S]*\}/);
     if (!jsonMatch) {
-      console.warn("No JSON structure found in Bedrock response");
+      console.warn("[analyze] no JSON structure found in Bedrock response");
       return [];
     }
     const parsed = JSON.parse(jsonMatch[0]);
@@ -230,7 +235,7 @@ function parseBedrockToFrames(
         end_pos: typeof f.end_pos === "number" ? f.end_pos : undefined,
       }));
   } catch (e) {
-    console.error("Failed to parse Bedrock response as JSON:", e);
+    console.error("[analyze] failed to parse Bedrock JSON:", e);
     return [];
   }
 }
@@ -247,7 +252,6 @@ function extractSummary(response: string | null): string | undefined {
   }
 }
 
-// Heuristic fallback so the UI always shows at least one agent frame
 function minimalHeuristicFrames(
   text: string,
   handshake: AnalyzeRequestBody["handshake"]
@@ -265,7 +269,12 @@ function minimalHeuristicFrames(
         ? `Detected urgency cue "${urgency[0]}".`
         : "Low-signal emotional/urgency heuristic.",
       context: text.slice(0, 200),
-      snippet: urgency ? urgency.input.slice(Math.max(0, urgency.index - 30), urgency.index + urgency[0].length + 30) : text.slice(0, 120),
+      snippet: urgency
+        ? urgency.input.slice(
+            Math.max(0, urgency.index - 30),
+            urgency.index + urgency[0].length + 30
+          )
+        : text.slice(0, 120),
       suggestion: 'Ask: "What is the concrete evidence and timeline?"',
     },
   ];
