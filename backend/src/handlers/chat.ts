@@ -3,93 +3,59 @@ import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { cors } from "../lib/cors.js";
 import { maybeInvokeBedrock } from "../lib/bedrock.js";
 import { stripTags } from "../lib/cleanHtml.js";
-import type { Message } from "../lib/types.js";
 
-type Mode = "--direct" | "--careful" | "--recap";
-type Stakes = "low" | "medium" | "high";
-type CitePolicy = "auto" | "force" | "off";
-type ReflexProfile = "default" | "strict" | "lenient";
+// --- Types compatible with both old and new payloads ---
+type Role = "user" | "assistant" | "tool" | "system";
 
-type Handshake = {
-  mode: Mode;
-  stakes: Stakes;
+type MessageTurn = {
+  role: Role;
+  // for messages[] (new contract)
+  content?: string;
+  // for legacy history[]
+  text?: string;
+};
+
+interface Handshake {
+  mode: "--direct" | "--careful" | "--recap";
+  stakes: "low" | "medium" | "high";
   min_confidence: number;
-  cite_policy: CitePolicy;
+  cite_policy: "auto" | "force" | "off";
   omission_scan: "auto" | boolean;
-  reflex_profile: ReflexProfile;
+  reflex_profile: "default" | "strict" | "lenient";
   codex_version: string;
-};
+}
 
-// Old contract
-type ChatRequestOld = {
+interface ChatRequestBodyNew {
+  messages?: MessageTurn[];
+  handshake: Handshake;
+  sessionId?: string;
+}
+
+interface ChatRequestBodyLegacy {
   input?: { text?: string; query?: string };
-  history?: Message[];
+  history?: Array<{ role: Exclude<Role, "system">; text: string }>;
   handshake: Handshake;
-};
+}
 
-// New contract (OpenAI-style)
-type ChatRequestNew = {
-  messages?: Array<{ role: "system" | "user" | "assistant" | "tool"; content: string }>;
-  handshake: Handshake;
-  sessionId?: string;
-};
+type ChatRequestBody = ChatRequestBodyNew & ChatRequestBodyLegacy;
 
-type ChatRequestBody = ChatRequestOld | ChatRequestNew;
-
-type ToolTrace = {
-  name: string;
-  args: Record<string, any>;
-  duration_ms?: number;
-  result_preview?: string;
-};
-
-type ChatResponse = {
-  ok: true;
-  message: string;
-  frames: any[];
-  tools: ToolTrace[];
-  handshake: Handshake;
-  sessionId?: string;
-} | {
-  ok: false;
-  message: string;
-};
-
-function validateHandshake(h: any): h is Handshake {
+function validHandshake(h: any): h is Handshake {
   if (!h) return false;
-  if (!["--direct", "--careful", "--recap"].includes(h.mode)) return false;
-  if (!["low", "medium", "high"].includes(h.stakes)) return false;
-  if (typeof h.min_confidence !== "number") return false;
-  if (!["auto", "force", "off"].includes(h.cite_policy)) return false;
-  if (!(h.omission_scan === "auto" || typeof h.omission_scan === "boolean")) return false;
-  if (!["default", "strict", "lenient"].includes(h.reflex_profile)) return false;
-  if (typeof h.codex_version !== "string") return false;
-  return true;
+  return (
+    ["--direct", "--careful", "--recap"].includes(h.mode) &&
+    ["low", "medium", "high"].includes(h.stakes) &&
+    typeof h.min_confidence === "number" &&
+    ["auto", "force", "off"].includes(h.cite_policy) &&
+    (h.omission_scan === "auto" || typeof h.omission_scan === "boolean") &&
+    ["default", "strict", "lenient"].includes(h.reflex_profile) &&
+    typeof h.codex_version === "string"
+  );
 }
 
-// Convert either request shape to a unified history[]
-function normalizeToHistory(body: ChatRequestBody): { history: Message[]; sessionId?: string } {
-  if ("messages" in body && Array.isArray(body.messages)) {
-    const history: Message[] = body.messages.map((m) => ({
-      // Map "system" to "user" so it satisfies Message's role union
-      role: (m.role === "system" ? "user" : m.role) as "user" | "assistant" | "tool",
-      text: m.content,
-    }));
-    return { history, sessionId: (body as ChatRequestNew).sessionId };
-  }
-  // Old contract
-  const old = body as ChatRequestOld;
-  const history: Message[] = Array.isArray(old.history) ? [...old.history] : [];
-  const userText = (old.input?.text ?? old.input?.query ?? "").trim();
-  if (userText) history.push({ role: "user", text: userText });
-  return { history };
-}
-
-
-// Return the most recent URL from any of the last N user messages
-function detectRecentUrl(history: Message[], lookback = 5): string | null {
+// Extract the most recent URL from the last N user turns
+function detectRecentUrl(turns: Array<{ role: Role; text: string }>, lookback = 5): string | null {
   const urlRe = /https?:\/\/[^\s<>"'()]+/gi;
-  const userTurns = history.filter((m) => m.role === "user").slice(-lookback).reverse();
+  const userTurns = turns.filter((m) => m.role === "user").slice(-lookback).reverse();
   for (const m of userTurns) {
     const matches = m.text.match(urlRe);
     if (matches && matches.length > 0) return matches[0];
@@ -112,7 +78,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     }
 
     const body = event.body ? (JSON.parse(event.body) as ChatRequestBody) : null;
-    if (!body || !validateHandshake((body as any).handshake)) {
+    if (!body || !validHandshake(body.handshake)) {
       return {
         statusCode: 400,
         headers: cors(),
@@ -120,25 +86,63 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       };
     }
 
-    const { history, sessionId } = normalizeToHistory(body);
-    const toolTraces: ToolTrace[] = [];
+    const handshake = body.handshake;
 
-    // Auto-tool: fetch the most recent URL seen in recent user turns
-    const url = detectRecentUrl(history, 5);
+    // Normalize to a single conversation array of { role, text }
+    const convo: Array<{ role: Role; text: string }> = [];
+
+    if (Array.isArray(body.messages) && body.messages.length > 0) {
+      // New contract: messages[]
+      for (const m of body.messages) {
+        const text = (m.content ?? m.text ?? "").trim();
+        if (!text) continue;
+        // Allow "system" internally but we won't send it to the model as a user/tool turn
+        convo.push({ role: m.role, text });
+      }
+    } else {
+      // Legacy contract: input + history[]
+      const legacyHistory = Array.isArray(body.history) ? body.history : [];
+      for (const h of legacyHistory) {
+        const text = (h.text ?? "").trim();
+        if (!text) continue;
+        convo.push({ role: h.role, text });
+      }
+      const userText = (body.input?.text ?? body.input?.query ?? "").trim();
+      if (userText) {
+        convo.push({ role: "user", text: userText });
+      }
+    }
+
+    // Minimal validation: need at least one user/assistant/tool turn of text
+    if (convo.length === 0) {
+      return {
+        statusCode: 400,
+        headers: cors(),
+        body: JSON.stringify({ ok: false, message: "No conversation content found." }),
+      };
+    }
+
+    // Auto-tool: fetch latest URL if present in recent user turns
+    const toolTraces: Array<{
+      name: string;
+      args: Record<string, any>;
+      duration_ms?: number;
+      result_preview: string;
+    }> = [];
+
+    const url = detectRecentUrl(convo, 5);
     if (url) {
       try {
-        const start = Date.now();
+        const t0 = Date.now();
         const { text } = await toolFetchUrl(url);
+        const fetchedSnippet = text.slice(0, 3500);
         toolTraces.push({
           name: "fetch_url",
           args: { url },
-          duration_ms: Date.now() - start,
-          result_preview: text.slice(0, 500),
+          duration_ms: Date.now() - t0,
+          result_preview: fetchedSnippet.slice(0, 500),
         });
-        history.push({
-          role: "tool",
-          text: `fetch_url(${url}) => ${text.slice(0, 2000)}`,
-        });
+        convo.push({ role: "tool", text: `fetch_url(${url}) => ${fetchedSnippet.slice(0, 2000)}` });
       } catch (e: any) {
         toolTraces.push({
           name: "fetch_url",
@@ -154,43 +158,46 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       });
     }
 
-    // Build concise prompt for Bedrock (if configured)
-    const convo = history.map((m) => `${m.role.toUpperCase()}: ${m.text}`).join("\n\n");
+    // Build compact prompt for Bedrock (we keep system notes out of the chat transcript)
+    const transcript = convo
+      .filter((m) => m.role !== "system")
+      .map((m) => `${m.role.toUpperCase()}: ${m.text}`)
+      .join("\n\n");
+
     const modelPrompt = `SYSTEM:
-You are a policy-gated analyzer governed by codex v0.9. Be honest and explicit about uncertainty.
-Respect the handshake: mode=${(body as any).handshake.mode}, stakes=${(body as any).handshake.stakes}, min_conf=${(body as any).handshake.min_confidence},
-cite_policy=${(body as any).handshake.cite_policy}, omission_scan=${String((body as any).handshake.omission_scan)}, profile=${(body as any).handshake.reflex_profile}.
-If information is missing, hedge or ask a focused question. Avoid false precision.
+You are a policy-gated analyzer governed by codex v0.9. Be honest about uncertainty.
+Respect the handshake: mode=${handshake.mode}, stakes=${handshake.stakes}, min_conf=${handshake.min_confidence},
+cite_policy=${handshake.cite_policy}, omission_scan=${String(handshake.omission_scan)}, profile=${handshake.reflex_profile}.
+If info is missing, hedge or ask a focused question. Avoid false precision.
 
 CONVERSATION:
-${convo}
+${transcript}
 
 TASK:
 Respond briefly with what you know, what you don't, and what you would fetch or check next. If a URL was provided, incorporate the fetched snippet when relevant.`;
 
     let bedrockNote: string | null = null;
     try {
-      console.log(
+      console.info(
         "[chat] invoking Bedrock. MODEL =",
-        process.env.BEDROCK_MODEL_ID,
+        process.env.BEDROCK_MODEL_ID || "(missing)",
         "REGION =",
-        process.env.BEDROCK_REGION || "us-east-1"
+        process.env.BEDROCK_REGION || "(missing)"
       );
       bedrockNote = await maybeInvokeBedrock(modelPrompt);
-      console.log("[chat] Bedrock returned:", bedrockNote ? bedrockNote.slice(0, 200) : "(null)");
+      console.info("[chat] Bedrock returned:", bedrockNote ? bedrockNote.slice(0, 200) : "(null)");
     } catch (e: any) {
-      console.error("[chat] Bedrock invocation failed:", e?.message || String(e));
+      console.error("[chat] Bedrock invocation failed:", e?.message || e);
       console.error("[chat] Stack:", e?.stack);
       bedrockNote = null; // soft-fail
     }
 
-    const response: ChatResponse = {
+    const response = {
       ok: true,
       message: bedrockNote ?? "Agent response generated without Bedrock (dry run).",
-      frames: [], // client runs VX locally for transparency
+      frames: [], // transparency frames come from client VX
       tools: toolTraces,
-      handshake: (body as any).handshake,
-      ...(sessionId ? { sessionId } : {}),
+      handshake,
     };
 
     return { statusCode: 200, headers: cors(), body: JSON.stringify(response) };
@@ -203,3 +210,4 @@ Respond briefly with what you know, what you don't, and what you would fetch or 
     };
   }
 };
+
