@@ -69,21 +69,22 @@ function validateHandshake(h: any): h is Handshake {
 
 // Convert either request shape to a unified history[]
 function normalizeToHistory(body: ChatRequestBody): { history: Message[]; sessionId?: string } {
-  // New contract: messages -> history
   if ("messages" in body && Array.isArray(body.messages)) {
     const history: Message[] = body.messages.map((m) => ({
-      role: m.role,
+      // Map "system" to "user" so it satisfies Message's role union
+      role: (m.role === "system" ? "user" : m.role) as "user" | "assistant" | "tool",
       text: m.content,
     }));
     return { history, sessionId: (body as ChatRequestNew).sessionId };
   }
-  // Old contract: input/history
+  // Old contract
   const old = body as ChatRequestOld;
   const history: Message[] = Array.isArray(old.history) ? [...old.history] : [];
   const userText = (old.input?.text ?? old.input?.query ?? "").trim();
   if (userText) history.push({ role: "user", text: userText });
   return { history };
 }
+
 
 // Return the most recent URL from any of the last N user messages
 function detectRecentUrl(history: Message[], lookback = 5): string | null {
