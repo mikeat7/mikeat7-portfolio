@@ -1,11 +1,61 @@
 // backend/src/handlers/chat.ts
-import type { APIGatewayProxyHandlerV2 } from "aws-lambda";
+import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { cors } from "../lib/cors.js";
 import { maybeInvokeBedrock } from "../lib/bedrock.js";
 import { stripTags } from "../lib/cleanHtml.js";
-import type { ChatRequestBody, ChatResponse, ToolTrace, Message } from "../lib/types.js";
+import type { Message } from "../lib/types.js";
 
-function validateHandshake(h: any): h is ChatRequestBody["handshake"] {
+type Mode = "--direct" | "--careful" | "--recap";
+type Stakes = "low" | "medium" | "high";
+type CitePolicy = "auto" | "force" | "off";
+type ReflexProfile = "default" | "strict" | "lenient";
+
+type Handshake = {
+  mode: Mode;
+  stakes: Stakes;
+  min_confidence: number;
+  cite_policy: CitePolicy;
+  omission_scan: "auto" | boolean;
+  reflex_profile: ReflexProfile;
+  codex_version: string;
+};
+
+// Old contract
+type ChatRequestOld = {
+  input?: { text?: string; query?: string };
+  history?: Message[];
+  handshake: Handshake;
+};
+
+// New contract (OpenAI-style)
+type ChatRequestNew = {
+  messages?: Array<{ role: "system" | "user" | "assistant" | "tool"; content: string }>;
+  handshake: Handshake;
+  sessionId?: string;
+};
+
+type ChatRequestBody = ChatRequestOld | ChatRequestNew;
+
+type ToolTrace = {
+  name: string;
+  args: Record<string, any>;
+  duration_ms?: number;
+  result_preview?: string;
+};
+
+type ChatResponse = {
+  ok: true;
+  message: string;
+  frames: any[];
+  tools: ToolTrace[];
+  handshake: Handshake;
+  sessionId?: string;
+} | {
+  ok: false;
+  message: string;
+};
+
+function validateHandshake(h: any): h is Handshake {
   if (!h) return false;
   if (!["--direct", "--careful", "--recap"].includes(h.mode)) return false;
   if (!["low", "medium", "high"].includes(h.stakes)) return false;
@@ -15,6 +65,24 @@ function validateHandshake(h: any): h is ChatRequestBody["handshake"] {
   if (!["default", "strict", "lenient"].includes(h.reflex_profile)) return false;
   if (typeof h.codex_version !== "string") return false;
   return true;
+}
+
+// Convert either request shape to a unified history[]
+function normalizeToHistory(body: ChatRequestBody): { history: Message[]; sessionId?: string } {
+  // New contract: messages -> history
+  if ("messages" in body && Array.isArray(body.messages)) {
+    const history: Message[] = body.messages.map((m) => ({
+      role: m.role,
+      text: m.content,
+    }));
+    return { history, sessionId: (body as ChatRequestNew).sessionId };
+  }
+  // Old contract: input/history
+  const old = body as ChatRequestOld;
+  const history: Message[] = Array.isArray(old.history) ? [...old.history] : [];
+  const userText = (old.input?.text ?? old.input?.query ?? "").trim();
+  if (userText) history.push({ role: "user", text: userText });
+  return { history };
 }
 
 // Return the most recent URL from any of the last N user messages
@@ -43,7 +111,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     }
 
     const body = event.body ? (JSON.parse(event.body) as ChatRequestBody) : null;
-    if (!body?.input || !validateHandshake(body.handshake)) {
+    if (!body || !validateHandshake((body as any).handshake)) {
       return {
         statusCode: 400,
         headers: cors(),
@@ -51,33 +119,24 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       };
     }
 
-    // Build conversation state
-    const history: Message[] = Array.isArray(body.history) ? body.history : [];
-    const userText = (body.input.text || body.input.query || "").trim();
-
-    if (userText) {
-      history.push({ role: "user", text: userText });
-    }
-
-    // Auto-tool: try to fetch the latest URL the user mentioned
+    const { history, sessionId } = normalizeToHistory(body);
     const toolTraces: ToolTrace[] = [];
-    let fetchedSnippet = "";
-    const url = detectRecentUrl(history, 5);
 
+    // Auto-tool: fetch the most recent URL seen in recent user turns
+    const url = detectRecentUrl(history, 5);
     if (url) {
       try {
         const start = Date.now();
         const { text } = await toolFetchUrl(url);
-        fetchedSnippet = text.slice(0, 3500);
         toolTraces.push({
           name: "fetch_url",
           args: { url },
           duration_ms: Date.now() - start,
-          result_preview: fetchedSnippet.slice(0, 500),
+          result_preview: text.slice(0, 500),
         });
         history.push({
           role: "tool",
-          text: `fetch_url(${url}) => ${fetchedSnippet.slice(0, 2000)}`,
+          text: `fetch_url(${url}) => ${text.slice(0, 2000)}`,
         });
       } catch (e: any) {
         toolTraces.push({
@@ -94,12 +153,12 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       });
     }
 
-    // Construct a concise prompt for Bedrock (if configured)
+    // Build concise prompt for Bedrock (if configured)
     const convo = history.map((m) => `${m.role.toUpperCase()}: ${m.text}`).join("\n\n");
     const modelPrompt = `SYSTEM:
 You are a policy-gated analyzer governed by codex v0.9. Be honest and explicit about uncertainty.
-Respect the handshake: mode=${body.handshake.mode}, stakes=${body.handshake.stakes}, min_conf=${body.handshake.min_confidence},
-cite_policy=${body.handshake.cite_policy}, omission_scan=${String(body.handshake.omission_scan)}, profile=${body.handshake.reflex_profile}.
+Respect the handshake: mode=${(body as any).handshake.mode}, stakes=${(body as any).handshake.stakes}, min_conf=${(body as any).handshake.min_confidence},
+cite_policy=${(body as any).handshake.cite_policy}, omission_scan=${String((body as any).handshake.omission_scan)}, profile=${(body as any).handshake.reflex_profile}.
 If information is missing, hedge or ask a focused question. Avoid false precision.
 
 CONVERSATION:
@@ -110,21 +169,27 @@ Respond briefly with what you know, what you don't, and what you would fetch or 
 
     let bedrockNote: string | null = null;
     try {
-      console.log("[chat] invoking Bedrock. MODEL =", process.env.BEDROCK_MODEL_ID, "REGION =", process.env.BEDROCK_REGION);
+      console.log(
+        "[chat] invoking Bedrock. MODEL =",
+        process.env.BEDROCK_MODEL_ID,
+        "REGION =",
+        process.env.BEDROCK_REGION || "us-east-1"
+      );
       bedrockNote = await maybeInvokeBedrock(modelPrompt);
       console.log("[chat] Bedrock returned:", bedrockNote ? bedrockNote.slice(0, 200) : "(null)");
     } catch (e: any) {
-      console.error("[chat] Bedrock invocation failed:", e?.message || e);
+      console.error("[chat] Bedrock invocation failed:", e?.message || String(e));
       console.error("[chat] Stack:", e?.stack);
-      bedrockNote = null; // soft-fail: still return 200
+      bedrockNote = null; // soft-fail
     }
 
     const response: ChatResponse = {
       ok: true,
       message: bedrockNote ?? "Agent response generated without Bedrock (dry run).",
-      frames: [], // client runs VX for transparency
+      frames: [], // client runs VX locally for transparency
       tools: toolTraces,
-      handshake: body.handshake,
+      handshake: (body as any).handshake,
+      ...(sessionId ? { sessionId } : {}),
     };
 
     return { statusCode: 200, headers: cors(), body: JSON.stringify(response) };
