@@ -1,5 +1,5 @@
 // backend/src/handlers/chat.ts
-import { APIGatewayProxyHandlerV2 } from "aws-lambda";
+import type { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { cors } from "../lib/cors.js";
 import { maybeInvokeBedrock } from "../lib/bedrock.js";
 import { stripTags } from "../lib/cleanHtml.js";
@@ -15,51 +15,6 @@ function validateHandshake(h: any): h is ChatRequestBody["handshake"] {
   if (!["default", "strict", "lenient"].includes(h.reflex_profile)) return false;
   if (typeof h.codex_version !== "string") return false;
   return true;
-}
-
-// Accept both modern and legacy shapes by normalizing into { input, history }
-function normalizeBody(raw: any): ChatRequestBody | null {
-  if (!raw || typeof raw !== "object") return null;
-
-  // Clone shallow so we can assign safely
-  const b: any = { ...raw };
-
-  // Case A: modern "messages" array → build history[] and input.text
-  if (Array.isArray(b.messages)) {
-    const msgs = b.messages;
-    const history: Message[] = [];
-
-    for (const m of msgs) {
-      const role = m?.role;
-      const text = typeof m?.text === "string" ? m.text :
-                   typeof m?.content === "string" ? m.content : "";
-      if (!text) continue;
-      if (role === "system" || role === "user" || role === "assistant" || role === "tool") {
-        history.push({ role, text });
-      }
-    }
-
-    // If no explicit input provided, infer last user as the current input
-    if (!b.input) {
-      const lastUser = [...history].reverse().find((m) => m.role === "user");
-      if (lastUser) {
-        b.input = { text: lastUser.text };
-      }
-    }
-
-    b.history = Array.isArray(b.history) ? b.history : history;
-  }
-
-  // Case B: legacy quick shape: top-level text/history without input
-  if (!b.input && typeof b.text === "string") {
-    b.input = { text: b.text };
-  }
-
-  // Ensure required containers exist
-  if (!b.input || typeof b.input !== "object") b.input = { text: "" };
-  if (!Array.isArray(b.history)) b.history = [];
-
-  return b as ChatRequestBody;
 }
 
 // Return the most recent URL from any of the last N user messages
@@ -87,10 +42,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       return { statusCode: 200, headers: cors(), body: "" };
     }
 
-    const raw = event.body ? JSON.parse(event.body) : null;
-    const body = normalizeBody(raw);
-
-    if (!body || !validateHandshake((body as any).handshake)) {
+    const body = event.body ? (JSON.parse(event.body) as ChatRequestBody) : null;
+    if (!body?.input || !validateHandshake(body.handshake)) {
       return {
         statusCode: 400,
         headers: cors(),
@@ -100,14 +53,13 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
 
     // Build conversation state
     const history: Message[] = Array.isArray(body.history) ? body.history : [];
-    const userText = (body.input?.text || (body as any).input?.query || "").trim();
+    const userText = (body.input.text || body.input.query || "").trim();
 
-    // Append the new user turn if not present
     if (userText) {
       history.push({ role: "user", text: userText });
     }
 
-    // Auto-tool: fetch the most recent URL seen in recent user turns
+    // Auto-tool: try to fetch the latest URL the user mentioned
     const toolTraces: ToolTrace[] = [];
     let fetchedSnippet = "";
     const url = detectRecentUrl(history, 5);
@@ -135,7 +87,6 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
         });
       }
     } else {
-      // Breadcrumb for tests
       toolTraces.push({
         name: "fetch_url",
         args: {},
@@ -157,12 +108,14 @@ ${convo}
 TASK:
 Respond briefly with what you know, what you don't, and what you would fetch or check next. If a URL was provided, incorporate the fetched snippet when relevant.`;
 
-  let bedrockNote: string | null = null;
+    let bedrockNote: string | null = null;
     try {
+      console.log("[chat] invoking Bedrock. MODEL =", process.env.BEDROCK_MODEL_ID, "REGION =", process.env.BEDROCK_REGION);
       bedrockNote = await maybeInvokeBedrock(modelPrompt);
+      console.log("[chat] Bedrock returned:", bedrockNote ? bedrockNote.slice(0, 200) : "(null)");
     } catch (e: any) {
-      console.error("[chat] Bedrock invocation failed:", e.message || e);
-      console.error("[chat] Stack:", e.stack);
+      console.error("[chat] Bedrock invocation failed:", e?.message || e);
+      console.error("[chat] Stack:", e?.stack);
       bedrockNote = null; // soft-fail: still return 200
     }
 
@@ -184,4 +137,3 @@ Respond briefly with what you know, what you don't, and what you would fetch or 
     };
   }
 };
-
