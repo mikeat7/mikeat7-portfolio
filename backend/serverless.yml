@@ -29,22 +29,33 @@ provider:
 functions:
   chat:
     handler: dist/handlers/chat.handler
+    environment:
+      BEDROCK_MODEL_ID: ${env:CHAT_MODEL_ID, 'anthropic.claude-3-5-sonnet-20240620-v1:0'}
+      BEDROCK_REGION: ${env:BEDROCK_REGION, 'us-east-1'}
     events:
       - httpApi:
           method: POST
           path: /agent/chat
+
   fetchUrl:
     handler: dist/handlers/fetch_url.handler
+    environment:
+      BEDROCK_REGION: ${env:BEDROCK_REGION, 'us-east-1'}
     events:
       - httpApi:
           method: POST
           path: /agent/fetch-url
+
   analyze:
     handler: dist/handlers/analyze.handler
+    environment:
+      BEDROCK_MODEL_ID: ${env:ANALYZE_MODEL_ID, 'anthropic.claude-3-5-haiku-20241022-v1:0'}
+      BEDROCK_REGION: ${env:BEDROCK_REGION, 'us-east-1'}
     events:
       - httpApi:
           method: POST
           path: /agent/analyze
+
 
 package:
   patterns:
