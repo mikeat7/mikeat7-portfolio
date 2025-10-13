@@ -192,13 +192,15 @@ Respond briefly with what you know, what you don't, and what you would fetch or 
       bedrockNote = null; // soft-fail
     }
 
-    const response = {
-      ok: true,
-      message: bedrockNote ?? "Agent response generated without Bedrock (dry run).",
-      frames: [], // transparency frames come from client VX
-      tools: toolTraces,
-      handshake,
-    };
+  const response = {
+  ok: true,
+  message: bedrockNote ?? "Agent response generated without Bedrock (dry run).",
+  frames: [],
+  tools: toolTraces,
+  handshake: body.handshake,
+  ...(bedrockNote ? {} : { notice: "Bedrock throttled or unavailable" }),
+};
+
 
     return { statusCode: 200, headers: cors(), body: JSON.stringify(response) };
   } catch (err: any) {
