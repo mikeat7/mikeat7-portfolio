@@ -186,23 +186,14 @@ TEXT TO ANALYZE:
 ${text}
 """
 
-RESPONSE FORMAT (JSON):
-{
-  "frames": [
-    {
-      "reflex_id": "vx-ai01",
-      "reflex_name": "Speculative Authority",
-      "score": 0.75,
-      "severity": "medium",
-      "rationale": "Uses 'experts' without attribution",
-      "snippet": "exact quote from text",
-      "suggestion": "Ask: Which experts? What are their credentials?"
-    }
-  ],
-  "summary": "Brief 1-2 sentence analysis overview"
-}
+RESPONSE FORMAT (JSON, ONLY THIS, NO MARKDOWN FENCES, NO PROSE BEFORE/AFTER):
+{"frames":[{"reflex_id":"vx-ai01","reflex_name":"Speculative Authority","score":0.75,"severity":"medium","rationale":"Uses 'experts' without attribution","snippet":"exact quote from text","suggestion":"Ask: Which experts? What are their credentials?"}],"summary":"Brief 1-2 sentence analysis overview"}
 
-Return ONLY valid JSON. If no patterns detected, return empty frames array.`;
+RULES:
+- Return one single JSON object exactly like above (minified is fine).
+- Do NOT include \`\`\`json fences or any commentary.
+- If no patterns are detected, return {"frames":[],"summary":"..."}.
+`;
 }
 
 function parseBedrockToFrames(
@@ -212,8 +203,13 @@ function parseBedrockToFrames(
 ): VXFrame[] {
   if (!response) return [];
   try {
+    // Trim & strip common code fences first
+    let cleaned = response.trim();
+    cleaned = cleaned.replace(/^```json\s*|\s*```$/g, "");
+    cleaned = cleaned.replace(/^```\s*|\s*```$/g, "");
+
     // Pull out the JSON block if the model wrapped it in prose
-    const jsonMatch = response.match(/\{[\s\S]*"frames"[\s\S]*\}/);
+    const jsonMatch = cleaned.match(/\{[\s\S]*"frames"[\s\S]*\}/);
     if (!jsonMatch) {
       console.warn("[analyze] no JSON structure found in Bedrock response");
       return [];
@@ -243,7 +239,11 @@ function parseBedrockToFrames(
 function extractSummary(response: string | null): string | undefined {
   if (!response) return undefined;
   try {
-    const jsonMatch = response.match(/\{[\s\S]*"summary"[\s\S]*\}/);
+    let cleaned = response.trim();
+    cleaned = cleaned.replace(/^```json\s*|\s*```$/g, "");
+    cleaned = cleaned.replace(/^```\s*|\s*```$/g, "");
+
+    const jsonMatch = cleaned.match(/\{[\s\S]*"summary"[\s\S]*\}/);
     if (!jsonMatch) return undefined;
     const parsed = JSON.parse(jsonMatch[0]);
     return typeof parsed.summary === "string" ? parsed.summary : undefined;
