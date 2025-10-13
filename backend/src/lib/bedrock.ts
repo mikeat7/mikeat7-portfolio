@@ -7,13 +7,23 @@ export async function maybeInvokeBedrock(prompt: string): Promise<string | null>
   const modelId = process.env.BEDROCK_MODEL_ID || "";
   const region  = process.env.BEDROCK_REGION   || "us-east-1";
 
-  // Tuning knobs (env-overrideable)
-  const MAX_TOKENS  = Number(process.env.BEDROCK_MAX_TOKENS  ?? "512");
-  const TEMPERATURE = Number(process.env.BEDROCK_TEMPERATURE ?? "0.2");
-  const TOP_P       = Number(process.env.BEDROCK_TOP_P       ?? "0.9");
+  // NEW: read optional tuning knobs (with safe defaults + clamping)
+  const MAX_TOKENS = Math.max(
+    1,
+    Math.min(4096, Number(process.env.BEDROCK_MAX_TOKENS ?? 512))
+  );
+  const TEMPERATURE = (() => {
+    const v = Number(process.env.BEDROCK_TEMPERATURE ?? 0.7);
+    return Number.isFinite(v) ? Math.max(0, Math.min(2, v)) : 0.7;
+  })();
+  const TOP_P = (() => {
+    const v = Number(process.env.BEDROCK_TOP_P ?? 0.9);
+    return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0.9;
+  })();
 
   console.info("[bedrock] modelId:", modelId || "(empty)");
   console.info("[bedrock] region:", region);
+  console.info("[bedrock] max_tokens:", MAX_TOKENS, "temp:", TEMPERATURE, "top_p:", TOP_P);
 
   if (!modelId) {
     console.warn("[bedrock] BEDROCK_MODEL_ID missing → dry run (returning null).");
@@ -22,18 +32,14 @@ export async function maybeInvokeBedrock(prompt: string): Promise<string | null>
 
   const client = new BedrockRuntimeClient({ region });
 
-  // Claude 3.x Messages API?
   const isClaudeMessages = /claude-3|anthropic\.claude/i.test(modelId);
-
   const body = isClaudeMessages
     ? JSON.stringify({
         anthropic_version: "bedrock-2023-05-31",
         max_tokens: MAX_TOKENS,
         temperature: TEMPERATURE,
         top_p: TOP_P,
-        messages: [
-          { role: "user", content: prompt } // plain string content is fine on Bedrock
-        ],
+        messages: [{ role: "user", content: prompt }],
       })
     : JSON.stringify({
         prompt: `\n\nHuman: ${prompt}\n\nAssistant:`,
@@ -49,7 +55,6 @@ export async function maybeInvokeBedrock(prompt: string): Promise<string | null>
     body,
   });
 
-  // Exponential backoff + jitter on throttling
   const MAX_RETRIES = 5;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -59,22 +64,13 @@ export async function maybeInvokeBedrock(prompt: string): Promise<string | null>
 
       try {
         const parsed = JSON.parse(txt);
-
-        // Anthropic Messages response
         if (parsed?.content && Array.isArray(parsed.content)) {
           const textPart = parsed.content.find((c: any) => c?.type === "text");
           return textPart?.text ?? null;
         }
-
-        // Legacy completion response
-        if (typeof parsed?.completion === "string") {
-          return parsed.completion;
-        }
-
-        // Unrecognized JSON → return raw for caller-side parsing
+        if (typeof parsed?.completion === "string") return parsed.completion;
         return txt;
       } catch {
-        // Not JSON → return raw text
         return txt;
       }
     } catch (e: any) {
@@ -94,10 +90,9 @@ export async function maybeInvokeBedrock(prompt: string): Promise<string | null>
         await sleep(backoff);
         continue;
       }
-      return null; // non-retryable or out of retries
+      return null;
     }
   }
-
-  return null; // should not hit
+  return null;
 }
 
