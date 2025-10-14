@@ -9,15 +9,9 @@ provider:
   timeout: 15
   httpApi:
     cors: true
-  provider:
   environment:
     NODE_OPTIONS: --enable-source-maps
-    BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, 'anthropic.claude-3-5-sonnet-20240620-v1:0'}
-    BEDROCK_REGION:   ${env:BEDROCK_REGION, 'us-east-1'}
-    BEDROCK_MAX_TOKENS: ${env:BEDROCK_MAX_TOKENS, '96'}
-    BEDROCK_TEMPERATURE: ${env:BEDROCK_TEMPERATURE, '0.4'}
-    BEDROCK_TOP_P: ${env:BEDROCK_TOP_P, '0.9'}
-
+    BEDROCK_REGION: ${env:BEDROCK_REGION, 'us-east-1'}
   iam:
     role:
       statements:
@@ -31,33 +25,26 @@ functions:
     handler: dist/handlers/chat.handler
     environment:
       BEDROCK_MODEL_ID: ${env:CHAT_MODEL_ID, 'anthropic.claude-3-5-sonnet-20240620-v1:0'}
-      BEDROCK_REGION: ${env:BEDROCK_REGION, 'us-east-1'}
     events:
       - httpApi:
           method: POST
           path: /agent/chat
 
-  fetchUrl:
-    handler: dist/handlers/fetch_url.handler
-    environment:
-      BEDROCK_REGION: ${env:BEDROCK_REGION, 'us-east-1'}
-    events:
-      - httpApi:
-          method: POST
-          path: /agent/fetch-url
-
-   analyze:
+  analyze:
     handler: dist/handlers/analyze.handler
     environment:
-      BEDROCK_MODEL_ID: ${env:ANALYZE_MODEL_ID, 'anthropic.claude-3-5-haiku-20241022-v1:0'}
-      BEDROCK_REGION: ${env:BEDROCK_REGION, 'us-east-1'}
-      BEDROCK_MAX_TOKENS: ${env:ANALYZE_MAX_TOKENS, '256'}
-
+      BEDROCK_MODEL_ID: ${env:ANALYZE_MODEL_ID, 'anthropic.claude-3-haiku-20240307-v1:0'}
     events:
       - httpApi:
           method: POST
           path: /agent/analyze
 
+  fetchUrl:
+    handler: dist/handlers/fetch_url.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /agent/fetch-url
 
 package:
   patterns:
