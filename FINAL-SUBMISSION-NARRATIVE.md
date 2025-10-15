@@ -176,7 +176,7 @@ Results → Supabase (persist session) → Visual heatmap + frames → User
 
 ---
 
-**Creator:** Mike Adelman
+**Creator:** Mike Filippi
 **Competition:** AWS AI Agent Hackathon 2025
 **Live URL:** https://clarityarmor.com
 **GitHub:** https://github.com/mikeat7/mikeat7-portfolio
