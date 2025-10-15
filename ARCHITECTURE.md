@@ -726,7 +726,7 @@ Response to User
 
 - **Live App:** https://clarityarmor.com
 - **Repository:** https://github.com/mikeat7/mikeat7-portfolio
-- **Creator:** Mike Adelman
+- **Creator:** Mike Filippi
 - **License:** MIT (see LICENSE file)
 
 ---
