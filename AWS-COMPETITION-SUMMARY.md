@@ -12,14 +12,66 @@
 
 ### Required Selections (5 services)
 
-#### 1. **Amazon Bedrock** (Primary)
-- **Model:** Claude 3.5 Sonnet v2 (`anthropic.claude-3-5-sonnet-20241022-v2:0`)
-- **Usage:** Core reasoning engine for text analysis
-- **Features Used:**
-  - Converse API for multi-turn conversations
-  - Autonomous tool orchestration
-  - Structured output parsing
-  - Context window management (200K tokens)
+diff --git a/AWS-COMPETITION-SUMMARY.md b/AWS-COMPETITION-SUMMARY.md
+index 0000000..0000001 100644
+--- a/AWS-COMPETITION-SUMMARY.md
++++ b/AWS-COMPETITION-SUMMARY.md
+@@ -1,6 +1,7 @@
+ # AWS AI Agent Competition - Final Summary
+ 
+ ## Project: Truth Serum + Clarity Armor (TSCA)
+ 
+ **Live URL:** https://clarityarmor.com
+ **GitHub:** https://github.com/mikeat7/mikeat7-portfolio
+ **Competition:** AWS AI Agent Hackathon 2025
+@@ -10,6 +11,33 @@
+ 
+ ## AWS Services Used
+ 
+ ### Required Selections (5 services)
+ 
+ #### 1. **Amazon Bedrock** (Primary)
+-...
++...
++
++### Dual-Agent Model Routing (Performance-aware)
++
++TSCA runs two Bedrock-backed agent paths to balance quality and throughput:
++
++- **/agent/chat → Anthropic Claude 3.5 Sonnet (20240620, on-demand)**  
++  **Model ID:** `anthropic.claude-3-5-sonnet-20240620-v1:0`  
++  **Why:** Best answer quality for user-facing replies. We cap `max_tokens` and apply light client backoff to stay within account RPS.
++
++- **/agent/analyze → Anthropic Claude 3 Haiku (20240307, on-demand)**  
++  **Model ID:** `anthropic.claude-3-haiku-20240307-v1:0`  
++  **Why:** Low-latency, high-throughput detection path for VX frames (manipulation signals). Keeps analysis snappy even under load.
++
++**Routing logic**
++- Frontend sends normal conversation turns to `/agent/chat` (Sonnet).
++- The **Analyze** button (and auto-analysis hooks) call `/agent/analyze` (Haiku) with a tiny client-side rate limiter to avoid bursts.
++- Backend uses uniform handshakes (Codex v0.9) and a common tool (`fetch_url`) to bring recent context into either path.
++
++**Result**
++- High coherence and polish where it matters (chat), while **scaling** analysis (VX) cheaply and reliably.
++- This split is visible in CloudWatch logs and in the model IDs returned by our diagnostic logging.
+ 
+ ---
+ 
+ ## Contact & Links
+ 
+ - **Live App:** https://clarityarmor.com
+ - **GitHub:** https://github.com/mikeat7/mikeat7-portfolio
+ - **License:** MIT
+ 
+ ---
+ 
+-**Last Updated:** 2025-10-09
+-**Codex Version:** 0.9.0
+-**Architecture Version:** 1.1 (with session persistence)
++**Last Updated:** 2025-10-13
++**Codex Version:** 0.9.0
++**Architecture Version:** 1.2 (dual-agent routing + session persistence)
+
 
 #### 2. **Amazon Bedrock Agents** (Primary)
 - **Agent Runtime:** Manages tool invocation and decision-making
@@ -450,7 +502,7 @@ Should show: All tests passed ✅
 
 ## Credits
 
-**Creator:** Mike Adelman
+**Creator:** Mike Filippi
 **Competition:** AWS AI Agent Hackathon 2025
 **Model:** Claude 3.5 Sonnet v2 (Anthropic via AWS Bedrock)
 **Inspiration:** Harry Frankfurt's "On Bullshit" (1986)
