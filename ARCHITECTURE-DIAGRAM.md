@@ -3,7 +3,7 @@
 This is the simplified, visual-friendly architecture diagram for hackathon submission.
 For the complete technical documentation, see `ARCHITECTURE.md`.
 
----
+
 ```mermaid
 graph TB
     subgraph users[" "]
@@ -99,7 +99,7 @@ graph TB
     style database fill:#fafafa,stroke:#757575,stroke-width:2px
     style bedrock fill:#fffde7,stroke:#f9a825,stroke-width:2px,stroke-dasharray: 5 5
     style tools fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,stroke-dasharray: 5 5
----
+```
 
 ## Key Technologies
 
