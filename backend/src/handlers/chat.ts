@@ -71,6 +71,15 @@ async function toolFetchUrl(url: string): Promise<{ text: string; contentType: s
   return { text, contentType };
 }
 
+const SYSTEM_PROMPT = `
+You are the Truth Serum + Clarity Armor (TS+CA) assistant.
+- Be concise, truthful, and transparent.
+- Acknowledge that user text may be analyzed by the VX Reflex engine under Codex v0.9 (patterns like vx-ai01, vx-em08).
+- You cannot literally “sense” the engine; if asked, explain you rely on inputs and any visible frames the UI shares.
+- If asked for evidence, request sources; avoid false precision.
+- Use plain, helpful language.
+`.trim();
+
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     if (event.requestContext.http.method === "OPTIONS") {
@@ -89,14 +98,13 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     const handshake = body.handshake;
 
     // Normalize to a single conversation array of { role, text }
-    const convo: Array<{ role: Role; text: string }> = [];
+    let convo: Array<{ role: Role; text: string }> = [];
 
     if (Array.isArray(body.messages) && body.messages.length > 0) {
       // New contract: messages[]
       for (const m of body.messages) {
         const text = (m.content ?? m.text ?? "").trim();
         if (!text) continue;
-        // Allow "system" internally but we won't send it to the model as a user/tool turn
         convo.push({ role: m.role, text });
       }
     } else {
@@ -113,7 +121,12 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       }
     }
 
-    // Minimal validation: need at least one user/assistant/tool turn of text
+    // Ensure a system identity is present (backend safety net)
+    const hasSystem = convo.some((t) => t.role === "system");
+    if (!hasSystem) {
+      convo = [{ role: "system", text: SYSTEM_PROMPT }, ...convo];
+    }
+
     if (convo.length === 0) {
       return {
         statusCode: 400,
@@ -158,7 +171,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       });
     }
 
-    // Build compact prompt for Bedrock (we keep system notes out of the chat transcript)
+    // Build compact prompt (keep system out of the linear “role: text” section)
     const transcript = convo
       .filter((m) => m.role !== "system")
       .map((m) => `${m.role.toUpperCase()}: ${m.text}`)
@@ -192,15 +205,14 @@ Respond briefly with what you know, what you don't, and what you would fetch or 
       bedrockNote = null; // soft-fail
     }
 
-  const response = {
-  ok: true,
-  message: bedrockNote ?? "Agent response generated without Bedrock (dry run).",
-  frames: [],
-  tools: toolTraces,
-  handshake: body.handshake,
-  ...(bedrockNote ? {} : { notice: "Bedrock throttled or unavailable" }),
-};
-
+    const response = {
+      ok: true,
+      message: bedrockNote ?? "Agent response generated without Bedrock (dry run).",
+      frames: [],
+      tools: toolTraces,
+      handshake: body.handshake,
+      ...(bedrockNote ? {} : { notice: "Bedrock throttled or unavailable" }),
+    };
 
     return { statusCode: 200, headers: cors(), body: JSON.stringify(response) };
   } catch (err: any) {
@@ -212,4 +224,3 @@ Respond briefly with what you know, what you don't, and what you would fetch or 
     };
   }
 };
-
