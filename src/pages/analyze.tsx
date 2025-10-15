@@ -1,5 +1,5 @@
 // src/pages/analyze.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useVXContext } from "@/context/VXProvider";
 import runReflexAnalysis from "@/lib/analysis/runReflexAnalysis";
 import { callAgentSummarize } from "@/lib/llmClient";
@@ -9,7 +9,6 @@ import codex from "@/data/front-end-codex.v0.9.json";
 import CoFirePanel from "@/components/CoFirePanel";
 import BackButton from "@/components/BackButton";
 import AnalysisReport from "@/components/AnalysisReport";
-
 
 // Small help chip (kept for tooltips in Chat tab)
 const Help = ({ text }: { text: string }) => (
@@ -275,6 +274,14 @@ const ChatPanel: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // NEW: autoscroll to latest message
+  const threadRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (threadRef.current) {
+      threadRef.current.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
+    }
+  }, [history]);
+
   const looksLikeUrl = (s: string) => /^https?:\/\/\S+/i.test(s.trim());
 
   function formatError(e: any) {
@@ -530,7 +537,10 @@ const ChatPanel: React.FC = () => {
         className="border rounded-2xl bg-[#e9eef5] p-3"
         style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
       >
-        <div className="max-h-[50vh] overflow-auto space-y-3">
+        <div
+          ref={threadRef}
+          className="max-h-[50vh] overflow-auto space-y-3"
+        >
           {history.map((m, i) => (
             <div
               key={i}
