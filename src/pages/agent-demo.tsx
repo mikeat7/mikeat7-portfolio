@@ -1,5 +1,5 @@
 // src/pages/agent-demo.tsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { agentChat, agentFetchUrl } from "@/lib/agentClient";
 import { buildHandshake, type Mode, type Stakes, type CitePolicy, type Codex } from "@/lib/codex-runtime";
 import codexJson from "@/data/front-end-codex.v0.9.json";
@@ -20,6 +20,18 @@ const AgentDemo: React.FC = () => {
   const [fetchResp, setFetchResp] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // refs for auto-scroll
+  const respRef = useRef<HTMLPreElement | null>(null);
+  const fetchRef = useRef<HTMLPreElement | null>(null);
+
+  // auto-scroll when new data lands
+  useEffect(() => {
+    if (respRef.current) respRef.current.scrollTo({ top: respRef.current.scrollHeight, behavior: "smooth" });
+  }, [resp]);
+  useEffect(() => {
+    if (fetchRef.current) fetchRef.current.scrollTo({ top: fetchRef.current.scrollHeight, behavior: "smooth" });
+  }, [fetchResp]);
 
   const handshake = useMemo(
     () =>
@@ -141,10 +153,16 @@ const AgentDemo: React.FC = () => {
       {err && <div className="border border-amber-300 bg-amber-50 text-amber-900 rounded p-3 text-sm">{err}</div>}
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <pre className="border rounded p-3 overflow-auto text-xs bg-gray-50">
+        <pre
+          ref={respRef}
+          className="border rounded p-3 overflow-y-auto text-xs bg-gray-50 max-h-96"
+        >
 {JSON.stringify(resp, null, 2)}
         </pre>
-        <pre className="border rounded p-3 overflow-auto text-xs bg-gray-50">
+        <pre
+          ref={fetchRef}
+          className="border rounded p-3 overflow-y-auto text-xs bg-gray-50 max-h-96"
+        >
 {JSON.stringify(fetchResp, null, 2)}
         </pre>
       </section>
