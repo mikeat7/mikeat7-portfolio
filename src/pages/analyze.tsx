@@ -32,11 +32,12 @@ const AnalyzePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"analyze" | "chat">(initialTab);
 
   useEffect(() => {
+    // IMPORTANT: use replace:true so this update doesn't create a new history entry
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       next.set("tab", activeTab);
       return next;
-    });
+    }, { replace: true });
   }, [activeTab, setSearchParams]);
 
   // ANALYZE tab state
@@ -107,8 +108,7 @@ const AnalyzePage: React.FC = () => {
   return (
     <div className="relative min-h-screen bg-[#e9eef5] py-10">
       <div className="relative max-w-6xl mx-auto px-4">
-     <BackButton fallback="/" />
-
+        <BackButton fallback="/" />
 
         {/* Header + Tabs */}
         <div
