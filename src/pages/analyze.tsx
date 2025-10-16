@@ -107,7 +107,8 @@ const AnalyzePage: React.FC = () => {
   return (
     <div className="relative min-h-screen bg-[#e9eef5] py-10">
       <div className="relative max-w-6xl mx-auto px-4">
-        <BackButton />
+     <BackButton fallback="/" />
+
 
         {/* Header + Tabs */}
         <div
