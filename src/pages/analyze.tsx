@@ -32,7 +32,7 @@ const AnalyzePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"analyze" | "chat">(initialTab);
 
   useEffect(() => {
-    // IMPORTANT: use replace:true so this update doesn't create a new history entry
+    // use replace:true so this update doesn't create a new history entry
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       next.set("tab", activeTab);
@@ -47,12 +47,7 @@ const AnalyzePage: React.FC = () => {
   const [reportText, setReportText] = useState<string>("");
 
   async function handleAnalyze() {
-    console.log("🔍 handleAnalyze called with input:", input.substring(0, 50));
-
-    if (!input.trim()) {
-      console.log("⚠️ Input is empty, returning");
-      return;
-    }
+    if (!input.trim()) return;
 
     setIsAnalyzing(true);
     setReflexFrames([]);
@@ -60,22 +55,17 @@ const AnalyzePage: React.FC = () => {
     setNotice(null);
 
     try {
-      console.log("🔍 Calling runReflexAnalysis...");
       const frames = await runReflexAnalysis(input);
-      console.log("✅ runReflexAnalysis returned", frames.length, "frames");
       setReflexFrames(frames);
-
       if (!frames || frames.length === 0) {
         setNotice("No detections found. Try stronger certainty claims, unnamed authorities, or sweeping generalizations.");
       }
       setAnalysisCount((n) => n + 1);
     } catch (e) {
-      console.error("🚨 Analysis failed:", e);
-      console.error("🚨 Error stack:", (e as Error).stack);
+      console.error("Analysis failed:", e);
       setReflexFrames([]);
       setNotice(`Analysis failed: ${(e as Error).message}. Check console for details.`);
     } finally {
-      console.log("🔍 Analysis complete, setting isAnalyzing to false");
       setIsAnalyzing(false);
     }
   }
@@ -99,9 +89,7 @@ const AnalyzePage: React.FC = () => {
       setReportText(reportText);
     } catch (e) {
       console.error("summarize failed:", e);
-      setReportText(
-        "Report service unavailable. (Tip: you can still export frames and use the on-page summary.)"
-      );
+      setReportText("Report service unavailable. (Tip: you can still export frames and use the on-page summary.)");
     }
   }
 
@@ -340,6 +328,17 @@ const ChatPanel: React.FC = () => {
     }
   }
 
+  // NEW: reset chat thread + localStorage
+  function resetChat() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {/* ignore */}
+    setHistory([]);
+    setError(null);
+    // optional: scroll to top
+    if (threadRef.current) threadRef.current.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   async function send() {
     const content = text.trim();
     if (!content) return;
@@ -562,6 +561,16 @@ const ChatPanel: React.FC = () => {
         >
           fetch-url
         </button>
+
+        {/* NEW: Reset chat */}
+        <button
+          onClick={resetChat}
+          className="px-3 py-2 rounded-xl border hover:bg-gray-50"
+          title="Clear the chat thread and local storage."
+          disabled={busy || history.length === 0}
+        >
+          reset chat
+        </button>
       </div>
 
       {/* Conversation */}
@@ -627,4 +636,5 @@ const ChatPanel: React.FC = () => {
 };
 
 export default AnalyzePage;
+
 
