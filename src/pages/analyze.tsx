@@ -1,5 +1,6 @@
 // src/pages/analyze.tsx
 import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useVXContext } from "@/context/VXProvider";
 import runReflexAnalysis from "@/lib/analysis/runReflexAnalysis";
 import { callAgentSummarize } from "@/lib/llmClient";
@@ -25,7 +26,18 @@ const Help = ({ text }: { text: string }) => (
 const AnalyzePage: React.FC = () => {
   const { reflexFrames, setReflexFrames, isAnalyzing, setIsAnalyzing } = useVXContext();
 
-  const [activeTab, setActiveTab] = useState<"analyze" | "chat">("analyze");
+  // Keep active tab in the URL so F5 preserves it
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get("tab") as "analyze" | "chat") ?? "analyze";
+  const [activeTab, setActiveTab] = useState<"analyze" | "chat">(initialTab);
+
+  useEffect(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", activeTab);
+      return next;
+    });
+  }, [activeTab, setSearchParams]);
 
   // ANALYZE tab state
   const [input, setInput] = useState("");
@@ -259,6 +271,7 @@ const AnalyzePage: React.FC = () => {
 const ChatPanel: React.FC = () => {
   type RolePlus = ChatMessage["role"] | "tool";
   type ChatMsg = { role: RolePlus; text: string; frames?: any[]; tools?: any[] };
+  const STORAGE_KEY = "tsca_chat_history_v1";
 
   // Robust/strict defaults per your request
   const [mode, setMode] = useState<Mode>("--careful");
@@ -273,6 +286,24 @@ const ChatPanel: React.FC = () => {
   const [text, setText] = useState(""); // start empty, use placeholder
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Load persisted chat on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setHistory(parsed as ChatMsg[]);
+      }
+    } catch {/* ignore */}
+  }, []);
+
+  // Persist chat after each change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    } catch {/* ignore */}
+  }, [history]);
 
   // NEW: autoscroll to latest message
   const threadRef = useRef<HTMLDivElement | null>(null);
