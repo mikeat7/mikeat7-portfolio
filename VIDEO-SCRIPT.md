@@ -55,7 +55,11 @@
    - **Vague Generalization** (0.68) - "leading competitors" undefined
 
 **Voiceover:**
-> "Local VX reflexes detected three manipulation patterns instantly. But now the AWS Bedrock agent enriches the analysis..."
+> "Local VX reflexes detected three manipulation patterns instantly. But now the AWS Bedrock agent enriches the analysis...
+We use a split-model strategy on Amazon Bedrock:
+•	/agent/analyze → Claude 3 Haiku (fast) for low-latency pattern analysis
+•	/agent/chat → Claude 3.5 Sonnet (high-quality) for deeper reasoning.”
+"
 
 **Action:**
 7. Agent results appear (animated transition)
@@ -121,12 +125,13 @@
 **Visual:** Switch to ARCHITECTURE-DIAGRAM.md (show Mermaid diagram)
 
 **Voiceover:**
-> "Here's how it works under the hood. Five AWS services working together..."
+> "Here's how it works under the hood. Five AWS services working together.. 
+"
 
 **Visual:** Highlight each service as mentioned:
 
 **Voiceover:**
-> "Amazon Bedrock with Claude 3.5 Sonnet for reasoning. Bedrock Agents Runtime for autonomous tool orchestration. AWS Lambda for serverless compute. API Gateway for REST endpoints. And CloudWatch for monitoring."
+> "We split models by job: Haiku for /agent/analyze (speed), Sonnet for /agent/chat (depth). Bedrock Agents Runtime for autonomous tool orchestration. AWS Lambda for serverless compute. API Gateway for REST endpoints. And CloudWatch for monitoring."
 
 **Visual:** Animate data flow:
 - User → React Frontend → Netlify Edge → API Gateway → Bedrock Agent → Lambda Tools → Supabase
