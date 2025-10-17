@@ -152,7 +152,7 @@ We use a split-model strategy on Amazon Bedrock:
 - **Live Demo:** clarityarmor.com
 - **GitHub:** github.com/mikeat7/mikeat7-portfolio
 - **AWS Services:** Bedrock • Bedrock Agents • Lambda • API Gateway • CloudWatch
-- **Built by:** Mike Adelman
+- **Built by:** Mike Filippi
 
 **Visual:** Fade to black with logo
 
