@@ -24,7 +24,7 @@ type HandshakeOpts = {
   sessionId?: string;
 };
 
-// Normalize base from Vite env once at module load
+// Read once at module load
 const RAW_BASE =
   (typeof import.meta !== "undefined" &&
     (import.meta as any).env &&
@@ -33,8 +33,12 @@ const RAW_BASE =
 
 const BASE = (RAW_BASE as string).trim().replace(/\/+$/, "");
 
-// If BASE is set → use AWS API Gateway paths.
-// If BASE is empty → use Netlify Functions paths.
+// Secret header for Functions/API (set in .env.local and Netlify env)
+const TSCA_KEY = (typeof import.meta !== "undefined" &&
+  (import.meta as any).env &&
+  (import.meta as any).env.VITE_TSCA_DEV_KEY) || "";
+
+// Resolve endpoints: API Gateway if BASE set; otherwise Netlify Functions
 export const ENDPOINTS = BASE
   ? {
       chat: `${BASE}/agent/chat`,
@@ -49,7 +53,6 @@ export const ENDPOINTS = BASE
       summarize: `/.netlify/functions/agent-summarize`,
     };
 
-// Helpful console breadcrumb during debugging
 // eslint-disable-next-line no-console
 console.log("[TSCA] VITE_AGENT_API_BASE =", BASE || "(missing → using Netlify Functions)");
 
@@ -73,7 +76,12 @@ async function parseJsonOrThrow(res: Response): Promise<any> {
 async function postJson(url: string, body: unknown): Promise<any> {
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      // ✅ required by secured Netlify functions / API Gateway
+      "x-tsca-key": TSCA_KEY,
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -89,7 +97,6 @@ export async function agentChat(
   history: ChatMessage[] = [],
   opts?: HandshakeOpts
 ): Promise<any> {
-  // Convert (text, history) to backend messages format
   const messages: Array<{
     role: "system" | "user" | "assistant" | "tool";
     content: string;
