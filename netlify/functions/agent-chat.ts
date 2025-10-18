@@ -1,71 +1,12 @@
-// File: netlify/functions/agent-chat.ts
 import type { Handler } from "@netlify/functions";
 import { InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
-import { bedrock, modelId, corsHeaders as baseCors } from "./_bedrock";
+import { bedrock, modelId, corsHeaders } from "./_bedrock";
 
 type Mode = "--direct" | "--careful" | "--recap";
 type Stakes = "low" | "medium" | "high";
 type CitePolicy = "auto" | "force" | "off";
 
-// --- CORS + Security Gates ---------------------------------------------------
-const ALLOWED_ORIGINS = new Set([
-  "https://clarityarmor.com",
-  "http://localhost:5173",
-]);
-
-// Ensure preflight allows our custom header
-const corsHeaders = {
-  ...baseCors,
-  "Access-Control-Allow-Headers": "authorization,content-type,x-tsca-key,x-amz-date,x-amz-security-token,x-amz-user-agent,x-amzn-trace-id,x-api-key",
-};
-
-function forbidden(body = "Forbidden") {
-  return { statusCode: 403, headers: corsHeaders, body };
-}
-
-function unauthorized(body = "Unauthorized") {
-  return { statusCode: 401, headers: corsHeaders, body };
-}
-
-function badRequest(body = "Bad Request") {
-  return { statusCode: 400, headers: corsHeaders, body };
-}
-
-function getOrigin(event: any): string {
-  return event.headers?.origin || event.headers?.Origin || "";
-}
-
-function requireApiKey(event: any) {
-  // 1) Origin allowlist
-  const origin = getOrigin(event);
-  if (origin && !ALLOWED_ORIGINS.has(origin)) {
-    return forbidden("Forbidden origin");
-  }
-
-  // 2) x-tsca-key header check (required)
-  const expected =
-    process.env.TSCA_API_KEY ||
-    // temporary fallback so this deploy works immediately; remove after setting the env var in Netlify
-    "hihfgjejjnvj7787529y329y83898y938y5982yhuhukhkhkkjjh";
-
-  if (!expected) {
-    return {
-      statusCode: 500,
-      headers: corsHeaders,
-      body: "Server misconfigured: TSCA_API_KEY is not set",
-    };
-  }
-
-  const provided =
-    event.headers?.["x-tsca-key"] ||
-    event.headers?.["X-Tsca-Key"] ||
-    event.headers?.["X-TSCA-Key"];
-
-  if (!provided) return unauthorized("Missing x-tsca-key");
-  if (provided !== expected) return forbidden("Invalid x-tsca-key");
-  return null;
-}
-// ---------------------------------------------------------------------------
+const REQUIRED_KEY = process.env.TSCA_API_KEY;
 
 function sysPrompt(params: {
   mode?: Mode; stakes?: Stakes; cite?: CitePolicy;
@@ -89,22 +30,26 @@ function toAnthropicMessages(
   system: string
 ) {
   const msgs = history.map(h => ({ role: h.role, content: [{ type:"text", text: h.text }]}));
-  // For Bedrock Anthropic, inline system into the user turn:
+  // Inline system into user turn for Bedrock Anthropic:
   msgs.push({ role: "user", content: [{ type: "text", text: `${system}\n\nUser: ${userNow}` }] });
   return msgs;
 }
 
 export const handler: Handler = async (event) => {
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 200, headers: corsHeaders, body: "" };
-  }
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, headers: corsHeaders, body: "Method Not Allowed" };
-  }
+  // CORS (allow our custom header)
+  const headers = {
+    ...corsHeaders,
+    "Access-Control-Allow-Headers": "content-type,x-tsca-key",
+  };
 
-  // 🔐 Gate: origin + x-tsca-key required
-  const gate = requireApiKey(event);
-  if (gate) return gate;
+  if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers, body: "" };
+  if (event.httpMethod !== "POST") return { statusCode: 405, headers, body: "Method Not Allowed" };
+
+  // Simple header check (only if key is configured)
+  const gotKey = event.headers["x-tsca-key"] || event.headers["X-Tsca-Key"];
+  if (REQUIRED_KEY && gotKey !== REQUIRED_KEY) {
+    return { statusCode: 401, headers, body: "Unauthorized" };
+  }
 
   try {
     const body = JSON.parse(event.body || "{}");
@@ -113,10 +58,6 @@ export const handler: Handler = async (event) => {
       history = [] as Array<{ role: "user" | "assistant"; text: string }>,
       mode, stakes, cite_policy, omission_scan, reflex_profile
     } = body;
-
-    if (!text || typeof text !== "string") {
-      return badRequest("Missing 'text' string");
-    }
 
     const system = sysPrompt({ mode, stakes, cite: cite_policy, omission_scan, profile: reflex_profile });
     const messages = toAnthropicMessages(history, String(text), system);
@@ -138,14 +79,10 @@ export const handler: Handler = async (event) => {
     const out = JSON.parse(new TextDecoder().decode(res.body as Uint8Array));
     const message = out?.content?.[0]?.text ?? "(no reply)";
 
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-      body: JSON.stringify({ message, tools: [] })
-    };
+    return { statusCode: 200, headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify({ message, tools: [] }) };
   } catch (e: any) {
     console.error("agent-chat error:", e);
-    return { statusCode: 500, headers: corsHeaders, body: e?.message || "agent-chat error" };
+    return { statusCode: 500, headers, body: e?.message || "agent-chat error" };
   }
 };
 
