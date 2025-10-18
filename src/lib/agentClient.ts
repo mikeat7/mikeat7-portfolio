@@ -33,10 +33,11 @@ const RAW_BASE =
 
 const BASE = (RAW_BASE as string).trim().replace(/\/+$/, "");
 
-// Secret header for Functions/API (set in .env.local and Netlify env)
-const TSCA_KEY = (typeof import.meta !== "undefined" &&
-  (import.meta as any).env &&
-  (import.meta as any).env.VITE_TSCA_DEV_KEY) || "";
+// Public value that the browser is allowed to read & send
+const TSCA_KEY =
+  (typeof import.meta !== "undefined" &&
+    (import.meta as any).env?.VITE_TSCA_PUBLIC_KEY) || "";
+
 
 // Resolve endpoints: API Gateway if BASE set; otherwise Netlify Functions
 export const ENDPOINTS = BASE
