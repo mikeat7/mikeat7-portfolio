@@ -2,7 +2,8 @@ import type { Handler } from "@netlify/functions";
 import { InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import { bedrock, modelId, corsHeaders } from "./_bedrock";
 
-const REQUIRED_KEY = process.env.TSCA_API_KEY;
+const REQUIRED_KEY = process.env.TSCA_API_KEY;            // secret (server-only)
+const PUBLIC_KEY   = process.env.VITE_TSCA_PUBLIC_KEY;    // public (also in client)
 
 export const handler: Handler = async (event) => {
   const headers = {
@@ -13,8 +14,17 @@ export const handler: Handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers, body: "" };
   if (event.httpMethod !== "POST") return { statusCode: 405, headers, body: "Method Not Allowed" };
 
-  const gotKey = event.headers["x-tsca-key"] || event.headers["X-Tsca-Key"];
-  if (REQUIRED_KEY && gotKey !== REQUIRED_KEY) {
+  // ✅ header check (either secret or public key)
+  const gotKey =
+    event.headers["x-tsca-key"] ||
+    event.headers["X-Tsca-Key"] ||
+    event.headers["X-TSCA-KEY"];
+
+  const ok =
+    (!!REQUIRED_KEY && gotKey === REQUIRED_KEY) ||
+    (!!PUBLIC_KEY && gotKey === PUBLIC_KEY);
+
+  if (!ok) {
     return { statusCode: 401, headers, body: "Unauthorized" };
   }
 
@@ -38,7 +48,7 @@ export const handler: Handler = async (event) => {
 
     const payload = {
       anthropic_version: "bedrock-2023-05-31",
-      messages: [{ role: "user", content: [{ type: "text", text: prompt }]}],
+      messages: [{ role: "user", content: [{ type: "text", text: prompt }] }],
       max_tokens: 1200,
       temperature: 0.2,
     };
@@ -53,7 +63,11 @@ export const handler: Handler = async (event) => {
     const out = JSON.parse(new TextDecoder().decode(res.body as Uint8Array));
     const reportText = out?.content?.[0]?.text ?? "(no report)";
 
-    return { statusCode: 200, headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify({ reportText }) };
+    return {
+      statusCode: 200,
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({ reportText }),
+    };
   } catch (e: any) {
     console.error("agent-summarize error:", e);
     return { statusCode: 500, headers, body: e?.message || "agent-summarize error" };
