@@ -38,7 +38,6 @@ const TSCA_KEY =
   (typeof import.meta !== "undefined" &&
     (import.meta as any).env?.VITE_TSCA_PUBLIC_KEY) || "";
 
-
 // Resolve endpoints: API Gateway if BASE set; otherwise Netlify Functions
 export const ENDPOINTS = BASE
   ? {
@@ -92,25 +91,12 @@ async function postJson(url: string, body: unknown): Promise<any> {
   return parseJsonOrThrow(res);
 }
 
-/** History-aware chat (conforms to backend chat contract). */
+/** History-aware chat — sends the shape that our Netlify function expects */
 export async function agentChat(
   text: string,
   history: ChatMessage[] = [],
   opts?: HandshakeOpts
 ): Promise<any> {
-  const messages: Array<{
-    role: "system" | "user" | "assistant" | "tool";
-    content: string;
-  }> = [];
-
-  for (const h of history) {
-    messages.push({
-      role: (h.role as "system" | "user" | "assistant" | "tool"),
-      content: h.text,
-    });
-  }
-  messages.push({ role: "user", content: text });
-
   // Safe handshake defaults aligned with Codex v0.9
   const handshake = {
     mode: opts?.mode ?? "--careful",
@@ -122,11 +108,18 @@ export async function agentChat(
     codex_version: opts?.codex_version ?? "0.9.0",
   };
 
-  const payload: {
-    messages: typeof messages;
-    handshake: typeof handshake;
-    sessionId?: string;
-  } = { messages, handshake };
+  // ✅ send the shape the server expects
+  const payload: any = {
+    text,
+    history,
+    mode: handshake.mode,
+    stakes: handshake.stakes,
+    min_confidence: handshake.min_confidence,
+    cite_policy: handshake.cite_policy,
+    omission_scan: handshake.omission_scan,
+    reflex_profile: handshake.reflex_profile,
+    codex_version: handshake.codex_version,
+  };
 
   if (opts?.sessionId) payload.sessionId = opts.sessionId;
 
