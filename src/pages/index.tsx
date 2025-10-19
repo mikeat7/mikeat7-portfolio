@@ -113,17 +113,17 @@ const IndexPage: React.FC = () => {
                 boxShadow:
                   "inset 7px 7px 14px #cfd6e0, inset -7px -7px 14px #ffffff",
               }}
-              aria-label="Open training tools"
+              aria-label="Open tools"
             >
               <div className="flex items-center gap-3">
                 <GraduationCap className="w-5 h-5" style={{ color: '#ffd700' }} />
-                <h3 className="text-xl font-semibold">How to Train your AI to be Honest</h3>
+                <h3 className="text-xl font-semibold">How to Guide your AI towards greater Honesty</h3>
               </div>
               <p className="mt-2 text-sm text-slate-700">
-                Copy the codex &amp; handshakes to teach AIs epistemic humility (v0.8 &amp; v0.9).
+                Copy the codex &amp; handshakes to govern AIs epistemic humility (v0.8 &amp; v0.9).
               </p>
               <div className="mt-3 inline-flex items-center text-sm font-medium text-slate-900">
-                Open training tools
+                Open tools
                 <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
               </div>
             </Link>
