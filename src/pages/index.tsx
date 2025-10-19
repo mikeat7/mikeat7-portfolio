@@ -117,10 +117,10 @@ const IndexPage: React.FC = () => {
             >
               <div className="flex items-center gap-3">
                 <GraduationCap className="w-5 h-5" style={{ color: '#ffd700' }} />
-                <h3 className="text-xl font-semibold">How to Guide your AI towards greater Honesty</h3>
+                <h3 className="text-xl font-semibold">Guiding AI Epistemic Humility</h3>
               </div>
               <p className="mt-2 text-sm text-slate-700">
-                Copy the codex &amp; handshakes to govern AIs epistemic humility (v0.8 &amp; v0.9).
+                Copy the codex &amp; handshakes to govern AIs response accuracy and overconfidence (v0.8 &amp; v0.9).
               </p>
               <div className="mt-3 inline-flex items-center text-sm font-medium text-slate-900">
                 Open tools
