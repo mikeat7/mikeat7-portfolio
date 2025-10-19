@@ -279,9 +279,9 @@ ${hsRecap}
 
         {/* Page Title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 text-gray-900">🎓 Train an AI to Be Honest</h1>
+          <h1 className="text-4xl font-bold mb-4 text-gray-900">🎓 Guide an AI to Be Honest</h1>
           <p className="text-lg text-gray-600">
-            Use these codices and handshakes to teach language models epistemic humility and reduce hallucination.
+            Use these "in-context steering" codices and handshakes to guide language models towards epistemic humility and reduce hallucination.
           </p>
         </div>
 
