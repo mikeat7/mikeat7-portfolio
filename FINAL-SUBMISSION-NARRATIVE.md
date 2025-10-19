@@ -6,7 +6,9 @@
 
 ## What We Built
 
-**Truth Serum + Clarity Armor (TSCA)** is an AWS-powered autonomous AI agent that detects manipulation patterns in text using epistemic humility principles. The platform pairs **Amazon Bedrock's Claude 3.5 Sonnet** with a custom **VX Reflex Engine** (14 algorithmic pattern detectors) to create an AI that knows when language manipulates, misleads, or omits critical context—and more importantly, *admits when it's unsure*.
+**Truth Serum + Clarity Armor (TSCA)** is an AWS-powered autonomous AI agent that detects manipulation patterns in text using epistemic humility principles. The platform pairs **Amazon Bedrock's Claude 3.5 Sonnet** with a custom **VX Reflex Engine** (14 algorithmic pattern detectors) to create an AI that knows when language manipulates, misleads, or omits critical context—and more importantly, *admits when it's unsure*. 
+“We’re not doing gradient-based fine-tuning here; we’re using in-context steering with a strict codex handshake (mode, stakes, citation policy, omission scan, reflex profile). For persistence we store session history and frames in Supabase. If we needed model-level adaptation, we’d fine-tune a smaller open model later, but it wasn’t necessary for this product slice.”
+
 
 **Core Components:**
 
@@ -53,6 +55,12 @@ This platform existed as a local pattern detector with basic Bedrock integration
 6. **Enhanced Codex Protocol**: Full policy governance—agent enforces confidence thresholds, citation requirements, and omission scans based on stakes
 
 **Technical Metrics:** 4,000+ lines TypeScript/React/SQL, 15+ new files, 5 AWS services integrated, 2 database tables with RLS, comprehensive documentation with Mermaid diagrams, automated test scripts.
+
+
+
+“We originally prototyped via API Gateway to move quickly, then simplified to Netlify Functions for the demo to reduce moving parts and make costs more predictable. The handshake/codex contract and Bedrock integration are unchanged; only the transport changed. After judging, we’ll add plan-level throttles and auth for multi-tenant usage.”
+
+
 
 ---
 
