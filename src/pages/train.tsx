@@ -279,7 +279,7 @@ ${hsRecap}
 
         {/* Page Title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 text-gray-900">🎓 Calibrating AI Confidence: A practical prompt framwork</h1>
+          <h1 className="text-4xl font-bold mb-4 text-gray-900">🎓 Calibrating AI Confidence: A practical prompt framework</h1>
           <p className="text-lg text-gray-600">
             Use these "in-context steering" codices and handshakes to guide language models towards epistemic humility and reduce hallucination.
           </p>
