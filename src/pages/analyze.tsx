@@ -10,7 +10,23 @@ import codex from "@/data/front-end-codex.v0.9.json";
 import CoFirePanel from "@/components/CoFirePanel";
 import BackButton from "@/components/BackButton";
 import AnalysisReport from "@/components/AnalysisReport";
-import { isLikelyUrl, buildUrlContextBlock } from "@/utils/urlContext"; // NEW
+import { isLikelyUrl } from "@/utils/urlContext"; // still handy
+
+// --- tiny retry helper for throttles (429/500) ---
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  let delay = 300;
+  for (let i = 0; i < 2; i++) {
+    try {
+      return await fn();
+    } catch (e: any) {
+      const msg = String(e?.message || e);
+      if (!/\b(429|500)\b/.test(msg)) throw e;
+      await new Promise((r) => setTimeout(r, delay));
+      delay *= 2;
+    }
+  }
+  return fn(); // final attempt
+}
 
 // Small help chip (kept for tooltips in Chat tab)
 const Help = ({ text }: { text: string }) => (
@@ -33,12 +49,14 @@ const AnalyzePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"analyze" | "chat">(initialTab);
 
   useEffect(() => {
-    // use replace:true so this update doesn't create a new history entry
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.set("tab", activeTab);
-      return next;
-    }, { replace: true });
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("tab", activeTab);
+        return next;
+      },
+      { replace: true }
+    );
   }, [activeTab, setSearchParams]);
 
   // ANALYZE tab state
@@ -46,55 +64,80 @@ const AnalyzePage: React.FC = () => {
   const [analysisCount, setAnalysisCount] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
   const [reportText, setReportText] = useState<string>("");
-  const [processedInput, setProcessedInput] = useState<string>(""); // NEW: remember fetched/clipped text
+  const [processedInput, setProcessedInput] = useState<string>(""); // remember fetched/clipped text
+  const [isFetching, setIsFetching] = useState(false); // guard against double-fire
 
-  async function handleAnalyze() {
-    if (!input.trim()) return;
-
+  // runAnalyze accepts override text and avoids re-reading state
+  async function runAnalyze(inputOverride?: string) {
+    if (isAnalyzing) return; // simple client-side rate limit
     setIsAnalyzing(true);
     setReflexFrames([]);
-    setReportText("");
     setNotice(null);
-
     try {
-      let textForAnalysis = input.trim();
-
-      // NEW: If user pasted a URL, fetch & analyze the page text (clipped)
-      if (isLikelyUrl(textForAnalysis)) {
-        const { contextBlock, meta } = await buildUrlContextBlock(textForAnalysis);
-        if (!contextBlock) {
-          setNotice(meta.note || "That URL didn't return readable text.");
-          setIsAnalyzing(false);
-          return;
-        }
-        textForAnalysis = contextBlock;
+      const textForModel = (inputOverride ?? input ?? "").slice(0, 20000);
+      if (!textForModel.trim()) {
+        setNotice("Nothing to analyze.");
+        return;
       }
-
-      setProcessedInput(textForAnalysis); // remember for Generate Report
-
-      const frames = await runReflexAnalysis(textForAnalysis);
+      setProcessedInput(textForModel); // used by "Generate Report"
+      const frames = await runReflexAnalysis(textForModel);
       setReflexFrames(frames);
       if (!frames || frames.length === 0) {
-        setNotice("No detections found. Try stronger certainty claims, unnamed authorities, or sweeping generalizations.");
+        setNotice(
+          "No detections found. Try stronger certainty claims, unnamed authorities, or sweeping generalizations."
+        );
       }
       setAnalysisCount((n) => n + 1);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Analysis failed:", e);
       setReflexFrames([]);
-      setNotice(`Analysis failed: ${(e as Error).message}. Check console for details.`);
+      setNotice(`Analysis failed: ${e?.message || String(e)}. Check console for details.`);
     } finally {
       setIsAnalyzing(false);
     }
   }
 
+  async function handleAnalyze() {
+    const raw = input.trim();
+    if (!raw) return;
+
+    // If a URL is pasted, fetch it first, drop into the box, then run exactly once.
+    if (isLikelyUrl(raw)) {
+      if (isFetching || isAnalyzing) return;
+      setIsFetching(true);
+      setNotice(null);
+      try {
+        const { text } = await withRetry(() => agentFetchUrl(raw));
+        if (text && text.length) {
+          setInput(text);
+          // run analysis just once on the fetched text
+          await runAnalyze(text);
+        } else {
+          setNotice("Fetched page didn’t contain readable text.");
+        }
+      } catch (e: any) {
+        const msg = String(e?.message || e);
+        if (/403|blocked server requests/i.test(msg)) {
+          setNotice("That site blocks server fetches. Try copy/paste the article text.");
+        } else {
+          setNotice(`Fetch failed: ${msg}`);
+        }
+      } finally {
+        setIsFetching(false);
+      }
+      return;
+    }
+
+    // Otherwise, analyze the typed text
+    await runAnalyze(raw);
+  }
+
   async function handleGenerateReport() {
-    // Optional: agent summary from frames; will show a friendly message if unavailable
     try {
-      const basis = processedInput || input; // NEW: prefer processed (URL-fetched) text
+      const basis = processedInput || input;
       const { reportText } = await callAgentSummarize({
         inputText: basis,
         frames: reflexFrames,
-        // Use a careful/strict handshake by default for summaries
         handshakeOverrides: {
           mode: "--careful",
           stakes: "high",
@@ -165,7 +208,7 @@ const AnalyzePage: React.FC = () => {
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  disabled={isAnalyzing}
+                  disabled={isAnalyzing || isFetching}
                   className="w-full border border-slate-300 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                   rows={6}
                   placeholder="Paste a paragraph, a link to an article, or a snippet from a methods section…"
@@ -174,18 +217,16 @@ const AnalyzePage: React.FC = () => {
                 <div className="flex justify-end">
                   <button
                     onClick={handleAnalyze}
-                    disabled={!input.trim() || isAnalyzing}
+                    disabled={!input.trim() || isAnalyzing || isFetching}
                     className="px-6 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
                     title="Run local analysis with stringent fallacy/reflex detection."
                   >
-                    {isAnalyzing ? "Analyzing…" : "Run Analysis"}
+                    {isAnalyzing || isFetching ? "Working…" : "Run Analysis"}
                   </button>
                 </div>
 
                 {/* Status + notice */}
-                <div className="text-xs text-slate-600">
-                  {analysisCount > 0 && <>Runs: {analysisCount}</>}
-                </div>
+                <div className="text-xs text-slate-600">{analysisCount > 0 && <>Runs: {analysisCount}</>}</div>
                 {notice && (
                   <div
                     className="mt-2 text-xs text-slate-700 px-3 py-2 rounded-lg"
@@ -252,14 +293,14 @@ const AnalyzePage: React.FC = () => {
                 </>
               )}
 
-              {analysisCount > 0 && reflexFrames.length === 0 && !isAnalyzing && (
+              {analysisCount > 0 && reflexFrames.length === 0 && !isAnalyzing && !isFetching && (
                 <div
                   className="mt-8 p-4 rounded-2xl bg-[#e9eef5]"
                   style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
                 >
                   <p className="text-slate-700 text-center">
-                    No reflexes detected. Try text with strong certainty, unnamed authorities,
-                    or sweeping claims—then see how the engine responds.
+                    No reflexes detected. Try text with strong certainty, unnamed authorities, or sweeping claims—then
+                    see how the engine responds.
                   </p>
                 </div>
               )}
@@ -296,7 +337,9 @@ const ChatPanel: React.FC = () => {
 
   // NEW: active article context for follow-ups
   const [activeDoc, setActiveDoc] = useState<null | { url: string; textBlock: string; charCount: number }>(null);
-  function clearDocContext() { setActiveDoc(null); }
+  function clearDocContext() {
+    setActiveDoc(null);
+  }
 
   // Load persisted chat on mount
   useEffect(() => {
@@ -306,14 +349,18 @@ const ChatPanel: React.FC = () => {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) setHistory(parsed as ChatMsg[]);
       }
-    } catch {/* ignore */}
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   // Persist chat after each change
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-    } catch {/* ignore */}
+    } catch {
+      /* ignore */
+    }
   }, [history]);
 
   // NEW: autoscroll to latest message
@@ -337,11 +384,16 @@ const ChatPanel: React.FC = () => {
     setBusy(true);
     setError(null);
     try {
-      const data = await agentFetchUrl(url);
+      const data = await withRetry(() => agentFetchUrl(url));
       const plain = String(data?.text ?? "").slice(0, 4000);
       setHistory((h) => [...h, { role: "tool", text: `fetch_url(${url}) →\n\n${plain}` }]);
     } catch (e: any) {
-      setError(formatError(e));
+      const msg = e?.message || e?.toString?.() || "Unknown error";
+      if (/403|blocked server requests/i.test(msg)) {
+        setError("That site blocks server fetches. Try copy/paste the article text.");
+      } else {
+        setError(formatError(e));
+      }
     } finally {
       setBusy(false);
       setText("");
@@ -352,11 +404,12 @@ const ChatPanel: React.FC = () => {
   function resetChat() {
     try {
       localStorage.removeItem(STORAGE_KEY);
-    } catch {/* ignore */}
+    } catch {
+      /* ignore */
+    }
     setHistory([]);
     setError(null);
     clearDocContext();
-    // optional: scroll to top
     if (threadRef.current) threadRef.current.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -534,15 +587,12 @@ const ChatPanel: React.FC = () => {
         </button>
       </div>
 
-      {/* Conversation (moved ABOVE the lines/button/textarea so its border/shadow can't act like a divider) */}
+      {/* Conversation (above divider so its shadow can't act like a divider) */}
       <div
         className="border rounded-2xl bg-[#e9eef5] p-3"
         style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
       >
-        <div
-          ref={threadRef}
-          className="max-h-[50vh] overflow-auto space-y-3"
-        >
+        <div ref={threadRef} className="max-h-[50vh] overflow-auto space-y-3">
           {history.map((m, i) => (
             <div
               key={i}
@@ -580,7 +630,7 @@ const ChatPanel: React.FC = () => {
         <button
           onClick={async () => {
             const content = text.trim();
-            if (!content) return;
+            if (!content || busy) return;
 
             setBusy(true);
             setError(null);
@@ -590,40 +640,45 @@ const ChatPanel: React.FC = () => {
               .filter((m) => m.role === "user" || m.role === "assistant")
               .map(({ role, text }) => ({ role: role as ChatMessage["role"], text }));
 
-            // Add the user's raw message to the thread immediately
+            // Add user's raw message immediately
             const userMsg = { role: "user" as const, text: content };
             const nextHist = [...history, userMsg];
             setHistory(nextHist);
 
             try {
-              // Run local reflex analysis on the user's text (as before)
+              // Local reflex analysis on user's input
               const userFrames = await runReflexAnalysis(content);
               nextHist[nextHist.length - 1] = { ...userMsg, frames: userFrames };
               setHistory([...nextHist]);
 
-              let promptForModel = content;
+              let textToSend = content;
 
-              // NEW Case A: user pasted a URL — fetch & set active doc, include it in THIS turn
               if (isLikelyUrl(content)) {
-                const { contextBlock, meta } = await buildUrlContextBlock(content);
-                if (!contextBlock) {
-                  setError(meta.note || "That URL didn't return readable text.");
-                  setBusy(false);
-                  setText("");
+                // Fetch the page and include the content inline for this turn
+                const { text: fetched } = await withRetry(() => agentFetchUrl(content));
+                if (fetched?.length) {
+                  const clipped = fetched.slice(0, 20000);
+                  textToSend =
+`Analyze the following page content (truncated if long). Answer follow-ups with this context in mind.
+
+[URL] ${content}
+[CONTENT START]
+${clipped}
+[CONTENT END]`;
+
+                  // Keep the article context active for follow-ups
+                  setActiveDoc({
+                    url: content,
+                    textBlock: `[URL] ${content}\n[CONTENT START]\n${clipped}\n[CONTENT END]`,
+                    charCount: clipped.length,
+                  });
+                } else {
+                  setError("Fetched page had no readable text; sending URL as-is.");
                   setActiveDoc(null);
-                  return;
                 }
-                setActiveDoc({ url: meta.url, textBlock: contextBlock, charCount: meta.charCount });
-
-                promptForModel =
-`Please analyze this article and be specific about unsupported claims.
-
-${contextBlock}
-`;
-              }
-              // NEW Case B: normal follow-up — if activeDoc exists, include it
-              else if (activeDoc) {
-                promptForModel =
+              } else if (activeDoc) {
+                // Include active article context for follow-ups
+                textToSend =
 `Context: You are still discussing the article below. Use it to answer concisely.
 
 ${activeDoc.textBlock}
@@ -631,25 +686,26 @@ ${activeDoc.textBlock}
 User: ${content}`;
               }
 
-              // strict defaults (unchanged)
               const hs = buildHandshake(codex as any, {
                 mode,
                 stakes,
                 min_confidence: minConfidence,
                 cite_policy: citePolicy,
-                omission_scan,
+                omission_scan: omission_scan,
                 reflex_profile: reflexProfile,
               });
 
-              const resp = await agentChat(promptForModel, priorHistory, {
-                mode: hs.mode,
-                stakes: hs.stakes,
-                min_confidence: hs.min_confidence,
-                cite_policy: hs.cite_policy,
-                omission_scan: hs.omission_scan,
-                reflex_profile: hs.reflex_profile,
-                codex_version: hs.codex_version,
-              });
+              const resp = await withRetry(() =>
+                agentChat(textToSend, priorHistory, {
+                  mode: hs.mode,
+                  stakes: hs.stakes,
+                  min_confidence: hs.min_confidence,
+                  cite_policy: hs.cite_policy,
+                  omission_scan: hs.omission_scan,
+                  reflex_profile: hs.reflex_profile,
+                  codex_version: hs.codex_version,
+                })
+              );
 
               const assistantText = String(resp?.message ?? "").trim() || "(no reply)";
               const assistantMsg = { role: "assistant" as const, text: assistantText, tools: resp?.tools ?? [] };
@@ -657,8 +713,12 @@ User: ${content}`;
               setHistory((h) => [...h, assistantMsg]);
             } catch (e: any) {
               const msg = e?.message || e?.toString?.() || "Unknown error";
-              if (/Failed to fetch|NetworkError|TypeError/i.test(msg)) {
-                setError(`${msg}. Tip: open the app on http://localhost:8888 (Netlify Dev) or your live Netlify URL so the /agent/* functions work.`);
+              if (/403|blocked server requests/i.test(msg)) {
+                setError("That site blocks server fetches. Try copy/paste the article text.");
+              } else if (/Failed to fetch|NetworkError|TypeError/i.test(msg)) {
+                setError(
+                  `${msg}. Tip: open the app on http://localhost:8888 (Netlify Dev) or your live Netlify URL so the /agent/* functions work.`
+                );
               } else {
                 const status = e?.response?.status ? ` (${e.response.status} ${e.response.statusText || ""})` : "";
                 setError(`${msg}${status}`);
@@ -684,7 +744,7 @@ User: ${content}`;
           value={text}
           onChange={(e) => setText(e.target.value)}
           className="w-full border rounded-xl p-3 text-sm resize-none max-h-40 overflow-auto whitespace-pre-wrap break-words break-all md:break-words"
-          placeholder="Paste a URL or ask a question. (Typing a URL here will auto-run fetch-url.)"
+          placeholder="Paste a URL or ask a question. (Typing a URL here will auto-fetch and include the page.)"
           rows={3}
           disabled={busy}
         />
@@ -693,7 +753,9 @@ User: ${content}`;
       {activeDoc && (
         <div className="text-xs text-slate-600 mt-2">
           Article context active: {activeDoc.url} ({activeDoc.charCount.toLocaleString()} chars){" "}
-          <button onClick={clearDocContext} className="underline">Reset</button>
+          <button onClick={clearDocContext} className="underline">
+            Reset
+          </button>
         </div>
       )}
 
