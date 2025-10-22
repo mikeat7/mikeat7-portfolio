@@ -339,6 +339,32 @@ const ChatPanel: React.FC = () => {
     if (threadRef.current) threadRef.current.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // Presets for the Chat tab only (restored to fix build errors)
+  function applyPreset(p: "quick" | "careful" | "audit") {
+    if (p === "quick") {
+      setMode("--direct");
+      setStakes("low");
+      setMinConfidence(0.55);
+      setCitePolicy("off");
+      setOmissionUI("false");
+      setReflexProfile("lenient");
+    } else if (p === "careful") {
+      setMode("--careful");
+      setStakes("medium");
+      setMinConfidence(0.6);
+      setCitePolicy("auto");
+      setOmissionUI("auto");
+      setReflexProfile("default");
+    } else {
+      setMode("--careful");
+      setStakes("high");
+      setMinConfidence(0.75);
+      setCitePolicy("force");
+      setOmissionUI("true");
+      setReflexProfile("strict");
+    }
+  }
+
   async function send() {
     const content = text.trim();
     if (!content) return;
@@ -547,10 +573,10 @@ const ChatPanel: React.FC = () => {
         </button>
       </div>
 
-      {/* ----- simple straight line (replacing the 3D divider) ----- */}
+      {/* Simple straight line (replaces the problematic 3D divider) */}
       <hr className="my-3 border-black" />
 
-      {/* Send button ABOVE the input, left-aligned, plus optional line below */}
+      {/* Send button ABOVE the input, left-aligned */}
       <div className="flex">
         <button
           onClick={send}
@@ -561,10 +587,10 @@ const ChatPanel: React.FC = () => {
         </button>
       </div>
 
-      {/* optional matching line below the button */}
+      {/* Optional: matching line below the button */}
       <hr className="my-3 border-black" />
 
-      {/* Conversation (unchanged) */}
+      {/* Conversation */}
       <div
         className="border rounded-2xl bg-[#e9eef5] p-3"
         style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
@@ -602,7 +628,7 @@ const ChatPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Input (textarea ONLY, under the button) */}
+      {/* Textarea ONLY (under the Send button) */}
       <div className="mt-2">
         <textarea
           value={text}
