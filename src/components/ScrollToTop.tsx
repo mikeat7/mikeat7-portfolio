@@ -1,50 +1,34 @@
 // src/components/ScrollToTop.tsx
-import { useLayoutEffect, useEffect } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-export default function ScrollToTop() {
-  const { pathname, hash } = useLocation();
+const ScrollToTop: React.FC = () => {
+  const { pathname, search } = useLocation();
 
-  // Ensure the browser doesn't restore scroll between SPA navigations
   useEffect(() => {
-    if ("scrollRestoration" in history) {
-      const prev = (history as any).scrollRestoration;
-      (history as any).scrollRestoration = "manual";
-      return () => {
-        (history as any).scrollRestoration = prev ?? "auto";
-      };
+    // Disable browser's saved scroll so we always start at top
+    if ("scrollRestoration" in window.history) {
+      try {
+        window.history.scrollRestoration = "manual";
+      } catch {/* ignore */}
     }
-  }, []);
 
-  useLayoutEffect(() => {
-    const id = hash?.replace("#", "");
-    const toTop = () => {
-      if (id) {
-        const el = document.getElementById(id);
-        if (el) {
-          el.scrollIntoView({ block: "start", inline: "nearest", behavior: "auto" });
-          return;
-        }
-      }
-      // Hit all targets to satisfy iOS/Safari/Firefox quirks
+    const jumpTop = () => {
+      // Be extra explicit for mobile browsers
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
-      window.scrollTo(0, 0);
     };
 
-    // Do it now (pre-paint), then again after layout settles
-    toTop();
-    const t0 = setTimeout(toTop, 0);
-    const t1 = setTimeout(toTop, 120);
-    const t2 = setTimeout(toTop, 300);
-
-    return () => {
-      clearTimeout(t0);
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [pathname, hash]);
+    // Do it on next paint, then once more after layout settles
+    requestAnimationFrame(() => {
+      jumpTop();
+      setTimeout(jumpTop, 0);
+    });
+  }, [pathname, search]); // keep hash intact for in-page anchors
 
   return null;
-}
+};
+
+export default ScrollToTop;
 
