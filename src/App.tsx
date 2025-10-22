@@ -1,3 +1,4 @@
+// src/App.tsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { VXProvider } from "@/context/VXProvider";
@@ -47,11 +48,13 @@ import CircularReasoning from "@/pages/educate/circular-reasoning";
 import BecomeAIAware from "@/pages/educate/become-ai-aware";
 import NarrativeFramingAnalysis from "@/pages/educate/narrative-framing-analysis";
 import AIBehaviorPatterns from "@/pages/educate/ai-behavior-patterns";
+import ScrollToTop from "@/components/ScrollToTop"; // ← added
 
 const App: React.FC = () => {
   return (
     <VXProvider>
       <Router>
+        <ScrollToTop /> {/* ← one-time mount fixes top-of-page on route change */}
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/educate" element={<Educate />} />
