@@ -9,7 +9,7 @@ import BullshitDetection from "@/pages/educate/bullshit-detection";
 import LogicalFallacies from "@/pages/educate/logical-fallacies";
 import AIAwareness from "@/pages/educate/ai-awareness";
 import AdvancedPractice from "@/pages/educate/advanced-practice";
-import Analyze from "@/pages/analyze"; 
+import Analyze from "@/pages/analyze";
 import Wisdom from "@/pages/wisdom";
 import Train from "@/pages/train";
 import Paper from "@/pages/paper";
@@ -48,13 +48,13 @@ import CircularReasoning from "@/pages/educate/circular-reasoning";
 import BecomeAIAware from "@/pages/educate/become-ai-aware";
 import NarrativeFramingAnalysis from "@/pages/educate/narrative-framing-analysis";
 import AIBehaviorPatterns from "@/pages/educate/ai-behavior-patterns";
-import ScrollToTop from "@/components/ScrollToTop"; // ← added
+import ScrollManager from "@/components/ScrollManager"; // ← use ScrollManager
 
 const App: React.FC = () => {
   return (
     <VXProvider>
       <Router>
-        <ScrollToTop /> {/* ← one-time mount fixes top-of-page on route change */}
+        <ScrollManager /> {/* one-time mount to normalize scroll on route change */}
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/educate" element={<Educate />} />
