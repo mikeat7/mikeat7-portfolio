@@ -2,73 +2,73 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigationType } from "react-router-dom";
 
-/**
- * Robust scroll normalizer for SPA navigations:
- * - PUSH / REPLACE => force top (phones/desktop)
- * - POP (back/forward) => let browser restore position
- * Handles mobile focus + scroll anchoring quirks.
- */
 export default function ScrollManager() {
   const location = useLocation();
   const navType = useNavigationType(); // "POP" | "PUSH" | "REPLACE"
   const lastKeyRef = useRef<string | null>(null);
 
+  // Set manual restoration once
   useEffect(() => {
-    // Force manual restoration for SPAs (some browsers ignore this unless set often)
     if ("scrollRestoration" in window.history) {
-      try {
-        window.history.scrollRestoration = "manual";
-      } catch {
-        /* ignore */
-      }
+      try { window.history.scrollRestoration = "manual"; } catch {}
     }
   }, []);
 
   useEffect(() => {
     const isPop = navType === "POP";
-    const sameKey = lastKeyRef.current === (location as any).key;
-    lastKeyRef.current = (location as any).key;
+    const thisKey = (location as any).key;
+    const sameKey = lastKeyRef.current === thisKey;
+    lastKeyRef.current = thisKey;
 
     if (isPop && !sameKey) {
-      // Let the browser restore on back/forward
+      // Back/forward: allow native restoration
       return;
     }
 
-    // On PUSH/REPLACE, hard-reset to top
+    // Temporarily clamp browser behaviors that fight us
+    const root = document.documentElement;
+    const prevScrollBehavior = root.style.scrollBehavior;
+    const prevOverflowAnchor = root.style.overflowAnchor as string | undefined;
 
-    // 0) blur any focused element (mobile caret can force scroll)
+    root.style.scrollBehavior = "auto";
+    root.style.overflowAnchor = "none";
+
+    // Blur any focused input (mobile caret causes y-remember)
     if (document.activeElement instanceof HTMLElement) {
-      try {
-        document.activeElement.blur();
-      } catch {
-        /* ignore */
-      }
+      try { document.activeElement.blur(); } catch {}
     }
 
-    // helper: set both roots
-    const setTop = (top = 0) => {
-      // Some engines use documentElement, others use body
-      document.documentElement.scrollTop = top;
-      document.body.scrollTop = top;
-      // Also call the formal API
-      window.scrollTo({ top, left: 0, behavior: "auto" });
+    // Helper to set scroll on all likely targets
+    const setTop = () => {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     };
 
-    // 1) immediate
-    setTop(0);
+    // Pass 1: sync
+    setTop();
 
-    // 2) next frame (after layout)
-    const raf = requestAnimationFrame(() => setTop(0));
+    // Pass 2: next frame
+    const raf1 = requestAnimationFrame(setTop);
 
-    // 3) after a short delay (late images/webfonts/anchor shifts)
-    const t = setTimeout(() => setTop(0), 80);
+    // Pass 3: short delay (late layout)
+    const t80 = setTimeout(setTop, 80);
 
+    // Pass 4: slightly later (images/webfonts on mobile)
+    const t140 = setTimeout(setTop, 140);
+
+    // Cleanup + restore original styles so your normal smooth scrolling works elsewhere
     return () => {
-      cancelAnimationFrame(raf);
-      clearTimeout(t);
+      cancelAnimationFrame(raf1);
+      clearTimeout(t80);
+      clearTimeout(t140);
+      // restore styles
+      root.style.scrollBehavior = prevScrollBehavior;
+      // undefined/empty strings both clear inline style
+      if (prevOverflowAnchor) root.style.overflowAnchor = prevOverflowAnchor;
+      else root.style.removeProperty("overflow-anchor");
     };
   }, [location.pathname, location.search, navType]);
 
   return null;
 }
-
