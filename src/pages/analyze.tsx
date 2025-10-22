@@ -51,7 +51,7 @@ const AnalyzePage: React.FC = () => {
 
     setIsAnalyzing(true);
     setReflexFrames([]);
-    setReportText(""); // ← fixed: was goReportText("")
+    setReportText("");
     setNotice(null);
 
     try {
@@ -373,7 +373,7 @@ const ChatPanel: React.FC = () => {
         stakes,
         min_confidence: minConfidence,
         cite_policy: citePolicy,
-        omission_scan: omission_scan,
+        omission_scan,
         reflex_profile: reflexProfile,
       });
 
@@ -589,7 +589,7 @@ const ChatPanel: React.FC = () => {
               style={{ background: m.role === "user" ? "#f4f6fb" : m.role === "assistant" ? "#eef2f8" : "#fff7ed" }}
             >
               <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">{m.role}</div>
-              <pre className="whitespace-pre-wrap break-words text-sm text-slate-800">{m.text}</pre>
+              <pre className="whitespace-pre-wrap text-sm text-slate-800">{m.text}</pre>
 
               {m.role === "assistant" && m.tools && m.tools.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -611,13 +611,12 @@ const ChatPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Input (in-flow, desktop-friendly, mobile-safe) */}
+      {/* Input */}
       <div className="flex items-start gap-2">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="flex-1 min-w-0 border rounded-xl p-3 text-sm resize-none
-                     max-h-40 overflow-auto whitespace-pre-wrap break-words break-all md:break-words"
+          className="flex-1 border rounded-xl p-3 text-sm"
           placeholder="Paste a URL or ask a question. (Typing a URL here will auto-run fetch-url.)"
           rows={3}
           disabled={busy}
@@ -625,7 +624,7 @@ const ChatPanel: React.FC = () => {
         <button
           onClick={send}
           disabled={busy || !text.trim()}
-          className="shrink-0 px-4 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
+          className="px-4 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
         >
           {busy ? "Sending…" : "Send"}
         </button>
@@ -637,5 +636,4 @@ const ChatPanel: React.FC = () => {
 };
 
 export default AnalyzePage;
-
 
