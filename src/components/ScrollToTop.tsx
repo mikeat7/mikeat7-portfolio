@@ -1,11 +1,11 @@
 // src/components/ScrollToTop.tsx
-import { useEffect } from "react";
+import { useLayoutEffect, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 export default function ScrollToTop() {
   const { pathname, hash } = useLocation();
 
-  // Turn off the browser's scroll restoration so SPA controls it.
+  // Ensure the browser doesn't restore scroll between SPA navigations
   useEffect(() => {
     if ("scrollRestoration" in history) {
       const prev = (history as any).scrollRestoration;
@@ -16,30 +16,29 @@ export default function ScrollToTop() {
     }
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const id = hash?.replace("#", "");
-    const scrollTop = () => {
-      const el = document.scrollingElement || document.documentElement;
+    const toTop = () => {
       if (id) {
-        const target = document.getElementById(id);
-        if (target) {
-          target.scrollIntoView({ block: "start", inline: "nearest", behavior: "auto" });
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ block: "start", inline: "nearest", behavior: "auto" });
           return;
         }
       }
-      // Force to absolute top (covers iOS/Firefox quirks)
-      (el as HTMLElement).scrollTop = 0;
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      // Hit all targets to satisfy iOS/Safari/Firefox quirks
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      window.scrollTo(0, 0);
     };
 
-    // Multi-pass: next frame + small delays to beat late layout/font paint
-    const raf = requestAnimationFrame(scrollTop);
-    const t0 = setTimeout(scrollTop, 0);
-    const t1 = setTimeout(scrollTop, 60);
-    const t2 = setTimeout(scrollTop, 250);
+    // Do it now (pre-paint), then again after layout settles
+    toTop();
+    const t0 = setTimeout(toTop, 0);
+    const t1 = setTimeout(toTop, 120);
+    const t2 = setTimeout(toTop, 300);
 
     return () => {
-      cancelAnimationFrame(raf);
       clearTimeout(t0);
       clearTimeout(t1);
       clearTimeout(t2);
