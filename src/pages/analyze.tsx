@@ -10,6 +10,7 @@ import codex from "@/data/front-end-codex.v0.9.json";
 import CoFirePanel from "@/components/CoFirePanel";
 import BackButton from "@/components/BackButton";
 import AnalysisReport from "@/components/AnalysisReport";
+import { isLikelyUrl, buildUrlContextBlock } from "@/utils/urlContext"; // NEW
 
 // Small help chip (kept for tooltips in Chat tab)
 const Help = ({ text }: { text: string }) => (
@@ -45,6 +46,7 @@ const AnalyzePage: React.FC = () => {
   const [analysisCount, setAnalysisCount] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
   const [reportText, setReportText] = useState<string>("");
+  const [processedInput, setProcessedInput] = useState<string>(""); // NEW: remember fetched/clipped text
 
   async function handleAnalyze() {
     if (!input.trim()) return;
@@ -55,7 +57,22 @@ const AnalyzePage: React.FC = () => {
     setNotice(null);
 
     try {
-      const frames = await runReflexAnalysis(input);
+      let textForAnalysis = input.trim();
+
+      // NEW: If user pasted a URL, fetch & analyze the page text (clipped)
+      if (isLikelyUrl(textForAnalysis)) {
+        const { contextBlock, meta } = await buildUrlContextBlock(textForAnalysis);
+        if (!contextBlock) {
+          setNotice(meta.note || "That URL didn't return readable text.");
+          setIsAnalyzing(false);
+          return;
+        }
+        textForAnalysis = contextBlock;
+      }
+
+      setProcessedInput(textForAnalysis); // remember for Generate Report
+
+      const frames = await runReflexAnalysis(textForAnalysis);
       setReflexFrames(frames);
       if (!frames || frames.length === 0) {
         setNotice("No detections found. Try stronger certainty claims, unnamed authorities, or sweeping generalizations.");
@@ -73,8 +90,9 @@ const AnalyzePage: React.FC = () => {
   async function handleGenerateReport() {
     // Optional: agent summary from frames; will show a friendly message if unavailable
     try {
+      const basis = processedInput || input; // NEW: prefer processed (URL-fetched) text
       const { reportText } = await callAgentSummarize({
-        inputText: input,
+        inputText: basis,
         frames: reflexFrames,
         // Use a careful/strict handshake by default for summaries
         handshakeOverrides: {
@@ -276,6 +294,10 @@ const ChatPanel: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // NEW: active article context for follow-ups
+  const [activeDoc, setActiveDoc] = useState<null | { url: string; textBlock: string; charCount: number }>(null);
+  function clearDocContext() { setActiveDoc(null); }
+
   // Load persisted chat on mount
   useEffect(() => {
     try {
@@ -301,8 +323,6 @@ const ChatPanel: React.FC = () => {
       threadRef.current.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
     }
   }, [history]);
-
-  const looksLikeUrl = (s: string) => /^https?:\/\/\S+/i.test(s.trim());
 
   function formatError(e: any) {
     const msg = e?.message || e?.toString?.() || "Unknown error";
@@ -335,6 +355,7 @@ const ChatPanel: React.FC = () => {
     } catch {/* ignore */}
     setHistory([]);
     setError(null);
+    clearDocContext();
     // optional: scroll to top
     if (threadRef.current) threadRef.current.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -560,29 +581,57 @@ const ChatPanel: React.FC = () => {
           onClick={async () => {
             const content = text.trim();
             if (!content) return;
-            // If it looks like a URL, run fetch-url shortcut
-            if (/^https?:\/\/\S+/i.test(content)) {
-              await fetchUrlToHistory(content);
-              return;
-            }
-            // Else send normally
-            const priorHistory = history
-              .filter((m) => m.role === "user" || m.role === "assistant")
-              .map(({ role, text }) => ({ role: role as ChatMessage["role"], text }));
 
             setBusy(true);
             setError(null);
 
-            try {
-              const userMsg = { role: "user" as const, text: content };
-              const nextHist = [...history, userMsg];
-              setHistory(nextHist);
+            // Prior convo history (user/assistant only)
+            const priorHistory = history
+              .filter((m) => m.role === "user" || m.role === "assistant")
+              .map(({ role, text }) => ({ role: role as ChatMessage["role"], text }));
 
+            // Add the user's raw message to the thread immediately
+            const userMsg = { role: "user" as const, text: content };
+            const nextHist = [...history, userMsg];
+            setHistory(nextHist);
+
+            try {
+              // Run local reflex analysis on the user's text (as before)
               const userFrames = await runReflexAnalysis(content);
               nextHist[nextHist.length - 1] = { ...userMsg, frames: userFrames };
               setHistory([...nextHist]);
 
-              // strict defaults
+              let promptForModel = content;
+
+              // NEW Case A: user pasted a URL — fetch & set active doc, include it in THIS turn
+              if (isLikelyUrl(content)) {
+                const { contextBlock, meta } = await buildUrlContextBlock(content);
+                if (!contextBlock) {
+                  setError(meta.note || "That URL didn't return readable text.");
+                  setBusy(false);
+                  setText("");
+                  setActiveDoc(null);
+                  return;
+                }
+                setActiveDoc({ url: meta.url, textBlock: contextBlock, charCount: meta.charCount });
+
+                promptForModel =
+`Please analyze this article and be specific about unsupported claims.
+
+${contextBlock}
+`;
+              }
+              // NEW Case B: normal follow-up — if activeDoc exists, include it
+              else if (activeDoc) {
+                promptForModel =
+`Context: You are still discussing the article below. Use it to answer concisely.
+
+${activeDoc.textBlock}
+
+User: ${content}`;
+              }
+
+              // strict defaults (unchanged)
               const hs = buildHandshake(codex as any, {
                 mode,
                 stakes,
@@ -592,7 +641,7 @@ const ChatPanel: React.FC = () => {
                 reflex_profile: reflexProfile,
               });
 
-              const resp = await agentChat(content, priorHistory, {
+              const resp = await agentChat(promptForModel, priorHistory, {
                 mode: hs.mode,
                 stakes: hs.stakes,
                 min_confidence: hs.min_confidence,
@@ -640,6 +689,13 @@ const ChatPanel: React.FC = () => {
           disabled={busy}
         />
       </div>
+
+      {activeDoc && (
+        <div className="text-xs text-slate-600 mt-2">
+          Article context active: {activeDoc.url} ({activeDoc.charCount.toLocaleString()} chars){" "}
+          <button onClick={clearDocContext} className="underline">Reset</button>
+        </div>
+      )}
 
       {error && <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">{error}</div>}
     </div>
