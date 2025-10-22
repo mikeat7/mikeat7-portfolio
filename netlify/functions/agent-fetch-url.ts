@@ -1,7 +1,8 @@
 import type { Handler } from "@netlify/functions";
 
-// ✅ server-side secret check
+// ✅ allow either secret (server) or public (browser) key
 const REQUIRED_KEY = process.env.TSCA_API_KEY;
+const PUBLIC_KEY   = process.env.VITE_TSCA_PUBLIC_KEY;
 
 // very conservative HTML→text
 function stripHtml(html: string) {
@@ -20,7 +21,6 @@ const BROWSER_HEADERS: Record<string, string> = {
   "Accept-Language": "en-US,en;q=0.9",
   "Cache-Control": "no-cache",
   "Pragma": "no-cache",
-  // A handful of origins behave better if a referer is set
   "Referer": "https://www.google.com/",
   "Upgrade-Insecure-Requests": "1",
 };
@@ -31,12 +31,21 @@ export const handler: Handler = async (event) => {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "content-type,x-tsca-key",
   };
+
   if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers: cors, body: "" };
   if (event.httpMethod !== "POST") return { statusCode: 405, headers: cors, body: "Method Not Allowed" };
 
-  // 🔐 header key check (only if configured)
-  const gotKey = event.headers["x-tsca-key"] || event.headers["X-Tsca-Key"];
-  if (REQUIRED_KEY && gotKey !== REQUIRED_KEY) {
+  // 🔐 header key check (allow either)
+  const gotKey =
+    event.headers["x-tsca-key"] ||
+    event.headers["X-Tsca-Key"] ||
+    event.headers["X-TSCA-KEY"];
+
+  const ok =
+    (!!REQUIRED_KEY && gotKey === REQUIRED_KEY) ||
+    (!!PUBLIC_KEY && gotKey === PUBLIC_KEY);
+
+  if (!ok) {
     return { statusCode: 401, headers: cors, body: "Unauthorized" };
   }
 
@@ -57,7 +66,6 @@ export const handler: Handler = async (event) => {
       headers: BROWSER_HEADERS,
     });
 
-    // If blocked, surface a friendly error the UI can show
     if (!resp.ok) {
       const status = resp.status;
       const msg =
