@@ -520,7 +520,7 @@ const ChatPanel: React.FC = () => {
           title="Invoke /agent/fetch-url and append the cleaned text as a tool message."
           disabled={busy}
         >
-        fetch-url
+          fetch-url
         </button>
 
         {/* NEW: Reset chat */}
