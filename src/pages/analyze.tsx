@@ -339,7 +339,7 @@ const ChatPanel: React.FC = () => {
     if (threadRef.current) threadRef.current.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // Presets for the Chat tab only (restored to fix build errors)
+  // Presets for the Chat tab only
   function applyPreset(p: "quick" | "careful" | "audit") {
     if (p === "quick") {
       setMode("--direct");
@@ -362,66 +362,6 @@ const ChatPanel: React.FC = () => {
       setCitePolicy("force");
       setOmissionUI("true");
       setReflexProfile("strict");
-    }
-  }
-
-  async function send() {
-    const content = text.trim();
-    if (!content) return;
-
-    // Auto-run fetch-url if input is a URL
-    if (looksLikeUrl(content)) {
-      await fetchUrlToHistory(content);
-      return;
-    }
-
-    setBusy(true);
-    setError(null);
-
-    // Prior convo history (user/assistant only)
-    const priorHistory = history
-      .filter((m) => m.role === "user" || m.role === "assistant")
-      .map(({ role, text }) => ({ role: role as ChatMessage["role"], text }));
-
-    // Add user message and run VX on it
-    const userMsg: ChatMsg = { role: "user", text: content };
-    const nextHist: ChatMsg[] = [...history, userMsg];
-    setHistory(nextHist);
-
-    try {
-      const userFrames = await runReflexAnalysis(content);
-      nextHist[nextHist.length - 1] = { ...userMsg, frames: userFrames };
-      setHistory([...nextHist]);
-
-      // Build handshake using strict defaults
-      const hs = buildHandshake(codex as any, {
-        mode,
-        stakes,
-        min_confidence: minConfidence,
-        cite_policy: citePolicy,
-        omission_scan,
-        reflex_profile: reflexProfile,
-      });
-
-      const resp = await agentChat(content, priorHistory, {
-        mode: hs.mode,
-        stakes: hs.stakes,
-        min_confidence: hs.min_confidence,
-        cite_policy: hs.cite_policy,
-        omission_scan: hs.omission_scan,
-        reflex_profile: hs.reflex_profile,
-        codex_version: hs.codex_version,
-      });
-
-      const assistantText = String(resp?.message ?? "").trim() || "(no reply)";
-      const assistantMsg: ChatMsg = { role: "assistant", text: assistantText, tools: resp?.tools ?? [] };
-      assistantMsg.frames = await runReflexAnalysis(assistantText);
-      setHistory((h) => [...h, assistantMsg]);
-    } catch (e: any) {
-      setError(formatError(e));
-    } finally {
-      setBusy(false);
-      setText("");
     }
   }
 
@@ -559,7 +499,7 @@ const ChatPanel: React.FC = () => {
           title="Invoke /agent/fetch-url and append the cleaned text as a tool message."
           disabled={busy}
         >
-          fetch-url
+        fetch-url
         </button>
 
         {/* NEW: Reset chat */}
@@ -573,24 +513,7 @@ const ChatPanel: React.FC = () => {
         </button>
       </div>
 
-      {/* Simple straight line (replaces the problematic 3D divider) */}
-      <hr className="my-3 border-black" />
-
-      {/* Send button ABOVE the input, left-aligned */}
-      <div className="flex">
-        <button
-          onClick={send}
-          disabled={busy || !text.trim()}
-          className="px-4 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
-        >
-          {busy ? "Sending…" : "Send"}
-        </button>
-      </div>
-
-      {/* Optional: matching line below the button */}
-      <hr className="my-3 border-black" />
-
-      {/* Conversation */}
+      {/* Conversation (moved ABOVE the lines/button/textarea so its border/shadow can't act like a divider) */}
       <div
         className="border rounded-2xl bg-[#e9eef5] p-3"
         style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
@@ -628,7 +551,85 @@ const ChatPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Textarea ONLY (under the Send button) */}
+      {/* Simple straight line */}
+      <hr className="my-3 border-black" />
+
+      {/* Send button ABOVE the textarea, left-aligned */}
+      <div className="flex">
+        <button
+          onClick={async () => {
+            const content = text.trim();
+            if (!content) return;
+            // If it looks like a URL, run fetch-url shortcut
+            if (/^https?:\/\/\S+/i.test(content)) {
+              await fetchUrlToHistory(content);
+              return;
+            }
+            // Else send normally
+            const priorHistory = history
+              .filter((m) => m.role === "user" || m.role === "assistant")
+              .map(({ role, text }) => ({ role: role as ChatMessage["role"], text }));
+
+            setBusy(true);
+            setError(null);
+
+            try {
+              const userMsg = { role: "user" as const, text: content };
+              const nextHist = [...history, userMsg];
+              setHistory(nextHist);
+
+              const userFrames = await runReflexAnalysis(content);
+              nextHist[nextHist.length - 1] = { ...userMsg, frames: userFrames };
+              setHistory([...nextHist]);
+
+              // strict defaults
+              const hs = buildHandshake(codex as any, {
+                mode,
+                stakes,
+                min_confidence: minConfidence,
+                cite_policy: citePolicy,
+                omission_scan,
+                reflex_profile: reflexProfile,
+              });
+
+              const resp = await agentChat(content, priorHistory, {
+                mode: hs.mode,
+                stakes: hs.stakes,
+                min_confidence: hs.min_confidence,
+                cite_policy: hs.cite_policy,
+                omission_scan: hs.omission_scan,
+                reflex_profile: hs.reflex_profile,
+                codex_version: hs.codex_version,
+              });
+
+              const assistantText = String(resp?.message ?? "").trim() || "(no reply)";
+              const assistantMsg = { role: "assistant" as const, text: assistantText, tools: resp?.tools ?? [] };
+              (assistantMsg as any).frames = await runReflexAnalysis(assistantText);
+              setHistory((h) => [...h, assistantMsg]);
+            } catch (e: any) {
+              const msg = e?.message || e?.toString?.() || "Unknown error";
+              if (/Failed to fetch|NetworkError|TypeError/i.test(msg)) {
+                setError(`${msg}. Tip: open the app on http://localhost:8888 (Netlify Dev) or your live Netlify URL so the /agent/* functions work.`);
+              } else {
+                const status = e?.response?.status ? ` (${e.response.status} ${e.response.statusText || ""})` : "";
+                setError(`${msg}${status}`);
+              }
+            } finally {
+              setBusy(false);
+              setText("");
+            }
+          }}
+          disabled={busy || !text.trim()}
+          className="px-4 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
+        >
+          {busy ? "Sending…" : "Send"}
+        </button>
+      </div>
+
+      {/* Optional second straight line */}
+      <hr className="my-3 border-black" />
+
+      {/* Textarea ONLY */}
       <div className="mt-2">
         <textarea
           value={text}
@@ -646,4 +647,5 @@ const ChatPanel: React.FC = () => {
 };
 
 export default AnalyzePage;
+
 
