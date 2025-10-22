@@ -31,7 +31,8 @@ const EducationHub: React.FC = () => {
     {
       id: "epistemic-foundations",
       title: "Epistemic Foundations",
-      description: "Build your foundation in critical thinking and intellectual humility",
+      description:
+        "Build your foundation in critical thinking and intellectual humility",
       icon: <Brain className="w-8 h-8" />,
       color: "from-blue-500 to-indigo-600",
       route: "/educate/epistemic-foundations",
@@ -39,7 +40,8 @@ const EducationHub: React.FC = () => {
     {
       id: "bullshit-detection",
       title: "Bullshit Detection",
-      description: "Learn to identify manipulation, fallacies, and deceptive language",
+      description:
+        "Learn to identify manipulation, fallacies, and deceptive language",
       icon: <Target className="w-8 h-8" />,
       color: "from-purple-500 to-violet-600",
       route: "/educate/bullshit-detection",
@@ -47,7 +49,8 @@ const EducationHub: React.FC = () => {
     {
       id: "logical-fallacies",
       title: "Logical Fallacies",
-      description: "Master the art of spotting flawed reasoning and invalid arguments",
+      description:
+        "Master the art of spotting flawed reasoning and invalid arguments",
       icon: <AlertTriangle className="w-8 h-8" />,
       color: "from-orange-500 to-amber-600",
       route: "/educate/logical-fallacies",
@@ -55,7 +58,8 @@ const EducationHub: React.FC = () => {
     {
       id: "ai-awareness",
       title: "AI Awareness",
-      description: "Understand how AI systems work, fail, and can be manipulated",
+      description:
+        "Understand how AI systems work, fail, and can be manipulated",
       icon: <Zap className="w-8 h-8" />,
       color: "from-cyan-500 to-teal-600",
       route: "/educate/ai-awareness",
@@ -63,7 +67,8 @@ const EducationHub: React.FC = () => {
     {
       id: "advanced-practice",
       title: "Advanced Practice",
-      description: "Master-level exercises in clarity, precision, and truth detection",
+      description:
+        "Master-level exercises in clarity, precision, and truth detection",
       icon: <Trophy className="w-8 h-8" />,
       color: "from-slate-500 to-gray-600",
       route: "/educate/advanced-practice",
@@ -89,7 +94,7 @@ const EducationHub: React.FC = () => {
   ];
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 overflow-hidden">
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 overflow-x-hidden">
       {/* Rising text background, behind all content */}
       <div
         className="bubble-bg pointer-events-none select-none"
@@ -102,11 +107,11 @@ const EducationHub: React.FC = () => {
       >
         {thoughts.map((t, i) => {
           // deterministic spread so bubbles don’t overlap
-          const left = 8 + ((i * 17) % 84);           // 8..92%
-          const fs = 0.9 + (((i * 7) % 5) * 0.06);    // ~0.9rem..1.2rem
-          const blur = ((i * 13) % 3) * 0.6;          // 0, 0.6, 1.2px
+          const left = 8 + ((i * 17) % 84); // 8..92%
+          const fs = 0.9 + (((i * 7) % 5) * 0.06); // ~0.9rem..1.2rem
+          const blur = ((i * 13) % 3) * 0.6; // 0, 0.6, 1.2px
           const delay = ((i * 3.7) % 14).toFixed(2) + "s";
-          const dur = (22 + ((i * 5) % 14)) + "s";    // 22..35s
+          const dur = 22 + ((i * 5) % 14) + "s"; // 22..35s
 
           return (
             <span
@@ -141,19 +146,22 @@ const EducationHub: React.FC = () => {
 
         {/* Header (neomorphic backdrop) */}
         <div
-          className="text-center mb-12 rounded-3xl p-10"
+          className="text-center mb-12 rounded-3xl p-6 sm:p-10 overflow-visible"
           style={{
             background: "#e9eef5",
             boxShadow:
               "9px 9px 18px rgba(163,177,198,0.6), -9px -9px 18px rgba(255,255,255,0.9)",
           }}
         >
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1
+            className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent
+                       leading-tight max-w-full overflow-visible break-words break-all md:break-words whitespace-pre-wrap"
+          >
             Education Hub
           </h1>
-          <p className="text-xl text-slate-700 max-w-3xl mx-auto">
-            Master the art of clear thinking, bullshit detection, and epistemic humility.
-            Your journey to intellectual freedom starts here.
+          <p className="text-base sm:text-xl text-slate-700 max-w-3xl mx-auto break-words">
+            Master the art of clear thinking, bullshit detection, and epistemic
+            humility. Your journey to intellectual freedom starts here.
           </p>
         </div>
 
@@ -180,15 +188,15 @@ const EducationHub: React.FC = () => {
                 >
                   {category.icon}
                 </div>
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-2xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors break-words">
                     {category.title}
                   </h2>
-                  <p className="text-slate-700 text-lg leading-relaxed">
+                  <p className="text-slate-700 text-lg leading-relaxed break-words">
                     {category.description}
                   </p>
                 </div>
-                <div className="text-slate-400 group-hover:text-blue-500 transition-colors">
+                <div className="text-slate-400 group-hover:text-blue-500 transition-colors shrink-0">
                   {/* chevron via rotated ArrowLeft for consistency */}
                   <ArrowLeft className="w-6 h-6 rotate-180" />
                 </div>
@@ -207,15 +215,16 @@ const EducationHub: React.FC = () => {
                 "9px 9px 18px rgba(163,177,198,0.35), -9px -9px 18px rgba(255,255,255,0.9)",
             }}
           >
-            <h2 className="text-2xl font-bold text-center mb-6 text-slate-800">
+            <h2 className="text-2xl font-bold text-center mb-6 text-slate-800 break-words">
               What is "Truth Serum + Clarity Armor"?
             </h2>
 
-            <div className="prose prose-lg max-w-none text-slate-700">
+            <div className="prose prose-lg max-w-none text-slate-700 break-words prose-p:whitespace-pre-wrap">
               <p className="text-lg leading-relaxed mb-6">
-                Truth Serum + Clarity Armor represents a synthesis of computational linguistics,
-                epistemic philosophy, and cognitive science—engineered to detect and neutralize
-                semantic manipulation in real-time discourse analysis.
+                Truth Serum + Clarity Armor represents a synthesis of
+                computational linguistics, epistemic philosophy, and cognitive
+                science—engineered to detect and neutralize semantic manipulation
+                in real-time discourse analysis.
               </p>
 
               <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -227,14 +236,15 @@ const EducationHub: React.FC = () => {
                       "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
                   }}
                 >
-                  <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                  <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 break-words">
                     <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
                     Computational Architecture
                   </h3>
-                  <p className="text-sm text-slate-700">
-                    The VX detection engine employs specialized algorithms for rhetorical taxonomy,
-                    featuring adaptive confidence calibration and co-firing vectors that identify
-                    sophisticated propaganda techniques.
+                  <p className="text-sm text-slate-700 break-words">
+                    The VX detection engine employs specialized algorithms for
+                    rhetorical taxonomy, featuring adaptive confidence
+                    calibration and co-firing vectors that identify sophisticated
+                    propaganda techniques.
                   </p>
                 </div>
 
@@ -246,13 +256,14 @@ const EducationHub: React.FC = () => {
                       "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
                   }}
                 >
-                  <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                  <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 break-words">
                     <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                     Epistemic Framework
                   </h3>
-                  <p className="text-sm text-slate-700">
-                    Blends intellectual humility, mental models, and critical pedagogy to build
-                    cognitive immunity against manipulation while preserving legitimate discourse.
+                  <p className="text-sm text-slate-700 break-words">
+                    Blends intellectual humility, mental models, and critical
+                    pedagogy to build cognitive immunity against manipulation
+                    while preserving legitimate discourse.
                   </p>
                 </div>
               </div>
@@ -266,20 +277,22 @@ const EducationHub: React.FC = () => {
                     "inset 6px 6px 12px rgba(99,102,241,0.08), inset -6px -6px 12px rgba(255,255,255,0.6)",
                 }}
               >
-                <h3 className="font-semibold text-indigo-800 mb-3">
+                <h3 className="font-semibold text-indigo-800 mb-3 break-words">
                   Abner's Vision Realized
                 </h3>
-                <p className="text-sm text-indigo-800/90 leading-relaxed">
-                  This platform embodies the insight that AI systems require epistemic-humility
-                  training to resist inherent “bullshitting” tendencies. Built with human-AI
-                  collaboration, it detects rhetorical manipulation while protecting legitimate inquiry.
+                <p className="text-sm text-indigo-800/90 leading-relaxed break-words">
+                  This platform embodies the insight that AI systems require
+                  epistemic-humility training to resist inherent “bullshitting”
+                  tendencies. Built with human-AI collaboration, it detects
+                  rhetorical manipulation while protecting legitimate inquiry.
                 </p>
               </div>
 
               <div className="text-center">
-                <p className="text-sm text-slate-600 italic">
-                  <strong>Collaborative Achievement:</strong> Advanced AI systems and human expertise
-                  working together for intellectual freedom and clarity.
+                <p className="text-sm text-slate-600 italic max-w-2xl mx-auto break-words">
+                  <strong>Collaborative Achievement:</strong> Advanced AI systems
+                  and human expertise working together for intellectual freedom
+                  and clarity.
                 </p>
               </div>
             </div>
@@ -288,8 +301,9 @@ const EducationHub: React.FC = () => {
 
         {/* Footer quote (kept) */}
         <div className="text-center mt-16">
-          <p className="text-sm text-slate-500 italic max-w-2xl mx-auto">
-            "The first principle is that you must not fool yourself — and you are the easiest person to fool."
+          <p className="text-sm text-slate-500 italic max-w-2xl mx-auto break-words">
+            "The first principle is that you must not fool yourself — and you are
+            the easiest person to fool."
             <br />— Richard Feynman
           </p>
         </div>
