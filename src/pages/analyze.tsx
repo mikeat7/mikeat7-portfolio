@@ -399,32 +399,6 @@ const ChatPanel: React.FC = () => {
     }
   }
 
-  // Presets for the Chat tab only
-  function applyPreset(p: "quick" | "careful" | "audit") {
-    if (p === "quick") {
-      setMode("--direct");
-      setStakes("low");
-      setMinConfidence(0.55);
-      setCitePolicy("off");
-      setOmissionUI("false");
-      setReflexProfile("lenient");
-    } else if (p === "careful") {
-      setMode("--careful");
-      setStakes("medium");
-      setMinConfidence(0.6);
-      setCitePolicy("auto");
-      setOmissionUI("auto");
-      setReflexProfile("default");
-    } else {
-      setMode("--careful");
-      setStakes("high");
-      setMinConfidence(0.75);
-      setCitePolicy("force");
-      setOmissionUI("true");
-      setReflexProfile("strict");
-    }
-  }
-
   return (
     <div className="mt-6 grid gap-4">
       {/* Controls live here (not in Analyze) */}
@@ -573,7 +547,24 @@ const ChatPanel: React.FC = () => {
         </button>
       </div>
 
-      {/* Conversation */}
+      {/* ----- simple straight line (replacing the 3D divider) ----- */}
+      <hr className="my-3 border-black" />
+
+      {/* Send button ABOVE the input, left-aligned, plus optional line below */}
+      <div className="flex">
+        <button
+          onClick={send}
+          disabled={busy || !text.trim()}
+          className="px-4 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
+        >
+          {busy ? "Sending…" : "Send"}
+        </button>
+      </div>
+
+      {/* optional matching line below the button */}
+      <hr className="my-3 border-black" />
+
+      {/* Conversation (unchanged) */}
       <div
         className="border rounded-2xl bg-[#e9eef5] p-3"
         style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
@@ -611,23 +602,16 @@ const ChatPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Input */}
-      <div className="flex items-start gap-2">
+      {/* Input (textarea ONLY, under the button) */}
+      <div className="mt-2">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="flex-1 border rounded-xl p-3 text-sm"
+          className="w-full border rounded-xl p-3 text-sm resize-none max-h-40 overflow-auto whitespace-pre-wrap break-words break-all md:break-words"
           placeholder="Paste a URL or ask a question. (Typing a URL here will auto-run fetch-url.)"
           rows={3}
           disabled={busy}
         />
-        <button
-          onClick={send}
-          disabled={busy || !text.trim()}
-          className="px-4 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
-        >
-          {busy ? "Sending…" : "Send"}
-        </button>
       </div>
 
       {error && <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">{error}</div>}
