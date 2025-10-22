@@ -94,7 +94,7 @@ const AnalyzePage: React.FC = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#e9eef5] py-10">
+    <div className="relative min-h-screen bg-[#e9eef5] py-10 overflow-x-hidden">
       <div className="relative max-w-6xl mx-auto px-4">
         <BackButton fallback="/" />
 
@@ -109,7 +109,7 @@ const AnalyzePage: React.FC = () => {
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
               <h1 className="text-3xl font-bold text-slate-900">Analyze a Statement</h1>
-              <p className="mt-2 text-slate-700">
+              <p className="mt-2 text-slate-700 break-words">
                 Paste text under <strong>Analyze</strong> to reveal logical fallacies such as assumptions, emotional
                 manipulation, and troubling semantic patterns. Our <strong>AI agent</strong> also, independently,
                 dissects <strong>Scientific Papers</strong> for invalid methods and faulty conclusions — or paste a URL —
@@ -148,7 +148,8 @@ const AnalyzePage: React.FC = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   disabled={isAnalyzing}
-                  className="w-full border border-slate-300 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border border-slate-300 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400
+                             whitespace-pre-wrap break-words"
                   rows={6}
                   placeholder="Paste a paragraph, a link to an article, or a snippet from a methods section…"
                 />
@@ -170,7 +171,7 @@ const AnalyzePage: React.FC = () => {
                 </div>
                 {notice && (
                   <div
-                    className="mt-2 text-xs text-slate-700 px-3 py-2 rounded-lg"
+                    className="mt-2 text-xs text-slate-700 px-3 py-2 rounded-lg break-words"
                     style={{ background: "#e9eef5", boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff" }}
                   >
                     {notice}
@@ -202,7 +203,7 @@ const AnalyzePage: React.FC = () => {
                               local
                             </span>
                           </div>
-                          <p className="text-sm text-slate-700 mt-1">{frame.rationale ?? (frame as any).reason}</p>
+                          <p className="text-sm text-slate-700 mt-1 break-words">{frame.rationale ?? (frame as any).reason}</p>
                           <p className="text-xs text-slate-500 mt-2">
                             Confidence: {Math.round(((frame.confidence ?? 0) as number) * 100)}% • Reflex ID: {frame.reflexId}
                           </p>
@@ -426,7 +427,7 @@ const ChatPanel: React.FC = () => {
   }
 
   return (
-    <div className="mt-6 grid gap-4">
+    <div className="mt-6 grid gap-4 relative min-h-[60vh]">
       {/* Controls live here (not in Analyze) */}
       <div
         className="rounded-2xl p-4"
@@ -580,7 +581,7 @@ const ChatPanel: React.FC = () => {
       >
         <div
           ref={threadRef}
-          className="max-h-[50vh] overflow-auto space-y-3"
+          className="max-h-[50vh] overflow-auto space-y-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
         >
           {history.map((m, i) => (
             <div
@@ -589,7 +590,7 @@ const ChatPanel: React.FC = () => {
               style={{ background: m.role === "user" ? "#f4f6fb" : m.role === "assistant" ? "#eef2f8" : "#fff7ed" }}
             >
               <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">{m.role}</div>
-              <pre className="whitespace-pre-wrap text-sm text-slate-800">{m.text}</pre>
+              <pre className="whitespace-pre-wrap break-words text-sm text-slate-800">{m.text}</pre>
 
               {m.role === "assistant" && m.tools && m.tools.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -611,30 +612,37 @@ const ChatPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Input */}
-      <div className="flex items-start gap-2">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          className="flex-1 border rounded-xl p-3 text-sm"
-          placeholder="Paste a URL or ask a question. (Typing a URL here will auto-run fetch-url.)"
-          rows={3}
-          disabled={busy}
-        />
-        <button
-          onClick={send}
-          disabled={busy || !text.trim()}
-          className="px-4 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
-        >
-          {busy ? "Sending…" : "Send"}
-        </button>
+      {/* Sticky Input (surgical change to keep Send always reachable) */}
+      <div className="sticky bottom-0 left-0 right-0 z-40 bg-[#e9eef5]/95 backdrop-blur [padding-bottom:env(safe-area-inset-bottom)] pt-2">
+        <div className="flex items-start gap-2">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            className="flex-1 min-w-0 border rounded-xl p-3 text-sm resize-none
+                       max-h-40 overflow-auto whitespace-pre-wrap break-words break-all md:break-words"
+            placeholder="Paste a URL or ask a question. (Typing a URL here will auto-run fetch-url.)"
+            rows={3}
+            disabled={busy}
+          />
+          <button
+            onClick={send}
+            disabled={busy || !text.trim()}
+            className="shrink-0 px-4 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
+          >
+            {busy ? "Sending…" : "Send"}
+          </button>
+        </div>
+        {error && (
+          <div className="mt-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm break-words">
+            {error}
+          </div>
+        )}
       </div>
-
-      {error && <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">{error}</div>}
     </div>
   );
 };
 
 export default AnalyzePage;
+
 
 
