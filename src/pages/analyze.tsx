@@ -374,7 +374,7 @@ const ChatPanel: React.FC = () => {
         stakes,
         min_confidence: minConfidence,
         cite_policy: citePolicy,
-        omission_scan,
+        omission_scan: omission_scan,
         reflex_profile: reflexProfile,
       });
 
@@ -581,7 +581,7 @@ const ChatPanel: React.FC = () => {
       >
         <div
           ref={threadRef}
-          className="max-h-[50vh] overflow-auto space-y-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
+          className="max-h-[50vh] overflow-auto space-y-3 pb-[calc(7rem+env(safe-area-inset-bottom))]"
         >
           {history.map((m, i) => (
             <div
@@ -612,8 +612,8 @@ const ChatPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Sticky Input (surgical change to keep Send always reachable) */}
-      <div className="sticky bottom-0 left-0 right-0 z-40 bg-[#e9eef5]/95 backdrop-blur [padding-bottom:env(safe-area-inset-bottom)] pt-2">
+      {/* Fixed Input (mobile Firefox-safe) */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#e9eef5]/95 backdrop-blur [padding-bottom:env(safe-area-inset-bottom)] pt-2">
         <div className="flex items-start gap-2">
           <textarea
             value={text}
@@ -643,6 +643,5 @@ const ChatPanel: React.FC = () => {
 };
 
 export default AnalyzePage;
-
 
 
