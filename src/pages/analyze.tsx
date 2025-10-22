@@ -51,7 +51,7 @@ const AnalyzePage: React.FC = () => {
 
     setIsAnalyzing(true);
     setReflexFrames([]);
-    goReportText("");
+    setReportText(""); // ← fixed: was goReportText("")
     setNotice(null);
 
     try {
