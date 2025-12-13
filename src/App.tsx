@@ -48,6 +48,10 @@ import CircularReasoning from "@/pages/educate/circular-reasoning";
 import BecomeAIAware from "@/pages/educate/become-ai-aware";
 import NarrativeFramingAnalysis from "@/pages/educate/narrative-framing-analysis";
 import AIBehaviorPatterns from "@/pages/educate/ai-behavior-patterns";
+import LibraryIndex from "@/pages/library/index";
+import LibraryBook from "@/pages/library/[slug]";
+import CDMIndex from "@/pages/cdm/index";
+import CDMBook from "@/pages/cdm/[slug]";
 import ScrollManager from "@/components/ScrollManager"; // ← use ScrollManager
 
 const App: React.FC = () => {
@@ -102,6 +106,10 @@ const App: React.FC = () => {
           <Route path="/omissions" element={<Omissions />} />
           <Route path="/educate/bullshit-patterns" element={<BullshitPatterns />} />
           <Route path="/testing" element={<Testing />} />
+          <Route path="/library" element={<LibraryIndex />} />
+          <Route path="/library/:slug" element={<LibraryBook />} />
+          <Route path="/cdm" element={<CDMIndex />} />
+          <Route path="/cdm/:slug" element={<CDMBook />} />
         </Routes>
       </Router>
     </VXProvider>

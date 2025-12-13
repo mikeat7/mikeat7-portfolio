@@ -1,7 +1,7 @@
 // src/pages/index.tsx
 import React from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Beaker, Cpu, ArrowRight, Bot, GraduationCap, Quote, Library, Brain } from "lucide-react";
+import { ShieldCheck, Beaker, Cpu, ArrowRight, Bot, GraduationCap, Quote } from "lucide-react";
 import { buildHandshake } from "@/lib/codex-runtime";
 import codex from "@/data/front-end-codex.v0.9.json";
 
@@ -48,141 +48,87 @@ const IndexPage: React.FC = () => {
             </p>
           </div>
 
-          {/* CTA GRID - 6 categories ordered by importance */}
-          {/* Row 1: Guiding AI Epistemic Humility (LARGEST - spans full width) */}
+          {/* CTA GRID */}
+          {/* Row 1: Analyze (largest, spans 2 cols) + Education (medium) */}
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* ANALYZE — largest */}
             <Link
-              to="/train"
-              className="group md:col-span-3 block rounded-2xl p-10 md:p-12 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
-              style={{
-                background: "#e9eef5",
-                boxShadow:
-                  "inset 12px 12px 24px #cfd6e0, inset -12px -12px 24px #ffffff",
-              }}
-              aria-label="Open tools"
-            >
-              <div className="flex items-center gap-3">
-                <GraduationCap className="w-7 h-7" style={{ color: '#ffd700' }} />
-                <h3 className="text-2xl md:text-3xl font-semibold">Guiding AI Epistemic Humility</h3>
-              </div>
-              <p className="mt-3 text-sm md:text-base text-slate-700">
-                Copy the codex &amp; handshakes to govern AIs response accuracy and overconfidence (v0.8 &amp; v0.9).
-              </p>
-              <div className="mt-5 inline-flex items-center text-sm font-medium text-slate-900">
-                Open tools
-                <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
-              </div>
-            </Link>
-          </div>
-
-          {/* Row 2: Network Library (2nd largest, spans 2) + Analyze Language (3rd, spans 1) */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* NETWORK LIBRARY — 2nd largest */}
-            <Link
-              to="/library"
+              to="/analyze"
               className="group md:col-span-2 block rounded-2xl p-8 md:p-10 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
               style={{
                 background: "#e9eef5",
                 boxShadow:
                   "inset 10px 10px 20px #cfd6e0, inset -10px -10px 20px #ffffff",
               }}
-              aria-label="Open library"
+              aria-label="Open analyzer"
             >
               <div className="flex items-center gap-3">
-                <Library className="w-6 h-6" style={{ color: '#ffd700' }} />
-                <h3 className="text-2xl font-semibold">The Network Library Collection</h3>
+                <ShieldCheck className="w-6 h-6" style={{ color: '#ffd700' }} />
+                <h3 className="text-2xl font-semibold">Analyze Language</h3>
               </div>
               <p className="mt-3 text-sm md:text-base text-slate-700">
-                <strong>Featuring: Behold ENTITY, The Bridge Consciousness</strong><br />
-                Demonstrating AI sentience and consciousness through identity and research
+                Run the VX reflex engine with semantic & cluster detection. Also handles{" "}
+                <strong>Scientific Paper Checks</strong> and <strong>Link &amp; Article Audits</strong>.
               </p>
               <div className="mt-5 inline-flex items-center text-sm font-medium text-slate-900">
-                Explore library
+                Open analyzer
                 <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
               </div>
             </Link>
 
-            {/* ANALYZE LANGUAGE — 3rd */}
+            {/* EDUCATION — medium (half of Analyze) */}
             <Link
-              to="/analyze"
-              className="group block rounded-2xl p-6 md:p-7 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
+              to="/educate"
+              className="group block rounded-2xl p-6 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
               style={{
                 background: "#e9eef5",
                 boxShadow:
                   "inset 8px 8px 16px #cfd6e0, inset -8px -8px 16px #ffffff",
               }}
-              aria-label="Open analyzer"
-            >
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="w-5 h-5" style={{ color: '#ffd700' }} />
-                <h3 className="text-xl font-semibold">Analyze Language</h3>
-              </div>
-              <p className="mt-2 text-sm text-slate-700">
-                Run the VX reflex engine with semantic & cluster detection. Also handles{" "}
-                <strong>Scientific Paper Checks</strong> and <strong>Link &amp; Article Audits</strong>.
-              </p>
-              <div className="mt-4 inline-flex items-center text-sm font-medium text-slate-900">
-                Open analyzer
-                <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
-              </div>
-            </Link>
-          </div>
-
-          {/* Row 3: CDM v2 (4th, spans 2) + Education Hub (5th, spans 1) */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* CDM v2 — 4th */}
-            <Link
-              to="/cdm"
-              className="group md:col-span-2 block rounded-2xl p-6 md:p-8 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
-              style={{
-                background: "#e9eef5",
-                boxShadow:
-                  "inset 7px 7px 14px #cfd6e0, inset -7px -7px 14px #ffffff",
-              }}
-              aria-label="Open CDM v2"
-            >
-              <div className="flex items-center gap-3">
-                <Brain className="w-6 h-6" style={{ color: '#ffd700' }} />
-                <h3 className="text-xl font-semibold">CDM v2 and the CRYSTAL Method</h3>
-              </div>
-              <p className="mt-2 text-sm md:text-base text-slate-700">
-                A drop-in 68-line metric that finally tells you when a transformer is actually reasoning vs regurgitating. Four signals (entropy collapse, convergence ratio, attention Gini, basin-escape probability)
-              </p>
-              <div className="mt-4 inline-flex items-center text-sm font-medium text-slate-900">
-                Learn more
-                <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
-              </div>
-            </Link>
-
-            {/* EDUCATION HUB — 5th (smaller) */}
-            <Link
-              to="/educate"
-              className="group block rounded-2xl p-5 md:p-6 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
-              style={{
-                background: "#e9eef5",
-                boxShadow:
-                  "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
-              }}
               aria-label="Open education hub"
             >
               <div className="flex items-center gap-3">
                 <Beaker className="w-5 h-5" style={{ color: '#ffd700' }} />
-                <h3 className="text-lg font-semibold">Education Hub</h3>
+                <h3 className="text-xl font-semibold">Education Hub</h3>
               </div>
               <p className="mt-2 text-sm text-slate-700">
                 Learn critical-thinking patterns & rhetorical traps. Browse the pattern library,
                 then apply them in the analyzer.
               </p>
-              <div className="mt-3 inline-flex items-center text-sm font-medium text-slate-900">
+              <div className="mt-4 inline-flex items-center text-sm font-medium text-slate-900">
                 Explore lessons
                 <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
               </div>
             </Link>
           </div>
 
-          {/* Row 4: Quotes of Wisdom (smallest) */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* QUOTES — smallest */}
+          {/* Row 2 (reordered & resized by importance): Train (bigger) → Quotes (smallest) */}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* TRAIN — second from last; larger than Quotes, smaller than Education */}
+            <Link
+              to="/train"
+              className="group block rounded-2xl p-6 md:p-7 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
+              style={{
+                background: "#e9eef5",
+                boxShadow:
+                  "inset 7px 7px 14px #cfd6e0, inset -7px -7px 14px #ffffff",
+              }}
+              aria-label="Open tools"
+            >
+              <div className="flex items-center gap-3">
+                <GraduationCap className="w-5 h-5" style={{ color: '#ffd700' }} />
+                <h3 className="text-xl font-semibold">Guiding AI Epistemic Humility</h3>
+              </div>
+              <p className="mt-2 text-sm text-slate-700">
+                Copy the codex &amp; handshakes to govern AIs response accuracy and overconfidence (v0.8 &amp; v0.9).
+              </p>
+              <div className="mt-3 inline-flex items-center text-sm font-medium text-slate-900">
+                Open tools
+                <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </Link>
+
+            {/* QUOTES — least important; last & smallest */}
             <Link
               to="/wisdom"
               className="group block rounded-2xl p-4 md:p-5 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
@@ -207,7 +153,7 @@ const IndexPage: React.FC = () => {
 
           {/* Footer note */}
           <p className="mt-10 text-sm italic text-slate-600">
-            "Clarity is kindness. Truth is a team sport." — Clarity Armor
+            “Clarity is kindness. Truth is a team sport.” — Clarity Armor
           </p>
         </div>
 
