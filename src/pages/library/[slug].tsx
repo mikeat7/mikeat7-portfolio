@@ -62,8 +62,11 @@ const LibraryBookPage: React.FC = () => {
   const [showBookmarkNotice, setShowBookmarkNotice] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [narratorCharIndex, setNarratorCharIndex] = useState(0);
+  const [showControls, setShowControls] = useState(true);
   const scrollPositionRef = useRef(0);
   const narratorCancelledRef = useRef(false);
+  const hideControlsTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const currentReadingPosRef = useRef<HTMLSpanElement | null>(null);
 
   // If book not found
   if (!book) {
@@ -105,20 +108,34 @@ const LibraryBookPage: React.FC = () => {
   useEffect(() => {
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
+      console.log(`🎤 Voice loading: Found ${voices.length} voices`);
       setAvailableVoices(voices);
 
       // Load saved voice preference or use default
       const savedVoiceName = localStorage.getItem("preferredVoice");
       if (savedVoiceName) {
         const savedVoice = voices.find(v => v.name === savedVoiceName);
-        if (savedVoice) setSelectedVoice(savedVoice);
+        if (savedVoice) {
+          setSelectedVoice(savedVoice);
+          console.log(`🎤 Restored saved voice: ${savedVoice.name}`);
+        }
       } else if (voices.length > 0) {
         setSelectedVoice(voices[0]);
+        console.log(`🎤 Using default voice: ${voices[0].name}`);
       }
     };
 
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    // Mobile-specific: Sometimes voices take a moment to load
+    // Try again after a short delay if none loaded
+    setTimeout(() => {
+      if (window.speechSynthesis.getVoices().length === 0) {
+        console.log("🎤 Retrying voice load (mobile delay)...");
+        loadVoices();
+      }
+    }, 500);
   }, []);
 
   // Clean content when it changes
@@ -262,6 +279,62 @@ const LibraryBookPage: React.FC = () => {
     };
   }, [book]);
 
+  // Auto-hide controls after 4 seconds of inactivity (like a video player)
+  useEffect(() => {
+    const startHideTimer = () => {
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current);
+      }
+      hideControlsTimerRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 4000); // Hide after 4 seconds
+    };
+
+    const showControlsHandler = () => {
+      setShowControls(true);
+      startHideTimer();
+    };
+
+    // Show controls on any user interaction
+    const events = ['mousedown', 'mousemove', 'touchstart', 'touchmove', 'click', 'keydown'];
+    events.forEach(event => {
+      document.addEventListener(event, showControlsHandler);
+    });
+
+    // Start initial timer
+    startHideTimer();
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, showControlsHandler);
+      });
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Keep controls visible when menus are open
+  useEffect(() => {
+    if (showSourceMenu || showVoiceMenu || showSpeedMenu) {
+      setShowControls(true);
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current);
+      }
+    }
+  }, [showSourceMenu, showVoiceMenu, showSpeedMenu]);
+
+  // Auto-scroll to keep current reading position centered on screen
+  useEffect(() => {
+    if (currentReadingPosRef.current && narratorCharIndex > 0) {
+      currentReadingPosRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest'
+      });
+    }
+  }, [narratorCharIndex]);
+
   // Theme styles
   const themeStyles = {
     light: { bg: "#e9eef5", text: "#1e293b", shadow: "rgba(163,177,198,0.6)" },
@@ -279,6 +352,21 @@ const LibraryBookPage: React.FC = () => {
     }
 
     if (!cleanedContent) return;
+
+    // Mobile fix: Force reload voices if not loaded (common mobile issue)
+    if (availableVoices.length === 0) {
+      console.log("📱 Mobile voice loading fix: Reloading voices...");
+      const voices = window.speechSynthesis.getVoices();
+      console.log(`📱 Found ${voices.length} voices`);
+      setAvailableVoices(voices);
+      if (voices.length > 0) {
+        setSelectedVoice(voices[0]);
+        console.log(`📱 Selected default voice: ${voices[0].name}`);
+      } else {
+        alert("No voices available. Please try again in a moment.");
+        return;
+      }
+    }
 
     // Always cancel any existing speech first
     window.speechSynthesis.cancel();
@@ -421,49 +509,40 @@ const LibraryBookPage: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Render content with highlighting for currently narrated sentence
+  // Render content with cumulative highlighting - all read text stays highlighted
   const renderHighlightedContent = () => {
-    if (!cleanedContent || narratorCharIndex === 0) {
+    if (!content || narratorCharIndex === 0) {
       return content;
     }
 
-    // Find the current sentence being narrated
-    const beforeCurrent = cleanedContent.substring(0, narratorCharIndex);
-    const afterCurrent = cleanedContent.substring(narratorCharIndex);
+    // Map narrator position (from cleaned content) to original content position
+    // This is approximate but works well for highlighting
+    const readUpTo = Math.min(narratorCharIndex, content.length);
 
-    // Find sentence boundaries (. ! ? followed by space or newline)
-    const sentenceStart = Math.max(
-      beforeCurrent.lastIndexOf('. ') + 2,
-      beforeCurrent.lastIndexOf('! ') + 2,
-      beforeCurrent.lastIndexOf('? ') + 2,
-      beforeCurrent.lastIndexOf('\n\n') + 2,
-      0
-    );
-
-    const sentenceEndMatch = afterCurrent.match(/[.!?]\s|\n\n/);
-    const sentenceEnd = (sentenceEndMatch && sentenceEndMatch.index !== undefined)
-      ? narratorCharIndex + sentenceEndMatch.index + 2
-      : cleanedContent.length;
-
-    // Get the original content parts
-    const beforeSentence = content.substring(0, sentenceStart);
-    const currentSentence = content.substring(sentenceStart, sentenceEnd);
-    const afterSentence = content.substring(sentenceEnd);
+    // Split content: already read vs not yet read
+    const alreadyRead = content.substring(0, readUpTo);
+    const notYetRead = content.substring(readUpTo);
 
     return (
       <>
-        {beforeSentence}
+        {/* Already read text - stays highlighted */}
         <span
           style={{
-            backgroundColor: theme === 'dark' ? '#ffd70033' : '#ffd70044',
-            padding: '2px 0',
-            borderRadius: '2px',
+            backgroundColor: theme === 'dark' ? '#ffd70044' : '#ffeb3b66',
             transition: 'background-color 0.3s ease',
           }}
         >
-          {currentSentence}
+          {alreadyRead}
         </span>
-        {afterSentence}
+        {/* Current reading position marker - for auto-scroll */}
+        <span
+          ref={currentReadingPosRef}
+          style={{
+            position: 'relative',
+          }}
+        />
+        {/* Not yet read text - normal */}
+        {notYetRead}
       </>
     );
   };
@@ -473,9 +552,21 @@ const LibraryBookPage: React.FC = () => {
       className="min-h-screen transition-colors duration-300"
       style={{ background: currentTheme.bg, color: currentTheme.text }}
     >
-      {/* CONTROL BAR (Sticky) */}
+      {/* Tap to show controls hint - appears when controls are hidden */}
+      {!showControls && (
+        <div
+          className="fixed top-0 left-0 right-0 z-40 text-center py-2 text-xs opacity-50 animate-pulse"
+          style={{ background: currentTheme.bg }}
+        >
+          Tap screen to show controls
+        </div>
+      )}
+
+      {/* CONTROL BAR (Sticky) - Auto-hides after 4 seconds, shows on touch/click */}
       <div
-        className="sticky top-0 z-50 border-b transition-colors duration-300"
+        className={`sticky z-50 border-b transition-all duration-500 ease-in-out ${
+          showControls ? 'top-0 opacity-100' : '-top-full opacity-0'
+        }`}
         style={{
           background: currentTheme.bg,
           borderColor: currentTheme.shadow,
@@ -619,7 +710,7 @@ const LibraryBookPage: React.FC = () => {
 
                   {showVoiceMenu && (
                     <div
-                      className="absolute right-0 mt-2 w-64 max-h-64 overflow-y-auto rounded-xl z-10"
+                      className="absolute right-0 mt-2 w-48 md:w-64 max-h-64 overflow-y-auto rounded-xl z-10"
                       style={{
                         background: currentTheme.bg,
                         boxShadow: `6px 6px 12px ${currentTheme.shadow}, -6px -6px 12px rgba(255,255,255,0.5)`,
