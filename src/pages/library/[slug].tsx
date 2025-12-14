@@ -161,10 +161,11 @@ const LibraryBookPage: React.FC = () => {
         // Wait for content to render, then scroll
         setTimeout(() => {
           // Find the scrollable container (same logic as scroll tracking)
+          const articleParent = document.querySelector('article')?.parentElement;
           const scrollable = document.documentElement.scrollHeight > window.innerHeight
             ? window
-            : document.querySelector('article')?.parentElement?.scrollHeight > (document.querySelector('article')?.parentElement?.clientHeight || 0)
-              ? document.querySelector('article')?.parentElement
+            : (articleParent && articleParent.scrollHeight > (articleParent.clientHeight || 0))
+              ? articleParent
               : null;
 
           if (scrollable) {
@@ -440,7 +441,7 @@ const LibraryBookPage: React.FC = () => {
     );
 
     const sentenceEndMatch = afterCurrent.match(/[.!?]\s|\n\n/);
-    const sentenceEnd = sentenceEndMatch
+    const sentenceEnd = (sentenceEndMatch && sentenceEndMatch.index !== undefined)
       ? narratorCharIndex + sentenceEndMatch.index + 2
       : cleanedContent.length;
 
