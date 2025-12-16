@@ -594,7 +594,6 @@ const LibraryBookPage: React.FC = () => {
     utterance.onerror = (event) => {
       console.error("❌ Speech synthesis error:", event);
       console.error("Error type:", event.error);
-      console.error("Error message:", event.message);
 
       // Show user-friendly error
       let errorMsg = "Speech failed: ";
