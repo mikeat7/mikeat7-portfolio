@@ -163,7 +163,7 @@ const LibraryBookPage: React.FC = () => {
     };
   }, [book]);
 
-  // Restore scroll position for this book
+  // Restore scroll position and narrator position for this book
   useEffect(() => {
     if (!isLoading && book && content) {
       const savedScrollPos = loadPreference<number>(`bookmark-${book.slug}`, 0);
@@ -174,29 +174,24 @@ const LibraryBookPage: React.FC = () => {
       console.log(`   Saved narrator position: ${savedNarratorPos}`);
       console.log(`   All localStorage keys:`, Object.keys(localStorage).filter(k => k.startsWith('bookmark-') || k.startsWith('narrator-')));
 
+      // Restore narrator position to state (shows Resume button)
+      if (savedNarratorPos > 0) {
+        setNarratorCharIndex(savedNarratorPos);
+        console.log(`🎤 Restored narrator position to state: ${savedNarratorPos}`);
+      }
+
+      // Restore scroll position
       if (savedScrollPos > 0) {
         // Wait for content to render, then scroll
         setTimeout(() => {
-          // Find the scrollable container (same logic as scroll tracking)
-          const articleParent = document.querySelector('article')?.parentElement;
-          const scrollable = document.documentElement.scrollHeight > window.innerHeight
-            ? window
-            : (articleParent && articleParent.scrollHeight > (articleParent.clientHeight || 0))
-              ? articleParent
-              : null;
+          // Always use window for restoration (same as scroll tracking fallback)
+          console.log(`🔄 Attempting to restore scroll to position ${savedScrollPos}`);
+          window.scrollTo({ top: savedScrollPos, behavior: 'auto' });
+          setShowBookmarkNotice(true);
+          console.log(`✅ Restored scroll to position ${savedScrollPos}`);
 
-          if (scrollable) {
-            if (scrollable === window) {
-              window.scrollTo({ top: savedScrollPos, behavior: 'auto' });
-            } else {
-              (scrollable as Element).scrollTop = savedScrollPos;
-            }
-            setShowBookmarkNotice(true);
-            console.log(`✅ Restored scroll to position ${savedScrollPos}`);
-
-            // Hide notice after 3 seconds
-            setTimeout(() => setShowBookmarkNotice(false), 3000);
-          }
+          // Hide notice after 3 seconds
+          setTimeout(() => setShowBookmarkNotice(false), 3000);
         }, 500);
       }
     }
@@ -266,15 +261,20 @@ const LibraryBookPage: React.FC = () => {
       scrollContainer.removeEventListener('scroll', handleScroll as EventListener);
       if (saveTimeout) clearTimeout(saveTimeout);
 
-      const finalPosition = scrollPositionRef.current;
+      // Get actual current position (check both methods)
+      const scrollY = window.scrollY || window.pageYOffset;
       const currentPosition = getScrollPosition();
-      console.log(`🔄 Cleanup: scrollPositionRef=${finalPosition}, current=${currentPosition}`);
+      console.log(`🔄 Cleanup: window.scrollY=${scrollY}, getScrollPosition()=${currentPosition}, scrollPositionRef=${scrollPositionRef.current}`);
 
+      // Use the maximum of all available positions
+      const finalPosition = Math.max(scrollY, currentPosition, scrollPositionRef.current);
+
+      // Always save current position on unmount (unless at top)
       if (finalPosition > 0 && book) {
         localStorage.setItem(`bookmark-${book.slug}`, JSON.stringify(finalPosition));
         console.log(`💾 Saved final bookmark for "${book.title}" at position: ${finalPosition} (on unmount)`);
       } else {
-        console.log(`⏭️ Skipped saving (position is ${finalPosition})`);
+        console.log(`⏭️ Skipped saving (all positions are 0)`);
       }
     };
   }, [book]);
@@ -325,15 +325,16 @@ const LibraryBookPage: React.FC = () => {
   }, [showSourceMenu, showVoiceMenu, showSpeedMenu]);
 
   // Auto-scroll to keep current reading position centered on screen
+  // ONLY when narrator is actively playing (not when restoring from memory)
   useEffect(() => {
-    if (currentReadingPosRef.current && narratorCharIndex > 0) {
+    if (currentReadingPosRef.current && narratorCharIndex > 0 && isNarratorOn && !isPaused) {
       currentReadingPosRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
         inline: 'nearest'
       });
     }
-  }, [narratorCharIndex]);
+  }, [narratorCharIndex, isNarratorOn, isPaused]);
 
   // Theme styles
   const themeStyles = {
