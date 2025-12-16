@@ -70,6 +70,12 @@ const LibraryBookPage: React.FC = () => {
   const hideControlsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const currentReadingPosRef = useRef<HTMLSpanElement | null>(null);
 
+  // Mobile TTS initialization
+  const [isMobile, setIsMobile] = useState(false);
+  const [ttsInitialized, setTtsInitialized] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [initError, setInitError] = useState('');
+
   // If book not found
   if (!book) {
     return (
@@ -106,8 +112,25 @@ const LibraryBookPage: React.FC = () => {
     fetchContent();
   }, [book.downloadUrl]);
 
-  // Load available voices
+  // Detect mobile device
   useEffect(() => {
+    const checkMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+    setIsMobile(checkMobile);
+    console.log(`📱 Mobile device detected: ${checkMobile}`);
+
+    // On desktop, mark TTS as initialized immediately
+    if (!checkMobile) {
+      setTtsInitialized(true);
+    }
+  }, []);
+
+  // Load available voices (desktop only - mobile uses manual initialization)
+  useEffect(() => {
+    if (isMobile) {
+      console.log("📱 Mobile detected - waiting for manual TTS initialization");
+      return; // Don't auto-load on mobile
+    }
+
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
       console.log(`🎤 Voice loading: Found ${voices.length} voices`);
@@ -130,15 +153,14 @@ const LibraryBookPage: React.FC = () => {
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
 
-    // Mobile-specific: Sometimes voices take a moment to load
-    // Try again after a short delay if none loaded
+    // Desktop retry after delay
     setTimeout(() => {
       if (window.speechSynthesis.getVoices().length === 0) {
-        console.log("🎤 Retrying voice load (mobile delay)...");
+        console.log("🎤 Retrying voice load (desktop delay)...");
         loadVoices();
       }
     }, 500);
-  }, []);
+  }, [isMobile]);
 
   // Clean content when it changes
   useEffect(() => {
@@ -347,14 +369,133 @@ const LibraryBookPage: React.FC = () => {
 
   const currentTheme = themeStyles[theme];
 
+  // Mobile TTS initialization function
+  const initializeMobileTTS = async () => {
+    console.log("📱 Initializing mobile TTS...");
+    setIsInitializing(true);
+    setInitError('');
+
+    try {
+      // Cancel any existing speech
+      window.speechSynthesis.cancel();
+
+      // Force reload voices with retry mechanism
+      const loadVoicesWithRetry = (): Promise<SpeechSynthesisVoice[]> => {
+        return new Promise((resolve) => {
+          let attempts = 0;
+          const maxAttempts = 15; // Try for 3 seconds
+
+          const checkVoices = () => {
+            const voices = window.speechSynthesis.getVoices();
+            console.log(`📱 Attempt ${attempts + 1}: Found ${voices.length} voices`);
+
+            if (voices.length > 0) {
+              console.log(`✅ Voices loaded successfully!`);
+              resolve(voices);
+            } else if (attempts >= maxAttempts) {
+              console.log(`❌ Voice loading timeout after ${maxAttempts} attempts`);
+              resolve(voices); // Return empty array to trigger error
+            } else {
+              attempts++;
+              setTimeout(checkVoices, 200);
+            }
+          };
+
+          // Set up voice changed listener
+          window.speechSynthesis.onvoiceschanged = checkVoices;
+
+          // Start checking immediately
+          checkVoices();
+        });
+      };
+
+      const voices = await loadVoicesWithRetry();
+
+      if (voices.length === 0) {
+        throw new Error('No voices available on this device. Your browser may not support text-to-speech.');
+      }
+
+      // Log all available voices for debugging
+      console.log("📋 All available voices:");
+      voices.forEach((voice, i) => {
+        console.log(`  ${i + 1}. ${voice.name} (${voice.lang}) ${voice.default ? '[DEFAULT]' : ''}`);
+      });
+
+      // Try to find English voices
+      const englishVoices = voices.filter(v =>
+        v.lang.startsWith('en-') || v.lang === 'en'
+      );
+
+      console.log(`🔍 Found ${englishVoices.length} English voices out of ${voices.length} total`);
+
+      if (englishVoices.length === 0) {
+        throw new Error(
+          `No English voices found. Your device has ${voices.length} voices but they're all in other languages (${voices.map(v => v.lang).join(', ')}). ` +
+          `Please install Google Text-to-Speech from Play Store and download English voice data.`
+        );
+      }
+
+      // Use English voices only
+      const voicesToUse = englishVoices;
+
+      // Test TTS with a very quiet utterance
+      const testUtterance = new SpeechSynthesisUtterance('Ready');
+      testUtterance.volume = 0.01; // Very quiet
+      testUtterance.rate = 2.0; // Very fast
+
+      await new Promise<void>((resolve, reject) => {
+        testUtterance.onend = () => {
+          console.log("✅ TTS test successful");
+          resolve();
+        };
+        testUtterance.onerror = (error) => {
+          console.error("❌ TTS test failed:", error);
+          reject(error);
+        };
+
+        window.speechSynthesis.speak(testUtterance);
+
+        // Timeout after 2 seconds
+        setTimeout(() => {
+          window.speechSynthesis.cancel();
+          resolve(); // Continue anyway
+        }, 2000);
+      });
+
+      // Success! Set up voices (English only)
+      setAvailableVoices(voicesToUse);
+
+      // Load saved voice or use first English voice
+      const savedVoiceName = localStorage.getItem("preferredVoice");
+      const savedVoice = savedVoiceName ? voicesToUse.find(v => v.name === savedVoiceName) : null;
+      const voiceToUse = savedVoice || voicesToUse[0];
+
+      setSelectedVoice(voiceToUse);
+      setTtsInitialized(true);
+
+      console.log(`✅ Mobile TTS initialized with voice: ${voiceToUse.name} (${voiceToUse.lang})`);
+
+    } catch (error: any) {
+      console.error("❌ Mobile TTS initialization failed:", error);
+      setInitError(error.message || 'Failed to initialize. Please check your browser settings and try again.');
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
   // Narrator functions (Web Speech API with pause/resume and word tracking)
   const startNarrator = (resumeFromChar: number = 0) => {
+    console.log("🎙️ startNarrator called with position:", resumeFromChar);
+
     if (!("speechSynthesis" in window)) {
       alert("Text-to-speech is not supported in your browser.");
       return;
     }
 
-    if (!cleanedContent) return;
+    if (!cleanedContent) {
+      console.log("❌ No cleaned content available");
+      return;
+    }
 
     // Mobile fix: Force reload voices if not loaded (common mobile issue)
     if (availableVoices.length === 0) {
@@ -366,16 +507,42 @@ const LibraryBookPage: React.FC = () => {
         setSelectedVoice(voices[0]);
         console.log(`📱 Selected default voice: ${voices[0].name}`);
       } else {
-        alert("No voices available. Please try again in a moment.");
+        alert("No voices available. Please enable narrator first.");
         return;
       }
     }
 
+    // Check for selected voice
+    if (!selectedVoice) {
+      console.log("❌ No voice selected");
+      alert("No voice selected. Please enable narrator first.");
+      return;
+    }
+
+    console.log(`✅ Using voice: ${selectedVoice.name}`);
+
     // Always cancel any existing speech first
     window.speechSynthesis.cancel();
 
+    // Small delay to ensure cancel completes
+    setTimeout(() => {
+      continueNarrator(resumeFromChar);
+    }, 100);
+  };
+
+  const continueNarrator = (resumeFromChar: number = 0) => {
+    console.log("📖 continueNarrator starting from char:", resumeFromChar);
+
     // If resuming from a saved position, use substring
     const textToSpeak = resumeFromChar > 0 ? cleanedContent.substring(resumeFromChar) : cleanedContent;
+
+    if (!textToSpeak || textToSpeak.length === 0) {
+      console.log("❌ No text to speak");
+      alert("No text to read. Please try again.");
+      return;
+    }
+
+    console.log(`📝 Text length: ${textToSpeak.length} characters`);
 
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.rate = narratorSpeed;
@@ -384,6 +551,9 @@ const LibraryBookPage: React.FC = () => {
 
     if (selectedVoice) {
       utterance.voice = selectedVoice;
+      console.log(`🎤 Voice set to: ${selectedVoice.name}`);
+    } else {
+      console.log("⚠️ No voice set, using default");
     }
 
     // Track word boundaries for highlighting
@@ -417,18 +587,58 @@ const LibraryBookPage: React.FC = () => {
       }
     };
 
+    utterance.onstart = () => {
+      console.log("✅ Speech started successfully!");
+    };
+
     utterance.onerror = (event) => {
-      console.error("Speech synthesis error:", event);
+      console.error("❌ Speech synthesis error:", event);
+      console.error("Error type:", event.error);
+      console.error("Error message:", event.message);
+
+      // Show user-friendly error
+      let errorMsg = "Speech failed: ";
+      if (event.error === 'not-allowed') {
+        errorMsg += "Permission denied. Please allow speech in your browser settings.";
+      } else if (event.error === 'network') {
+        errorMsg += "Network error. Please check your connection.";
+      } else {
+        errorMsg += event.error || "Unknown error";
+      }
+
+      alert(errorMsg);
+
       setIsNarratorOn(false);
       setIsPaused(false);
       setCurrentUtterance(null);
       setNarratorCharIndex(0);
     };
 
+    console.log("🚀 Calling speechSynthesis.speak()...");
+
     setCurrentUtterance(utterance);
     setIsNarratorOn(true);
     setIsPaused(false);
-    window.speechSynthesis.speak(utterance);
+
+    try {
+      window.speechSynthesis.speak(utterance);
+      console.log("✅ speak() called successfully");
+
+      // Check if it actually started (mobile sometimes queues silently)
+      setTimeout(() => {
+        if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+          console.log("⚠️ Speech didn't start - trying again with user interaction");
+          // On some mobile browsers, need immediate user interaction
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(utterance);
+        } else {
+          console.log(`✅ Speech state - speaking: ${window.speechSynthesis.speaking}, pending: ${window.speechSynthesis.pending}`);
+        }
+      }, 500);
+    } catch (error) {
+      console.error("❌ Exception calling speak():", error);
+      alert("Failed to start speech: " + error);
+    }
   };
 
   const pauseNarrator = () => {
@@ -706,9 +916,51 @@ const LibraryBookPage: React.FC = () => {
 
             {/* Controls */}
             <div className="flex items-center gap-3 flex-wrap">
-              {/* Narrator Controls */}
+              {/* Mobile: No narrator controls at all */}
+              {isMobile && (
+                <div className="text-xs text-slate-600 italic">
+                  Narrator available on desktop only
+                </div>
+              )}
+
+              {/* Desktop: Full narrator controls */}
+              {!isMobile && (
+                <>
+              {/* Mobile TTS Initialization Button - DISABLED */}
+              {false && isMobile && !ttsInitialized && (
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={initializeMobileTTS}
+                    disabled={isInitializing}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
+                    style={{
+                      background: currentTheme.bg,
+                      boxShadow: isInitializing
+                        ? `inset 3px 3px 6px ${currentTheme.shadow}, inset -3px -3px 6px rgba(255,255,255,0.5)`
+                        : `3px 3px 6px ${currentTheme.shadow}, -3px -3px 6px rgba(255,255,255,0.5)`,
+                      opacity: isInitializing ? 0.7 : 1,
+                    }}
+                  >
+                    <Mic className="w-4 h-4" style={{ color: isInitializing ? '#ffd700' : undefined }} />
+                    <span>{isInitializing ? 'Initializing...' : 'Enable Narrator'}</span>
+                  </button>
+                  {initError && (
+                    <div className="text-xs text-red-600 max-w-xs px-2">
+                      {initError}
+                      <button
+                        onClick={initializeMobileTTS}
+                        className="ml-2 underline"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Narrator Controls - Only show when TTS is initialized (or not mobile) */}
               {/* Play button - only when not playing and no memory */}
-              {!isNarratorOn && narratorCharIndex === 0 && (
+              {(!isMobile || ttsInitialized) && !isNarratorOn && narratorCharIndex === 0 && (
                 <button
                   onClick={() => startNarrator(0)}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
@@ -723,7 +975,7 @@ const LibraryBookPage: React.FC = () => {
               )}
 
               {/* Resume button - when stopped with memory OR when paused */}
-              {!isNarratorOn && narratorCharIndex > 0 && (
+              {(!isMobile || ttsInitialized) && !isNarratorOn && narratorCharIndex > 0 && (
                 <button
                   onClick={() => startNarrator(narratorCharIndex)}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
@@ -796,8 +1048,8 @@ const LibraryBookPage: React.FC = () => {
                 </button>
               )}
 
-              {/* Voice Selector */}
-              {availableVoices.length > 0 && (
+              {/* Voice Selector - Only show when TTS is ready */}
+              {(!isMobile || ttsInitialized) && availableVoices.length > 0 && (
                 <div className="relative">
                   <button
                     onClick={() => setShowVoiceMenu(!showVoiceMenu)}
@@ -814,10 +1066,11 @@ const LibraryBookPage: React.FC = () => {
 
                   {showVoiceMenu && (
                     <div
-                      className="absolute right-0 mt-2 w-48 md:w-64 max-h-64 overflow-y-auto rounded-xl z-10"
+                      className="fixed md:absolute right-2 md:right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] max-h-64 overflow-y-auto rounded-xl z-50"
                       style={{
                         background: currentTheme.bg,
                         boxShadow: `6px 6px 12px ${currentTheme.shadow}, -6px -6px 12px rgba(255,255,255,0.5)`,
+                        top: showVoiceMenu ? 'auto' : undefined,
                       }}
                     >
                       {availableVoices.map((voice, index) => (
@@ -858,7 +1111,7 @@ const LibraryBookPage: React.FC = () => {
 
                 {showSpeedMenu && (
                   <div
-                    className="absolute right-0 mt-2 w-32 rounded-xl overflow-hidden z-10"
+                    className="fixed md:absolute right-2 md:right-0 mt-2 w-32 rounded-xl overflow-hidden z-50"
                     style={{
                       background: currentTheme.bg,
                       boxShadow: `6px 6px 12px ${currentTheme.shadow}, -6px -6px 12px rgba(255,255,255,0.5)`,
@@ -964,7 +1217,7 @@ const LibraryBookPage: React.FC = () => {
 
                 {showSourceMenu && (
                   <div
-                    className="absolute right-0 mt-2 w-56 rounded-xl overflow-hidden z-10"
+                    className="fixed md:absolute right-2 md:right-0 mt-2 w-56 rounded-xl overflow-hidden z-50"
                     style={{
                       background: currentTheme.bg,
                       boxShadow: `6px 6px 12px ${currentTheme.shadow}, -6px -6px 12px rgba(255,255,255,0.5)`,
@@ -999,6 +1252,8 @@ const LibraryBookPage: React.FC = () => {
                   </div>
                 )}
               </div>
+              </>
+              )}
             </div>
           </div>
         </div>
