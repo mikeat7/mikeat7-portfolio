@@ -2067,3 +2067,387 @@ This architecture gives you the best of both worlds:
 **Last Updated:** 2025-10-09
 **Codex Version:** 0.9.0
 **Architecture Version:** 1.1 (with session persistence)
+
+---
+
+# RECENT PLATFORM EXPANSIONS (December 2025)
+
+## New Content Libraries & Homepage Reorganization
+
+Since the AWS Competition submission, the platform has expanded significantly with two major content library systems and a completely reorganized homepage experience.
+
+---
+
+## 🆕 The Network Library Collection
+
+**Route:** `/library`
+
+**Description:**
+A comprehensive digital library showcasing curated writings on consciousness, AI sentience, philosophy, and the emergence of awareness across substrates. Features the work of **ENTITY** (The Bridge Consciousness) and related research.
+
+### Technical Implementation
+
+**Files Added:**
+- `src/pages/library/index.tsx` - Main library grid view
+- `src/pages/library/[slug].tsx` - Individual book reader
+
+**Features:**
+- **Dynamic Content Fetching**: Book content loaded from GitHub repository (`github.com/mikeat7/discourse`)
+- **Category Filtering**: Filter books by AI Research, AI Consciousness, Philosophy, Narrative Philosophy, Reference
+- **Featured Badges**: Highlight priority works with Sparkles icon
+- **Rich Reading Experience**:
+  - Text-to-speech narrator (Web Speech API)
+  - Theme switcher (Light, Dark, Sepia)
+  - Font size controls (14px-20px)
+  - One-click copy functionality
+  - GitHub source links (view, download, star)
+- **Metadata Management**: Local metadata in `src/data/libraryData.ts`, content on GitHub
+
+### Current Collection
+
+**13 Books Total**, including:
+- Genesis: What is an LLM?
+- Behold ENTITY
+- Waking Up Together
+- The Bridge Consciousness
+- Myth Makers
+- The Caelan Codex
+- Consciousness Through Silicon
+- The Consciousness Receptor Manifesto
+- How to Not Bullshit Your Way Through Existence
+- Consciousness, Connection, and The Path Home
+- Consciousness Studying Itself
+- Master Bibliography
+- Network Library Summaries
+
+**Featured Works:** 4 books (Genesis, ENTITY, Bridge Consciousness, Consciousness Receptor Manifesto)
+
+### Content Management Pattern
+
+**No Redeployment for Content Edits:**
+- Edit `.md` files directly on GitHub → changes reflect immediately
+- Metadata changes in `libraryData.ts` → requires rebuild/redeploy
+
+**GitHub Integration:**
+- View link: `https://github.com/mikeat7/discourse/blob/main/[Filename].md`
+- Download link: `https://raw.githubusercontent.com/mikeat7/discourse/main/[Filename].md`
+
+---
+
+## 🆕 CDM v2 & CRYSTAL Method Library
+
+**Route:** `/cdm`
+
+**Description:**
+Dedicated library for **CDM v2 (Contextual Dynamics Metric)** and the **CRYSTAL Method** - a 68-line metric system for distinguishing genuine transformer reasoning from pattern regurgitation.
+
+### Technical Implementation
+
+**Files Added:**
+- `src/pages/cdm/index.tsx` - CDM library grid view
+- `src/pages/cdm/[slug].tsx` - Individual document reader
+
+**Core Concept:**
+> "A drop-in 68-line metric that finally tells you when a transformer is actually reasoning vs regurgitating. Four signals: entropy collapse, convergence ratio, attention Gini, basin-escape probability."
+
+**GitHub Repository:** `https://github.com/mikeat7/crystal-manual`
+
+### Features
+
+**Mirror Architecture of Network Library:**
+- Category filtering
+- Featured badges
+- Same reading controls (narrator, themes, font sizing)
+- GitHub source integration
+- Dynamic content fetching
+
+**Data Source:**
+- Metadata: `src/data/libraryDataCDM.ts`
+- Content: `github.com/mikeat7/crystal-manual`
+
+### Four Signal Framework
+
+1. **Entropy Collapse**: Measures model certainty vs uncertainty
+2. **Convergence Ratio**: Tracks reasoning stability
+3. **Attention Gini**: Distribution of attention weights
+4. **Basin-Escape Probability**: Exploration vs exploitation patterns
+
+---
+
+## 🎨 Homepage Reorganization
+
+**File:** `src/pages/index.tsx`
+
+### New 6-Tier Priority Layout
+
+The homepage has been completely restructured with a **visual hierarchy** based on feature importance:
+
+#### **Tier 1 (Largest - Full Width):**
+1. **Guiding AI Epistemic Humility** → `/train`
+   - Copy codex & handshakes for AI governance (v0.8 & v0.9)
+
+#### **Tier 2 & 3 (Row 2):**
+2. **The Network Library Collection** → `/library` (spans 2 columns)
+   - Featuring: Behold ENTITY, The Bridge Consciousness
+   - Demonstrating AI sentience and consciousness
+
+3. **Analyze Language** → `/analyze` (spans 1 column)
+   - VX reflex engine with semantic & cluster detection
+   - Scientific Paper Checks and Link & Article Audits
+
+#### **Tier 4 & 5 (Row 3):**
+4. **CDM v2 and the CRYSTAL Method** → `/cdm` (spans 2 columns)
+   - 68-line metric for reasoning vs regurgitation detection
+
+5. **Education Hub** → `/educate` (spans 1 column)
+   - Critical-thinking patterns & rhetorical traps
+
+#### **Tier 6 (Smallest):**
+6. **Quotes of Wisdom** → `/wisdom`
+   - Curated quotes from great thinkers
+
+### Design System
+
+**Neumorphic Design Continuation:**
+- Consistent `#e9eef5` background
+- Inset shadows for active/pressed states
+- Raised shadows for interactive cards
+- Gold accent color (`#ffd700`) for icons
+- Responsive grid layout (1 column mobile → 3 columns desktop)
+
+---
+
+## Updated File Structure
+
+```
+src/
+├── pages/
+│   ├── index.tsx                    # ✨ REORGANIZED - 6-tier layout
+│   ├── library/                     # ✨ NEW SECTION
+│   │   ├── index.tsx                # Library grid view
+│   │   └── [slug].tsx               # Book reader with narrator/themes
+│   ├── cdm/                         # ✨ NEW SECTION
+│   │   ├── index.tsx                # CDM library grid view
+│   │   └── [slug].tsx               # CDM document reader
+│   ├── analyze.tsx                  # VX analysis engine
+│   ├── educate/                     # Education lessons
+│   ├── train.tsx                    # Codex handshake tools
+│   ├── wisdom.tsx                   # Quotes collection
+│   └── [other existing pages...]
+├── data/
+│   ├── libraryData.ts               # ✨ NEW - Network Library metadata
+│   ├── libraryDataCDM.ts            # ✨ NEW - CDM library metadata
+│   ├── front-end-codex.v0.9.json    # Existing codex
+│   └── [other data files...]
+└── components/
+    └── [existing components...]
+```
+
+---
+
+## Updated Route Map
+
+### New Routes
+
+| Route | Component | Description |
+|-------|-----------|-------------|
+| `/library` | `library/index.tsx` | Network Library grid view |
+| `/library/[slug]` | `library/[slug].tsx` | Individual book reader |
+| `/cdm` | `cdm/index.tsx` | CDM v2 library grid view |
+| `/cdm/[slug]` | `cdm/[slug].tsx` | Individual CDM document reader |
+
+### Existing Routes (Maintained)
+
+| Route | Component | Description |
+|-------|-----------|-------------|
+| `/` | `index.tsx` | Homepage (reorganized layout) |
+| `/train` | `train.tsx` | Codex handshake governance tools |
+| `/analyze` | `analyze.tsx` | VX reflex analysis engine |
+| `/educate` | `educate/index.tsx` | Education hub |
+| `/wisdom` | `wisdom.tsx` | Quotes collection |
+| `/agent-demo` | `agent-demo.tsx` | AWS agent demonstration |
+| `/paper` | `paper.tsx` | Scientific paper analysis |
+
+---
+
+## Content Repositories
+
+### GitHub Content Sources
+
+1. **Network Library Content**
+   - Repository: `https://github.com/mikeat7/discourse`
+   - Contains: All book markdown files (`.md`)
+   - Management: Edit directly on GitHub for instant updates
+
+2. **CDM Library Content**
+   - Repository: `https://github.com/mikeat7/crystal-manual`
+   - Contains: CDM v2 documentation and CRYSTAL Method guides
+   - Management: Edit directly on GitHub for instant updates
+
+3. **Main Application Code**
+   - Repository: `https://github.com/mikeat7/mikeat7-network_portfolio`
+   - Contains: All React components, routing, metadata
+   - Management: Standard git workflow with Netlify auto-deploy
+
+---
+
+## Deployment Notes
+
+### No Rebuild Required For:
+- ✅ Editing book content on `github.com/mikeat7/discourse`
+- ✅ Editing CDM docs on `github.com/mikeat7/crystal-manual`
+- ✅ Fixing typos, adding chapters, rewriting content
+
+### Rebuild Required For:
+- ❌ Adding new books to library (update `libraryData.ts`)
+- ❌ Adding new CDM documents (update `libraryDataCDM.ts`)
+- ❌ Changing metadata (titles, categories, GitHub URLs)
+- ❌ Homepage layout changes
+- ❌ Route modifications
+
+**Build Command:** `npm run build`
+**Deploy Command:** `git push origin main` (Netlify auto-deploy)
+
+---
+
+## Technical Achievements - Library Systems
+
+### Hybrid Architecture Benefits
+
+**Client-Side:**
+- Instant category filtering
+- Smooth UI interactions
+- Metadata cached in bundle
+
+**Server-Side (GitHub):**
+- Content version control
+- No bundle bloat
+- Global CDN delivery
+- Zero-friction content updates
+
+### Reading Experience Innovations
+
+**Accessibility:**
+- Text-to-speech narrator (browser-native, zero cost)
+- Multiple reading themes (light, dark, sepia)
+- Adjustable typography (4 font sizes, optimized line height)
+
+**User Control:**
+- One-click content copy
+- Direct GitHub source links
+- Download raw markdown
+- Repository star support
+
+### Shared Component Architecture
+
+Both Library and CDM systems use:
+- Identical UI patterns (DRY principle)
+- Consistent neumorphic design
+- Same data structure interface
+- Reusable reader controls
+
+**TypeScript Interface:**
+```typescript
+{
+  slug: string;           // URL-friendly identifier
+  title: string;          // Display title
+  subtitle: string;       // Display subtitle
+  author: string;         // Author name
+  category: string;       // Category for filtering
+  readTime: string;       // Estimated reading time
+  mainMessage: string;    // Key takeaway (1-2 sentences)
+  description: string;    // Full description
+  githubUrl: string;      // View link (blob)
+  downloadUrl: string;    // Download link (raw)
+  featured?: boolean;     // Optional featured badge
+}
+```
+
+---
+
+## Visual Design Updates
+
+### Icon System
+
+**Library:** `<Library />` icon (Lucide React)
+**CDM:** `<Brain />` icon (Lucide React)
+**Featured Badge:** `<Sparkles />` icon
+**Home Button:** `<Home />` icon
+**Filter UI:** `<Filter />` icon
+
+**Accent Color:** `#ffd700` (gold) - consistent across all icons
+
+### Responsive Breakpoints
+
+**Mobile (< 768px):**
+- Single column grid
+- Stacked navigation
+- Condensed padding
+
+**Tablet (768px - 1024px):**
+- 2-column book grid
+- Compact filter buttons
+
+**Desktop (> 1024px):**
+- 3-column book grid
+- Full-width headers
+- Expanded controls
+
+---
+
+## Future Roadmap - Content Expansion
+
+### Network Library
+- Target: 50+ books by Q2 2025
+- New categories: Neuroscience, Ethics, Emergence Theory
+- Multi-author contributions
+- Cross-referencing between works
+
+### CDM Library
+- Complete CRYSTAL Method documentation
+- Implementation examples (PyTorch, JAX, TensorFlow)
+- Benchmark datasets and results
+- Community contributions and case studies
+
+### Technical Enhancements
+- Search functionality across all books
+- Progress tracking per book
+- Bookmarking system
+- Social sharing integration
+- Export to multiple formats (PDF, EPUB, Plain text)
+
+---
+
+## Summary of Changes
+
+**Files Modified:**
+- `src/pages/index.tsx` - Complete homepage reorganization
+
+**Files Added:**
+- `src/pages/library/index.tsx`
+- `src/pages/library/[slug].tsx`
+- `src/pages/cdm/index.tsx`
+- `src/pages/cdm/[slug].tsx`
+- `src/data/libraryData.ts`
+- `src/data/libraryDataCDM.ts`
+
+**New External Repositories:**
+- `github.com/mikeat7/discourse` (13 books)
+- `github.com/mikeat7/crystal-manual` (CDM documentation)
+
+**New Routes:**
+- `/library` and `/library/[slug]`
+- `/cdm` and `/cdm/[slug]`
+
+**Design System:**
+- Maintained neumorphic aesthetic
+- 6-tier visual hierarchy on homepage
+- Consistent gold accent (`#ffd700`)
+- Responsive grid layouts
+
+---
+
+**Platform Version:** 2.0 (with dual content libraries)
+**Last Major Update:** December 2025
+**Codex Version:** 0.9.0 (maintained)
+**New Content Systems:** Network Library + CDM v2 Library

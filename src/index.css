@@ -174,3 +174,31 @@ html.dark {
     max-width: 100%;
   }
 }
+
+/* --------------------------
+   Narrator Feature Animations
+--------------------------- */
+
+/* Click-to-start feedback animation */
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* Narrator reading position pulse animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scaleY(1.2);
+  }
+}

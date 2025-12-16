@@ -1,6 +1,8 @@
 // src/pages/library/[slug].tsx
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   ArrowLeft,
   Volume2,
@@ -510,23 +512,115 @@ const LibraryBookPage: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Render content with cumulative highlighting - all read text stays highlighted
-  const renderHighlightedContent = () => {
-    if (!content || narratorCharIndex === 0) {
-      return content;
+  // Handle click to set narrator position (like Word's Read Aloud)
+  const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Don't interfere if user is actively dragging to select text
+    if (window.getSelection()?.toString().length ?? 0 > 0) {
+      return;
     }
 
-    // Map narrator position (from cleaned content) to original content position
-    // This is approximate but works well for highlighting
-    const readUpTo = Math.min(narratorCharIndex, content.length);
+    // Don't interfere if narrator is actively speaking
+    if (isNarratorOn && !isPaused) {
+      return;
+    }
 
-    // Split content: already read vs not yet read
-    const alreadyRead = content.substring(0, readUpTo);
-    const notYetRead = content.substring(readUpTo);
+    try {
+      // Get click position
+      const range = document.caretRangeFromPoint?.(e.clientX, e.clientY) ||
+                    document.caretPositionFromPoint?.(e.clientX, e.clientY);
+
+      if (!range) return;
+
+      // Walk through text nodes to calculate character position
+      const contentDiv = e.currentTarget;
+      const walker = document.createTreeWalker(
+        contentDiv,
+        NodeFilter.SHOW_TEXT,
+        null
+      );
+
+      let charCount = 0;
+      let node: Node | null;
+      const clickedNode = 'startContainer' in range ? range.startContainer : range.offsetNode;
+      const clickedOffset = 'startOffset' in range ? range.startOffset : range.offset;
+
+      while ((node = walker.nextNode())) {
+        if (node === clickedNode) {
+          charCount += clickedOffset;
+          break;
+        } else if (node.textContent) {
+          charCount += node.textContent.length;
+        }
+      }
+
+      // Map to cleaned content position (approximate)
+      // cleanedContent is shorter because it removes markdown syntax
+      const ratio = cleanedContent.length / contentDiv.textContent!.length;
+      const cleanedPosition = Math.floor(charCount * ratio);
+
+      // Set narrator position (this will cause immediate highlighting)
+      if (cleanedPosition >= 0 && cleanedPosition < cleanedContent.length) {
+        console.log(`📍 Click-to-position: char ${charCount} → cleaned ${cleanedPosition}`);
+        setNarratorCharIndex(cleanedPosition);
+
+        // Save this as the new starting position
+        localStorage.setItem(`narrator-${book.slug}`, JSON.stringify(cleanedPosition));
+      }
+    } catch (error) {
+      console.error('Error calculating click position:', error);
+    }
+  };
+
+  // Render content with markdown support and stable highlighting
+  const renderContent = () => {
+    if (!content) {
+      return null;
+    }
+
+    // When narrator is OFF or no position saved - render beautiful markdown
+    if (!isNarratorOn && !isPaused && narratorCharIndex === 0) {
+      return (
+        <div
+          className="prose prose-slate prose-lg max-w-none dark:prose-invert cursor-text"
+          onClick={handleContentClick}
+          title="Click anywhere to set narrator start position"
+        >
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              h1: ({node, ...props}) => <h1 className="text-4xl font-bold mt-8 mb-4" {...props} />,
+              h2: ({node, ...props}) => <h2 className="text-3xl font-bold mt-6 mb-3" {...props} />,
+              h3: ({node, ...props}) => <h3 className="text-2xl font-bold mt-5 mb-2" {...props} />,
+              p: ({node, ...props}) => <p className="mb-4" {...props} />,
+              a: ({node, ...props}) => <a className="text-blue-600 hover:underline" {...props} />,
+              ul: ({node, ...props}) => <ul className="list-disc ml-6 mb-4" {...props} />,
+              ol: ({node, ...props}) => <ol className="list-decimal ml-6 mb-4" {...props} />,
+              code: ({node, inline, ...props}: any) =>
+                inline
+                  ? <code className="bg-slate-200 dark:bg-slate-700 px-1 rounded" {...props} />
+                  : <code className="block bg-slate-100 dark:bg-slate-800 p-4 rounded my-4" {...props} />,
+            }}
+          >
+            {content}
+          </ReactMarkdown>
+        </div>
+      );
+    }
+
+    // When narrator has a position (active, paused, or saved) - use STABLE plain text highlighting
+    // (Prevents layout shift that occurs with split markdown rendering)
+    const readUpTo = Math.min(narratorCharIndex, cleanedContent.length);
+    const alreadyRead = cleanedContent.substring(0, readUpTo);
+    const notYetRead = cleanedContent.substring(readUpTo);
 
     return (
-      <>
-        {/* Already read text - stays highlighted */}
+      <div
+        className="font-serif cursor-text"
+        style={{ whiteSpace: 'pre-wrap' }}
+        onClick={handleContentClick}
+        title="Click anywhere to change narrator position"
+      >
+        {/* Already read/highlighted portion */}
         <span
           style={{
             backgroundColor: theme === 'dark' ? '#ffd70044' : '#ffeb3b66',
@@ -535,16 +629,25 @@ const LibraryBookPage: React.FC = () => {
         >
           {alreadyRead}
         </span>
+
         {/* Current reading position marker - for auto-scroll */}
         <span
           ref={currentReadingPosRef}
           style={{
             position: 'relative',
+            display: 'inline-block',
+            width: '2px',
+            height: '1.2em',
+            backgroundColor: theme === 'dark' ? '#ffd700' : '#4ade80',
+            marginLeft: '1px',
+            marginRight: '1px',
+            verticalAlign: 'middle',
           }}
         />
-        {/* Not yet read text - normal */}
+
+        {/* Not yet read portion - normal */}
         {notYetRead}
-      </>
+      </div>
     );
   };
 
@@ -934,16 +1037,13 @@ const LibraryBookPage: React.FC = () => {
           </div>
         ) : (
           <div
-            className="prose prose-slate max-w-none"
             style={{
               fontSize: `${fontSize}px`,
               lineHeight: 1.8,
               color: currentTheme.text,
             }}
           >
-            <pre className="whitespace-pre-wrap font-serif">
-              {isNarratorOn || isPaused ? renderHighlightedContent() : content}
-            </pre>
+            {renderContent()}
           </div>
         )}
       </article>
