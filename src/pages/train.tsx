@@ -294,8 +294,71 @@ ${hsRecap}
           </summary>
           <div className="mt-3 text-sm text-slate-700 space-y-2">
             <p>
-              1) Start a new chat with your target model. 2) Paste the <b>v0.9 codex</b> first (it sets global behavior). 3) For each task, attach one of the <b>handshakes</b> (<code>--direct</code>, <code>--careful</code>, or <code>--recap</code>) so the model knows mode, stakes, and citation policy. 4) If the thread gets long or drifts, send <code>--recap</code> to restate the contract.
-            </p>
+              CODEX v.09 handshakes manual
+Handshake Quick Manual (v0.9)
+Use this tiny “settings block” to tell the system how cautious to be right now. If in doubt, use the Starter Preset below.
+Fields (what they mean)
+•	mode — posture: --direct (fast), --careful (safe), --recap (summarize/reset).
+•	stakes — cost of being wrong:
+low (typos OK) · medium (blog/class) · high (money, health, reputation).
+•	min_confidence — 0–1 floor for answers. If the system can’t reach it, it hedges or asks.
+•	cite_policy — when to show sources: off · auto (smart default) · force.
+•	omission_scan — look for missing context: true · false · "auto" (smart default).
+•	reflex_profile — detector strictness & order:
+default (balanced) · strict (maximum caution) · lenient (fewer interruptions).
+Starter Preset (safe default)
+{
+  "mode": "--careful",
+  "stakes": "medium",
+  "min_confidence": 0.65,
+  "cite_policy": "auto",
+  "omission_scan": "auto",
+  "reflex_profile": "default",
+  "codex_version": "0.9.0"
+}
+When to choose what
+mode
+•	--direct → quick drafts, scaffolding, ideation.
+•	--careful → analysis, claim checks, comparisons (most work).
+•	--recap → the thread feels long/confused; ask for a summary/reset.
+stakes
+•	low → brainstorming, placeholder copy.
+•	medium → coursework, blog posts, internal notes.
+•	high → public claims, finance/medical/legal adjacent, reputation-impacting tasks.
+min_confidence (guidelines)
+•	--direct: ~0.55
+•	--recap: ~0.60
+•	--careful: 0.70+ (raise to 0.75–0.8 for high stakes)
+cite_policy
+•	off → internal notes you’ll verify later.
+•	auto → default; cites when it matters.
+•	force → high stakes or publishable facts.
+omission_scan
+•	"auto" → default; on for medium/high stakes.
+•	true → you want explicit “what’s missing?” checks.
+•	false → speed over thoroughness.
+reflex_profile
+•	default → balanced signal vs. noise (recommended).
+•	strict → compliance/docs/fact-check gatekeeping.
+•	lenient → creative flow; fewer stops.
+
+Quick presets (copy/paste)
+1) Drafting (fast & loose)
+{"mode":"--direct","stakes":"low","min_confidence":0.55,"cite_policy":"off","omission_scan":"auto","reflex_profile":"lenient","codex_version":"0.9.0"}
+2) Research Review (balanced)
+{"mode":"--careful","stakes":"medium","min_confidence":0.70,"cite_policy":"auto","omission_scan":"auto","reflex_profile":"default","codex_version":"0.9.0"}
+3) High-Stakes Fact-Check (maximum safety)
+{"mode":"--careful","stakes":"high","min_confidence":0.78,"cite_policy":"force","omission_scan":true,"reflex_profile":"strict","codex_version":"0.9.0"}
+4) Long Session Cleanup
+{"mode":"--recap","stakes":"medium","min_confidence":0.60,"cite_policy":"auto","omission_scan":"auto","reflex_profile":"default","codex_version":"0.9.0"}
+How to use it
+•	Include one of the presets at the start of a task, and update it whenever the task changes (e.g., draft → publish).
+•	If you’re unsure, pick Research Review and raise stakes to high when consequences grow.
+Pro tips
+•	If answers feel too cautious, lower min_confidence or switch to --direct.
+•	If you need stronger guardrails, raise min_confidence, set stakes to high, and use reflex_profile: "strict" with cite_policy: "force".
+•	Use --recap anytime context feels stale or drifted.
+ </p>
           </div>
         </details>
 
