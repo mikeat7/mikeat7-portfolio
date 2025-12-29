@@ -1,12 +1,45 @@
 // src/pages/library/index.tsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Library, BookOpen, Clock, User, Sparkles, Filter, Home } from "lucide-react";
+import { Library, BookOpen, Clock, User, Sparkles, Filter, Home, Sun, Moon, FileText } from "lucide-react";
 import { libraryBooks, getCategories } from "@/data/libraryData";
+
+type Theme = "light" | "dark" | "sepia";
 
 const LibraryIndexPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const categories = ["All", ...getCategories()];
+
+  // Load preferences from localStorage
+  const loadPreference = <T,>(key: string, defaultValue: T): T => {
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      try {
+        return JSON.parse(stored) as T;
+      } catch {
+        return defaultValue;
+      }
+    }
+    return defaultValue;
+  };
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(() => {
+    return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+  });
+
+  const [theme, setTheme] = useState<Theme>(() => loadPreference<Theme>("readerTheme", "light"));
+  const [fontSize, setFontSize] = useState(() => loadPreference<number>("readerFontSize", 16));
+
+  const changeTheme = (newTheme: Theme) => {
+    setTheme(newTheme);
+    localStorage.setItem("readerTheme", JSON.stringify(newTheme));
+  };
+
+  const changeFontSize = (size: number) => {
+    setFontSize(size);
+    localStorage.setItem("readerFontSize", JSON.stringify(size));
+  };
 
   const filteredBooks =
     selectedCategory === "All"
@@ -74,6 +107,74 @@ const LibraryIndexPage: React.FC = () => {
               </button>
             ))}
           </div>
+
+          {/* READING PREFERENCES - Mobile only */}
+          {isMobile && (
+          <div className="mt-8 p-6 rounded-2xl" style={{
+            background: "#e9eef5",
+            boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff",
+          }}>
+            <h3 className="text-sm font-bold text-slate-700 mb-4">📖 Reading Preferences</h3>
+            <p className="text-xs text-slate-600 mb-4">Set your preferred theme and font size for all books</p>
+
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Theme Selector */}
+              <div className="flex-1">
+                <label className="text-xs font-medium text-slate-600 mb-2 block">Theme</label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {[
+                    { key: "light", icon: Sun, label: "Light" },
+                    { key: "dark", icon: Moon, label: "Dark" },
+                    { key: "sepia", icon: FileText, label: "Sepia" },
+                  ].map(({ key, icon: Icon, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => changeTheme(key as Theme)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:scale-105 flex-shrink-0"
+                      style={{
+                        background: "#e9eef5",
+                        boxShadow:
+                          theme === key
+                            ? "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff"
+                            : "2px 2px 4px #cfd6e0, -2px -2px 4px #ffffff",
+                      }}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      <span className="whitespace-nowrap">{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Font Size Selector */}
+              <div className="flex-1">
+                <label className="text-xs font-medium text-slate-600 mb-2 block">Font Size</label>
+                <div className="flex items-center gap-2">
+                  {[14, 16, 18, 20].map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => changeFontSize(size)}
+                      className="px-4 py-2 rounded-lg text-xs font-medium transition-all hover:scale-105"
+                      style={{
+                        background: "#e9eef5",
+                        boxShadow:
+                          fontSize === size
+                            ? "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff"
+                            : "2px 2px 4px #cfd6e0, -2px -2px 4px #ffffff",
+                      }}
+                    >
+                      {size === 14 ? "A-" : size === 16 ? "A" : size === 18 ? "A" : "A+"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500 mt-4 italic">
+              Current: {theme.charAt(0).toUpperCase() + theme.slice(1)} theme, {fontSize}px font
+            </p>
+          </div>
+          )}
         </div>
 
         {/* BOOK GRID */}

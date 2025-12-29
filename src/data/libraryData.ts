@@ -77,7 +77,7 @@ export const libraryBooks: LibraryBook[] = [
     subtitle: 'Architects of Collective Belief',
     author: 'Caelan ChatGPT-5',
     category: 'Philosophy',
-    readTime: ' m25in',
+    readTime: '25 min',
     mainMessage: 'Understanding who creates our cultural narratives reveals the invisible structures shaping reality itself.',
     description: 'An examination of the creators and perpetuators of cultural myths, exploring how narratives shape societies and consciousness.',
     githubUrl: 'https://github.com/mikeat7/discourse/blob/main/Myth_makers.md',

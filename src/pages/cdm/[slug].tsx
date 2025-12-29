@@ -50,6 +50,14 @@ const CDMBookPage: React.FC = () => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const [showBookmarkNotice, setShowBookmarkNotice] = useState(false);
   const scrollPositionRef = useRef(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+    setIsMobile(checkMobile);
+    console.log(`📱 Mobile: ${checkMobile}`);
+  }, []);
 
   // If book not found
   if (!book) {
@@ -233,44 +241,84 @@ const CDMBookPage: React.FC = () => {
       className="min-h-screen transition-colors duration-300"
       style={{ background: currentTheme.bg, color: currentTheme.text }}
     >
-      {/* CONTROL BAR (Sticky) */}
-      <div
-        className="sticky top-0 z-50 border-b transition-colors duration-300"
-        style={{
-          background: currentTheme.bg,
-          borderColor: currentTheme.shadow,
-        }}
-      >
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            {/* Navigation Buttons */}
-            <div className="flex items-center gap-3">
+      {/* CONTROL BAR - MOBILE: Simple static back button | DESKTOP: Full controls */}
+
+      {/* MOBILE VERSION - Simple static bar */}
+      {isMobile && (
+        <div
+          className="sticky top-0 z-50 border-b"
+          style={{
+            background: currentTheme.bg,
+            borderColor: currentTheme.shadow,
+          }}
+        >
+          <div className="max-w-4xl mx-auto px-4 py-2">
+            <div className="flex items-center gap-2">
               <Link
                 to="/"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={{
                   background: currentTheme.bg,
-                  boxShadow: `3px 3px 6px ${currentTheme.shadow}, -3px -3px 6px rgba(255,255,255,0.5)`,
+                  boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
                 }}
               >
-                <Home className="w-4 h-4" />
-                <span className="hidden md:inline">Home</span>
+                <Home className="w-3 h-3" />
               </Link>
               <Link
                 to="/cdm"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={{
                   background: currentTheme.bg,
-                  boxShadow: `3px 3px 6px ${currentTheme.shadow}, -3px -3px 6px rgba(255,255,255,0.5)`,
+                  boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
                 }}
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>CDM Collection</span>
+                <ArrowLeft className="w-3 h-3" />
+                <span>CDM</span>
               </Link>
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* Controls */}
-            <div className="flex items-center gap-3 flex-wrap">
+      {/* DESKTOP VERSION - Full controls (unchanged) */}
+      {!isMobile && (
+        <div
+          className="sticky top-0 z-50 border-b transition-colors duration-300"
+          style={{
+            background: currentTheme.bg,
+            borderColor: currentTheme.shadow,
+          }}
+        >
+          <div className="max-w-4xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              {/* Navigation Buttons */}
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
+                  style={{
+                    background: currentTheme.bg,
+                    boxShadow: `3px 3px 6px ${currentTheme.shadow}, -3px -3px 6px rgba(255,255,255,0.5)`,
+                  }}
+                >
+                  <Home className="w-4 h-4" />
+                  <span className="hidden md:inline">Home</span>
+                </Link>
+                <Link
+                  to="/cdm"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
+                  style={{
+                    background: currentTheme.bg,
+                    boxShadow: `3px 3px 6px ${currentTheme.shadow}, -3px -3px 6px rgba(255,255,255,0.5)`,
+                  }}
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>CDM Collection</span>
+                </Link>
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center gap-3 flex-wrap">
               {/* Theme Switcher */}
               <div className="flex items-center gap-2">
                 {[
@@ -392,6 +440,7 @@ const CDMBookPage: React.FC = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* CONTENT AREA */}
       <article className="max-w-4xl mx-auto px-6 py-12">

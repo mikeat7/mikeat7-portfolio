@@ -70,8 +70,10 @@ const LibraryBookPage: React.FC = () => {
   const hideControlsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const currentReadingPosRef = useRef<HTMLSpanElement | null>(null);
 
-  // Mobile TTS initialization
-  const [isMobile, setIsMobile] = useState(false);
+  // Mobile TTS initialization - Check IMMEDIATELY to prevent race condition
+  const [isMobile, setIsMobile] = useState(() => {
+    return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+  });
   const [ttsInitialized, setTtsInitialized] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [initError, setInitError] = useState('');
@@ -112,15 +114,22 @@ const LibraryBookPage: React.FC = () => {
     fetchContent();
   }, [book.downloadUrl]);
 
-  // Detect mobile device
+  // Detect mobile device and Firefox (to prevent crashes)
   useEffect(() => {
     const checkMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
-    setIsMobile(checkMobile);
-    console.log(`📱 Mobile device detected: ${checkMobile}`);
+    const isFirefox = /Firefox/i.test(navigator.userAgent);
 
-    // On desktop, mark TTS as initialized immediately
-    if (!checkMobile) {
+    setIsMobile(checkMobile);
+    console.log(`📱 Mobile: ${checkMobile}, Firefox: ${isFirefox}`);
+
+    // Mark TTS as initialized on desktop only
+    // Firefox mobile has broken Speech API - disable it completely
+    if (!checkMobile && !isFirefox) {
       setTtsInitialized(true);
+    } else if (checkMobile && isFirefox) {
+      console.log(`⚠️ Firefox mobile detected - ALL narrator features disabled`);
+      setTtsInitialized(false);
+      setIsMobile(true); // Force mobile mode to hide narrator UI
     }
   }, []);
 
@@ -177,6 +186,9 @@ const LibraryBookPage: React.FC = () => {
 
   // Cleanup narrator on unmount
   useEffect(() => {
+    // Skip all Speech API cleanup on mobile
+    if (isMobile) return;
+
     return () => {
       console.log(`🔄 Unmounting "${book.title}" - canceling any active narration`);
       if (window.speechSynthesis && window.speechSynthesis.speaking) {
@@ -185,26 +197,30 @@ const LibraryBookPage: React.FC = () => {
       }
       // Note: We do NOT clear localStorage here - positions should persist
     };
-  }, [book]);
+  }, [book, isMobile]);
 
   // Restore scroll position and narrator position for this book
   useEffect(() => {
     if (!isLoading && book && content) {
       const savedScrollPos = loadPreference<number>(`bookmark-${book.slug}`, 0);
-      const savedNarratorPos = loadPreference<number>(`narrator-${book.slug}`, 0);
 
       console.log(`📖 Loading "${book.title}" (slug: ${book.slug})`);
       console.log(`   Saved scroll position: ${savedScrollPos}`);
-      console.log(`   Saved narrator position: ${savedNarratorPos}`);
-      console.log(`   All localStorage keys:`, Object.keys(localStorage).filter(k => k.startsWith('bookmark-') || k.startsWith('narrator-')));
 
-      // Restore narrator position to state (shows Resume button)
-      if (savedNarratorPos > 0) {
-        setNarratorCharIndex(savedNarratorPos);
-        console.log(`🎤 Restored narrator position to state: ${savedNarratorPos}`);
+      // Only restore narrator position on desktop (not mobile)
+      if (!isMobile) {
+        const savedNarratorPos = loadPreference<number>(`narrator-${book.slug}`, 0);
+        console.log(`   Saved narrator position: ${savedNarratorPos}`);
+        console.log(`   All localStorage keys:`, Object.keys(localStorage).filter(k => k.startsWith('bookmark-') || k.startsWith('narrator-')));
+
+        // Restore narrator position to state (shows Resume button)
+        if (savedNarratorPos > 0) {
+          setNarratorCharIndex(savedNarratorPos);
+          console.log(`🎤 Restored narrator position to state: ${savedNarratorPos}`);
+        }
       }
 
-      // Restore scroll position
+      // Restore scroll position (works on both mobile and desktop)
       if (savedScrollPos > 0) {
         // Wait for content to render, then scroll
         setTimeout(() => {
@@ -219,7 +235,7 @@ const LibraryBookPage: React.FC = () => {
         }, 500);
       }
     }
-  }, [isLoading, book, content]);
+  }, [isLoading, book, content, isMobile]);
 
   // Save scroll position on scroll (debounced)
   useEffect(() => {
@@ -351,6 +367,9 @@ const LibraryBookPage: React.FC = () => {
   // Auto-scroll to keep current reading position centered on screen
   // ONLY when narrator is actively playing (not when restoring from memory)
   useEffect(() => {
+    // Skip on mobile (no narrator on mobile)
+    if (isMobile) return;
+
     if (currentReadingPosRef.current && narratorCharIndex > 0 && isNarratorOn && !isPaused) {
       currentReadingPosRef.current.scrollIntoView({
         behavior: 'smooth',
@@ -358,7 +377,7 @@ const LibraryBookPage: React.FC = () => {
         inline: 'nearest'
       });
     }
-  }, [narratorCharIndex, isNarratorOn, isPaused]);
+  }, [narratorCharIndex, isNarratorOn, isPaused, isMobile]);
 
   // Theme styles
   const themeStyles = {
@@ -786,13 +805,14 @@ const LibraryBookPage: React.FC = () => {
       return null;
     }
 
-    // When narrator is OFF or no position saved - render beautiful markdown
-    if (!isNarratorOn && !isPaused && narratorCharIndex === 0) {
+    // ALWAYS render markdown on mobile (no narrator highlighting)
+    // OR when narrator is OFF or no position saved on desktop
+    if (isMobile || (!isNarratorOn && !isPaused && narratorCharIndex === 0)) {
       return (
         <div
           className="prose prose-slate prose-lg max-w-none dark:prose-invert cursor-text"
-          onClick={handleContentClick}
-          title="Click anywhere to set narrator start position"
+          onClick={isMobile ? undefined : handleContentClick}
+          title={isMobile ? undefined : "Click anywhere to set narrator start position"}
         >
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
@@ -865,66 +885,96 @@ const LibraryBookPage: React.FC = () => {
       className="min-h-screen transition-colors duration-300"
       style={{ background: currentTheme.bg, color: currentTheme.text }}
     >
-      {/* Tap to show controls hint - appears when controls are hidden */}
-      {!showControls && (
-        <div
-          className="fixed top-0 left-0 right-0 z-40 text-center py-2 text-xs opacity-50 animate-pulse"
-          style={{ background: currentTheme.bg }}
-        >
-          Tap screen to show controls
-        </div>
-      )}
+      {/* CONTROL BAR - MOBILE: Simple static back button | DESKTOP: Full controls with auto-hide */}
 
-      {/* CONTROL BAR (Sticky) - Auto-hides after 4 seconds, shows on touch/click */}
-      <div
-        className={`sticky z-50 border-b transition-all duration-500 ease-in-out ${
-          showControls ? 'top-0 opacity-100' : '-top-full opacity-0'
-        }`}
-        style={{
-          background: currentTheme.bg,
-          borderColor: currentTheme.shadow,
-        }}
-      >
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            {/* Navigation Buttons */}
-            <div className="flex items-center gap-3">
+      {/* MOBILE VERSION - Simple static bar */}
+      {isMobile && (
+        <div
+          className="sticky top-0 z-50 border-b"
+          style={{
+            background: currentTheme.bg,
+            borderColor: currentTheme.shadow,
+          }}
+        >
+          <div className="max-w-4xl mx-auto px-4 py-2">
+            <div className="flex items-center gap-2">
               <Link
                 to="/"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={{
                   background: currentTheme.bg,
-                  boxShadow: `3px 3px 6px ${currentTheme.shadow}, -3px -3px 6px rgba(255,255,255,0.5)`,
+                  boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
                 }}
               >
-                <Home className="w-4 h-4" />
-                <span className="hidden md:inline">Home</span>
+                <Home className="w-3 h-3" />
               </Link>
               <Link
                 to="/library"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={{
                   background: currentTheme.bg,
-                  boxShadow: `3px 3px 6px ${currentTheme.shadow}, -3px -3px 6px rgba(255,255,255,0.5)`,
+                  boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
                 }}
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-3 h-3" />
                 <span>Library</span>
               </Link>
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* Controls */}
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Mobile: No narrator controls at all */}
-              {isMobile && (
-                <div className="text-xs text-slate-600 italic">
-                  Narrator available on desktop only
+      {/* DESKTOP VERSION - Full controls with auto-hide (unchanged) */}
+      {!isMobile && (
+        <>
+          {!showControls && (
+            <div
+              className="fixed top-0 left-0 right-0 z-40 text-center py-2 text-xs opacity-50 animate-pulse"
+              style={{ background: currentTheme.bg }}
+            >
+              Tap screen to show controls
+            </div>
+          )}
+
+          <div
+            className={`sticky z-50 border-b transition-all duration-500 ease-in-out ${
+              showControls ? 'top-0 opacity-100' : '-top-full opacity-0'
+            }`}
+            style={{
+              background: currentTheme.bg,
+              borderColor: currentTheme.shadow,
+            }}
+          >
+            <div className="max-w-4xl mx-auto px-6 py-4">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                {/* Navigation Buttons */}
+                <div className="flex items-center gap-3">
+                  <Link
+                    to="/"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
+                    style={{
+                      background: currentTheme.bg,
+                      boxShadow: `3px 3px 6px ${currentTheme.shadow}, -3px -3px 6px rgba(255,255,255,0.5)`,
+                    }}
+                  >
+                    <Home className="w-4 h-4" />
+                    <span className="hidden md:inline">Home</span>
+                  </Link>
+                  <Link
+                    to="/library"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
+                    style={{
+                      background: currentTheme.bg,
+                      boxShadow: `3px 3px 6px ${currentTheme.shadow}, -3px -3px 6px rgba(255,255,255,0.5)`,
+                    }}
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Library</span>
+                  </Link>
                 </div>
-              )}
 
-              {/* Desktop: Full narrator controls */}
-              {!isMobile && (
-                <>
+                {/* Controls */}
+                <div className="flex items-center gap-3 flex-wrap">
               {/* Mobile TTS Initialization Button - DISABLED */}
               {false && isMobile && !ttsInitialized && (
                 <div className="flex flex-col gap-2">
@@ -1251,12 +1301,12 @@ const LibraryBookPage: React.FC = () => {
                   </div>
                 )}
               </div>
-              </>
-              )}
             </div>
           </div>
         </div>
       </div>
+      </>
+      )}
 
       {/* CONTENT AREA */}
       <article className="max-w-4xl mx-auto px-6 py-12">

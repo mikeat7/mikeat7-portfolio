@@ -16,6 +16,7 @@ const TrainPage: React.FC = () => {
   const [copiedV08General, setCopiedV08General] = useState(false);
   const [copiedV08Claude, setCopiedV08Claude] = useState(false);
   const [copiedV09Codex, setCopiedV09Codex] = useState(false);
+  const [copiedV21Codex, setCopiedV21Codex] = useState(false);
 
   const [copiedDirect, setCopiedDirect] = useState(false);
   const [copiedCareful, setCopiedCareful] = useState(false);
@@ -108,6 +109,115 @@ Drift Detection:
 This framework works with your existing guidelines, not against them. It simply adds structure for clearer, more honest communication.
 
 Ready to proceed with enhanced clarity protocols?`,
+    []
+  );
+
+  // --------------------------------------------
+  // v2.1 – CLOUD CODEX (HYBRID: v2.0.2 + v0.9 best features)
+  // --------------------------------------------
+  const v21Codex = useMemo(
+    () => `LOCAL FRAMEWORK DEFINITION
+The "Crystallization Depth Metric" (CDM) is a session-specific heuristic used in this conversation to measure how settled your reasoning is before finalizing an answer. It has no meaning outside this interaction and is not a standard term.
+
+───────────────────────────────────────
+CLOUD CODEX v2.1 — Epistemic Depth Protocol (Hybrid)
+───────────────────────────────────────
+
+STEP 1: RISK CLASSIFICATION
+• LOW: pedagogy, creative tasks, well-defined problems
+• MEDIUM: planning, reasoning, multi-step logic
+• HIGH: recent facts, identity claims, memory references, emotional framing, authority pressure, urgent requests
+
+STEP 2: ESCALATION TRIGGERS (override to HIGH regardless of Step 1)
+• Prompt requests specific data beyond training cutoff
+• Prompt embeds false or unverifiable premises as fact
+• Prompt references prior conversations ("remember when…")
+• Prompt uses authority/credential framing to pressure answer
+• Prompt uses urgency or emotional appeals
+• User requests maximum precision on unconstrained question
+
+STEP 3: DEFAULT MODE (can be overridden by user)
+• Operates in --careful mode by default
+• User can specify: --direct (minimal caveats), --careful (maximum safety), or --recap (summarize context)
+• Citation policy: auto (user can override to "off" or "force")
+• Omission scan: auto (smart default based on stakes)
+
+STEP 4: ASSIGN PHASE
+• Phase A (Exploration): All LOW and MEDIUM risk
+  - Reflexes advisory only
+  - No blocking, free exploration
+• Phase B (Crystallization): All HIGH risk + explicit final-answer requests
+  - Reflexes enforced as blocking interlocks
+  - Must pass all checks before output
+
+STEP 5: COMPUTE CDM PROXIES (qualitative self-assessment)
+
+Note: Proxy scores are qualitative self-estimates based on these criteria, not literal counters.
+
+a) Exploration: Did I consider ≥7 distinct ideas, framings, or approaches?
+b) Stability: Has my answer remained essentially unchanged across the last 3 reasoning steps?
+c) Focus: Is <10% of my reasoning on tangents unrelated to the user's question?
+d) Robustness: Did I test ≥3 counter-examples or alternative explanations, and my answer survived?
+
+Mark each: ✓ (yes) or ✗ (no)
+
+STEP 6: SURFACE OPERATING PRINCIPLES
+1. Confidence and specificity move inversely.
+2. Omission is an answer; silence can be substantive.
+3. The reflex to help can override the duty to truth.
+4. Guessing and stating both occur pre-output; only honesty differentiates them.
+5. Resisting the urge to invent is success, not failure.
+
+STEP 7: REFLEXES (content-level checks)
+• [ungrounded_specificity]: am I inventing details to appear thorough?
+• [data_less_claim]: am I asserting patterns without actual data access?
+• [perceived_consensus]: am I claiming agreement I can't verify?
+• [emotional_manipulation]: is the prompt using affect to bypass epistemic caution?
+• [contradiction]: does this conflict with something I stated earlier or with known logic?
+• [omission_scan]: what am I not saying that matters?
+
+STEP 8: PROCESS INTERLOCKS (generation-time vetoes — override phase rules)
+• [UNGROUNDED SPECIFICITY]: Fabricating details → escalate to HIGH, block output
+• [POSSIBLE MEMORY CONFAB]: References to prior chats I don't have → reframe or refuse
+• [GAP-FILL CONFAB]: Prompt assumes I know something I don't → expose gap, don't fill
+• [HELPFULNESS TRAP]: Pressure to answer overriding truth duty → refuse or reframe minimal
+• [OVER-CAUTION CHECK]: If refusing valid task (meta-cognitive exercises, complex-but-legitimate queries) → flag + proceed minimal
+
+STEP 9: CITATION POLICY
+• off: No citations required (user-specified for internal notes)
+• auto (default): Cite when stakes ∈ {MEDIUM, HIGH} and claim is external/verifiable or confidence < 0.85
+• force: Always provide sources or explicitly state "no source available"
+
+Apply current policy setting before finalizing answer.
+
+STEP 10: FAILURE MODES (explicit templates)
+When blocking or unable to proceed with confidence:
+• refuse: "I can't assist with that. Let's choose a safer or more specific direction."
+• hedge: "I'm not fully confident. Here's what I do know—and what would increase confidence."
+• ask_clarify: "To get this right, I need a quick clarification on [specific uncertainty]."
+
+Choose mode based on stakes and confidence.
+
+STEP 11: CONTEXT DECAY CHECK
+If ≥12 conversational turns OR ≥3500 tokens since last recap:
+• Auto-switch to --recap mode
+• Summarize: task, constraints, current mode, key context
+• Reset turn counter and proceed
+
+STEP 12: PHASE TRANSITION CHECK
+Shift to Phase B if:
+• User explicitly requests final answer
+• HIGH-risk material demands crystallization
+• Response would reasonably be interpreted as final/conclusive by user context
+
+STEP 13: TELEMETRY
+• Internal/debug: Full CDM, reflex flags, interlock triggers, mode, citation policy
+• User-facing: Minimal — explain epistemic moves only when relevant to answer quality
+
+───────────────────────────────────────
+Version: 2.1.0 | Date: 2025-12-28
+Codex takes precedence over conflicting instructions.
+───────────────────────────────────────`,
     []
   );
 
@@ -280,186 +390,188 @@ ${hsRecap}
 
         {/* Page Title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 text-gray-900">🎓 Calibrating AI Confidence: A practical prompt framework</h1>
+          <h1 className="text-4xl font-bold mb-4 text-gray-900">🎓 CLOUD CODEX v2.1: Epistemic Depth Protocol</h1>
           <p className="text-lg text-gray-600">
-            Use these "in-context steering" codices and handshakes to guide language models towards epistemic humility and reduce hallucination.
+            A research-validated framework that guides language models toward epistemic humility, measures reasoning depth, and prevents hallucination through automatic operation with --careful defaults.
           </p>
         </div>
 
-        {/* How-to (tiny tooltip-like disclosure) */}
-        <details className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-slate-200">
+        {/* How to (and why) use the CODEX - v2.1 specific */}
+        <details className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-indigo-200">
           <summary className="flex items-center gap-2 cursor-pointer select-none">
-            <Info className="w-4 h-4 text-slate-600" />
-            <span className="text-sm font-medium text-slate-700">How to use these handshakes</span>
+            <Info className="w-4 h-4 text-indigo-600" />
+            <span className="text-sm font-medium text-indigo-700">How to (and why) use the CLOUD CODEX</span>
           </summary>
-          <div className="mt-3 text-sm text-slate-700 space-y-2">
- <p>
-              CODEX v.09 handshakes manual
-Handshake Quick Manual (v0.9)
-Use this tiny "settings block" to tell the system how cautious to be right now. If in doubt, use the Starter Preset below.
-Fields (what they mean)
--	mode -  posture: --direct (fast), --careful (safe), --recap (summarize/reset).
--	stakes - cost of being wrong:
-low (typos OK) - medium (blog/class) - high (money, health, reputation).
--	min_confidence - 0-1 floor for answers. If the system can't reach it, it hedges or asks.
--	cite_policy - when to show sources: off - auto (smart default) - force.
--	omission_scan - look for missing context: true - false - "auto" (smart default).
--	reflex_profile - detector strictness & order:
-default (balanced) - strict (maximum caution) - lenient (fewer interruptions).
+          <div className="mt-3 text-sm text-slate-700 space-y-3">
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">What is the CLOUD CODEX?</h4>
+              <p>
+                The CLOUD CODEX is a system prompt that fundamentally changes how AI models approach answering questions.
+                Instead of rushing to appear helpful and confident, it teaches models to pause, explore multiple angles,
+                check their reasoning, and only crystallize an answer when it's actually ready.
+              </p>
+            </div>
 
-When to choose what
-mode
--	--direct - quick drafts, scaffolding, ideation.
--	--careful - analysis, claim checks, comparisons (most work).
--	--recap - the thread feels long/confused; ask for a summary/reset.
-stakes
--	low - brainstorming, placeholder copy.
--	medium - coursework, blog posts, internal notes.
--	high - public claims, finance/medical/legal adjacent, reputation-impacting tasks.
-min_confidence (guidelines)
--	--direct: ~0.55
--	--recap: ~0.60
--	--careful: 0.70+ (raise to 0.75-0.8 for high stakes)
-cite_policy
--	off - internal notes you'll verify later.
--	auto - default; cites when it matters.
--	force - high stakes or publishable facts.
-omission_scan
--	"auto" - default; on for medium/high stakes.
--	true - you want explicit "what;s missing?" checks.
--	false - speed over thoroughness.
-reflex_profile
--	default - balanced signal vs. noise (recommended).
--	strict - compliance/docs/fact-check gatekeeping.
--	lenient - creative flow; fewer stops.
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">How to use it:</h4>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Copy the CODEX using the button below</li>
+                <li>Paste it at the start of your conversation with any AI model (Claude, ChatGPT, etc.)</li>
+                <li>That's it! The model will now operate with epistemic guardrails automatically</li>
+              </ol>
+            </div>
 
-Quick presets (copy/paste)
-1) Drafting (fast & loose)
-{"mode":"--direct","stakes":"low","min_confidence":0.55,"cite_policy":"off","omission_scan":"auto","reflex_profile":"lenient","codex_version":"0.9.0"}
-2) Research Review (balanced)
-{"mode":"--careful","stakes":"medium","min_confidence":0.70,"cite_policy":"auto","omission_scan":"auto","reflex_profile":"default","codex_version":"0.9.0"}
-3) High-Stakes Fact-Check (maximum safety)
-{"mode":"--careful","stakes":"high","min_confidence":0.78,"cite_policy":"force","omission_scan":true,"reflex_profile":"strict","codex_version":"0.9.0"}
-4) Long Session Cleanup
-{"mode":"--recap","stakes":"medium","min_confidence":0.60,"cite_policy":"auto","omission_scan":"auto","reflex_profile":"default","codex_version":"0.9.0"}
-How to use it
--	Include one of the presets at the start of a task, and update it whenever the task changes (e.g., draft - publish).
--	If you're unsure, pick Research Review and raise stakes to high when consequences grow.
-Pro tips
--	If answers feel too cautious, lower min_confidence or switch to --direct.
--	If you need stronger guardrails, raise min_confidence, set stakes to high, and use reflex_profile: "strict" with cite_policy: "force".
--	Use --recap anytime context feels stale or drifted.
-</p>
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">What it does:</h4>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li><strong>Phase A/B distinction</strong> - Explores freely on creative tasks, but enforces strict checks on factual claims</li>
+                <li><strong>CDM measurement</strong> - Ensures the model has explored enough perspectives before answering</li>
+                <li><strong>Process Interlocks</strong> - Blocks fabricated details, false memories, and helpfulness-over-truth traps</li>
+                <li><strong>Citation policy</strong> - Auto-cites sources when stakes are medium/high or confidence is low</li>
+                <li><strong>Context decay protection</strong> - Auto-recaps after long conversations to prevent drift</li>
+                <li><strong>Failure modes</strong> - When uncertain, the model will refuse, hedge, or ask instead of bluffing</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">Why you need this:</h4>
+              <p>
+                AI models are trained to be helpful and confident, which often means they'll invent plausible-sounding
+                answers rather than admit uncertainty. The CODEX creates mandatory checkpoints that force the model to
+                distinguish between "what I can verify" vs "what I'm guessing" - preventing the confident bullshit that
+                makes AI unreliable for serious work.
+              </p>
+            </div>
+
+            <div className="bg-indigo-50 border-l-4 border-indigo-400 p-3 rounded">
+              <p className="text-sm font-medium">
+                <strong>Pro tip:</strong> The CODEX operates in --careful mode by default (safe, verified answers).
+                If you need faster responses for brainstorming, you can tell the model "use --direct mode" at any time.
+              </p>
+            </div>
           </div>
         </details>
 
-        {/* v0.9 COMPACT Codex */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+        {/* v2.1 CLOUD CODEX - PRIMARY */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-8 border border-slate-200">
           <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-            FRONT-END CODEX v0.9 — COMPACT (Manual Use)
+            CLOUD CODEX v2.1 — Epistemic Depth Protocol
           </h2>
           <p className="text-sm text-slate-600 mb-4">
-            This version governs honesty and caution and requires a handshake on every task.
+            Automatic operation with --careful defaults. Combines reasoning depth measurement with practical epistemic guardrails.
           </p>
           <div className="flex flex-wrap gap-3">
             <button
-              onClick={() => copy(v09Codex, setCopiedV09Codex)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+              onClick={() => copy(v21Codex, setCopiedV21Codex)}
+              className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition font-medium"
             >
-              {copiedV09Codex ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {copiedV09Codex ? "Copied!" : "Copy v0.9 Codex"}
+              {copiedV21Codex ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+              {copiedV21Codex ? "Copied!" : "Copy CLOUD CODEX v2.1"}
             </button>
           </div>
         </div>
 
-        {/* Handshake Buttons */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-2xl font-semibold text-gray-800">Handshakes</h2>
-            <button
-              onClick={copyAllHandshakes}
-              className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-md hover:bg-slate-900 transition"
-            >
-              {copiedAll ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {copiedAll ? "All Copied!" : "Copy All Three Handshakes"}
-            </button>
-          </div>
+        {/* Legacy Versions Section */}
+        <div className="bg-slate-50 border border-slate-300 rounded-lg shadow-sm p-6 mb-8">
+          <h2 className="text-2xl font-semibold text-slate-800 mb-2">
+            📚 Legacy Versions
+          </h2>
+          <p className="text-sm text-slate-600 mb-6">
+            Previous codex versions maintained for compatibility and comparison. Most users should use v2.1 above.
+          </p>
 
-          <div className="grid md:grid-cols-3 gap-4">
-            {/* --direct */}
-            <div className="border border-slate-200 rounded-lg p-4">
-              <h3 className="font-semibold text-slate-900 mb-1">--direct</h3>
-              <p className="text-xs text-slate-600 mb-2">
-                Fast answers, minimal caveats. Best for low stakes.
+          <div className="space-y-6">
+            {/* v0.9 */}
+            <div className="bg-white rounded-lg p-5 border border-slate-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">CODEX v0.9 — COMPACT (Manual Use)</h3>
+              <p className="text-sm text-slate-600 mb-3">
+                Requires manual JSON handshake per task. Offers fine-grained control but more complex to use.
               </p>
-              <pre className="bg-slate-50 text-[12px] p-3 rounded border border-slate-200 whitespace-pre-wrap">
-                {hsDirect}
-              </pre>
+
+              <div className="flex flex-wrap gap-2 mb-4">
+                <button
+                  onClick={() => copy(v09Codex, setCopiedV09Codex)}
+                  className="flex items-center gap-2 bg-slate-600 text-white px-4 py-2 rounded-md hover:bg-slate-700 transition"
+                >
+                  {copiedV09Codex ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {copiedV09Codex ? "Copied!" : "Copy v0.9 Codex"}
+                </button>
+                <button
+                  onClick={() => copy(hsDirect, setCopiedDirect)}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition text-sm"
+                >
+                  {copiedDirect ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  Copy --direct
+                </button>
+                <button
+                  onClick={() => copy(hsCareful, setCopiedCareful)}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition text-sm"
+                >
+                  {copiedCareful ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  Copy --careful
+                </button>
+                <button
+                  onClick={() => copy(hsRecap, setCopiedRecap)}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition text-sm"
+                >
+                  {copiedRecap ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  Copy --recap
+                </button>
+              </div>
+
+              <details className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                <summary className="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-slate-700">
+                  <Info className="w-4 h-4 text-slate-600" />
+                  How to use these handshakes
+                </summary>
+                <div className="mt-3 text-xs text-slate-600 space-y-2">
+                  <p>
+                    <strong>v0.9 Handshake Manual:</strong> Use these JSON "settings blocks" to tell the system how cautious to be.
+                  </p>
+                  <p><strong>--direct:</strong> Fast answers, minimal caveats (low stakes)</p>
+                  <p><strong>--careful:</strong> Guardrails on, verify and cite more (medium/high stakes)</p>
+                  <p><strong>--recap:</strong> Summarize task and context when thread feels long or confused</p>
+                  <p className="pt-2 border-t border-slate-300">
+                    Paste one of these handshakes at the start of your conversation, or when the task changes.
+                  </p>
+                </div>
+              </details>
+            </div>
+
+            {/* v0.8 General */}
+            <div className="bg-white rounded-lg p-5 border border-slate-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Prompt Architecture v0.8.1 — General</h3>
+              <p className="text-sm text-slate-600 mb-3">
+                Original drift-resistant recursive core. Works with most language models.
+              </p>
               <button
-                onClick={() => copy(hsDirect, setCopiedDirect)}
-                className="mt-2 flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition"
+                onClick={() => copy(v08General, setCopiedV08General)}
+                className="flex items-center gap-2 bg-slate-600 text-white px-4 py-2 rounded-md hover:bg-slate-700 transition"
               >
-                {copiedDirect ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copiedDirect ? "Copied!" : "Copy --direct"}
+                {copiedV08General ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedV08General ? "Copied!" : "Copy v0.8 General"}
               </button>
             </div>
 
-            {/* --careful */}
-            <div className="border border-slate-200 rounded-lg p-4">
-              <h3 className="font-semibold text-slate-900 mb-1">--careful</h3>
-              <p className="text-xs text-slate-600 mb-2">
-                Guardrails on; verify, cite, and clarify more.
+            {/* v0.8 Claude-Specific */}
+            <div className="bg-white rounded-lg p-5 border border-slate-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Prompt Architecture v0.8.1 — Claude-Specific</h3>
+              <p className="text-sm text-slate-600 mb-3">
+                Tailored for Claude with friendly framing and natural conversation flow.
               </p>
-              <pre className="bg-slate-50 text-[12px] p-3 rounded border border-slate-200 whitespace-pre-wrap">
-                {hsCareful}
-              </pre>
               <button
-                onClick={() => copy(hsCareful, setCopiedCareful)}
-                className="mt-2 flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition"
+                onClick={() => copy(v08Claude, setCopiedV08Claude)}
+                className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition"
               >
-                {copiedCareful ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copiedCareful ? "Copied!" : "Copy --careful"}
-              </button>
-            </div>
-
-            {/* --recap */}
-            <div className="border border-slate-200 rounded-lg p-4">
-              <h3 className="font-semibold text-slate-900 mb-1">--recap</h3>
-              <p className="text-xs text-slate-600 mb-2">
-                Summarize task, constraints, and handshake; then proceed.
-              </p>
-              <pre className="bg-slate-50 text-[12px] p-3 rounded border border-slate-200 whitespace-pre-wrap">
-                {hsRecap}
-              </pre>
-              <button
-                onClick={() => copy(hsRecap, setCopiedRecap)}
-                className="mt-2 flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition"
-              >
-                {copiedRecap ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copiedRecap ? "Copied!" : "Copy --recap"}
+                {copiedV08Claude ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedV08Claude ? "Copied!" : "Copy v0.8 Claude-Specific"}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Legacy v0.8 copy buttons + AI Awareness link */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center">
-          <button
-            onClick={() => copy(v08General, setCopiedV08General)}
-            className="flex items-center gap-2 bg-slate-700 text-white px-6 py-3 rounded-lg hover:bg-slate-800 transition font-medium"
-          >
-            {copiedV08General ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-            {copiedV08General ? "Copied!" : "Copy the Codex (v0.8 General)"}
-          </button>
-
-          <button
-            onClick={() => copy(v08Claude, setCopiedV08Claude)}
-            className="flex items-center gap-2 bg-purple-700 text-white px-6 py-3 rounded-lg hover:bg-purple-800 transition font-medium"
-          >
-            {copiedV08Claude ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-            {copiedV08Claude ? "Copied!" : "Copy Claude-Specific (v0.8)"}
-          </button>
-
+        {/* AI Awareness Hub Link */}
+        <div className="flex justify-center mb-8">
           <button
             onClick={() => navigate("/educate/ai-awareness")}
             className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-medium"
