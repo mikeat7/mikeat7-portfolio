@@ -23,6 +23,12 @@ const LibraryIndexPage: React.FC = () => {
     return defaultValue;
   };
 
+  // Check if a book has a manual bookmark
+  const hasManualBookmark = (bookSlug: string): boolean => {
+    const bookmark = loadPreference<number | null>(`manual-bookmark-${bookSlug}`, null);
+    return bookmark !== null;
+  };
+
   // Mobile detection
   const [isMobile, setIsMobile] = useState(() => {
     return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
@@ -190,15 +196,36 @@ const LibraryIndexPage: React.FC = () => {
                   "8px 8px 16px rgba(163,177,198,0.6), -8px -8px 16px rgba(255,255,255,0.9)",
               }}
             >
-              {/* Featured Badge */}
-              {book.featured && (
-                <div className="flex items-center gap-1 mb-3">
-                  <Sparkles className="w-4 h-4" style={{ color: "#ffd700" }} />
-                  <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                    Featured
-                  </span>
-                </div>
-              )}
+              {/* Badges Row */}
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                {/* Featured Badge */}
+                {book.featured && (
+                  <div className="flex items-center gap-1">
+                    <Sparkles className="w-4 h-4" style={{ color: "#ffd700" }} />
+                    <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                      Featured
+                    </span>
+                  </div>
+                )}
+
+                {/* Manual Bookmark Badge */}
+                {hasManualBookmark(book.slug) && (
+                  <div
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg"
+                    style={{
+                      background: "#e9eef5",
+                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
+                    }}
+                  >
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" style={{ color: "#ffd700" }}>
+                      <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                    </svg>
+                    <span className="text-xs font-semibold text-slate-700">
+                      Bookmarked
+                    </span>
+                  </div>
+                )}
+              </div>
 
               {/* Book Number */}
               <div className="text-xs font-bold text-slate-400 mb-2">

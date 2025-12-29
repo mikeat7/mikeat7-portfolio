@@ -62,6 +62,7 @@ const LibraryBookPage: React.FC = () => {
   const [cleanedContent, setCleanedContent] = useState<string>("");
   const [scrollPosition, setScrollPosition] = useState(0);
   const [showBookmarkNotice, setShowBookmarkNotice] = useState(false);
+  const [bookmarkNoticeMessage, setBookmarkNoticeMessage] = useState("Continuing from where you left off");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [narratorCharIndex, setNarratorCharIndex] = useState(0);
   const [showControls, setShowControls] = useState(true);
@@ -69,6 +70,11 @@ const LibraryBookPage: React.FC = () => {
   const narratorCancelledRef = useRef(false);
   const hideControlsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const currentReadingPosRef = useRef<HTMLSpanElement | null>(null);
+
+  // Manual bookmark state (Mobile only)
+  const [manualBookmark, setManualBookmark] = useState<number | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string>("");
+  const [showJumpButton, setShowJumpButton] = useState(false);
 
   // Mobile TTS initialization - Check IMMEDIATELY to prevent race condition
   const [isMobile, setIsMobile] = useState(() => {
@@ -199,16 +205,92 @@ const LibraryBookPage: React.FC = () => {
     };
   }, [book, isMobile]);
 
+  // Load manual bookmark from localStorage (Mobile only) - Element-based
+  useEffect(() => {
+    if (book && isMobile && !isLoading && content) {
+      const key = `manual-bookmark-${book.slug}`;
+      const savedData = localStorage.getItem(key);
+
+      if (savedData) {
+        try {
+          const bookmarkData = JSON.parse(savedData);
+          console.log(`📌 Mobile bookmark loaded:`, bookmarkData);
+          setManualBookmark(1); // Non-zero to indicate bookmark exists
+          setDebugInfo(`Found bookmark: "${bookmarkData.text}..."`);
+
+          // Show jump button immediately since we know auto-scroll won't work
+          setShowJumpButton(true);
+
+          // Try auto-jump after delay
+          setTimeout(() => {
+            // Find element by text content and index
+            const allElements = document.querySelectorAll('article p, article h1, article h2, article h3');
+            let foundElement: Element | null = null;
+
+            // Try by index first (most reliable if content hasn't changed)
+            if (bookmarkData.index !== undefined && allElements[bookmarkData.index]) {
+              const el = allElements[bookmarkData.index];
+              if (el.textContent?.trim().startsWith(bookmarkData.text.substring(0, 30))) {
+                foundElement = el;
+                console.log(`✅ Found by index: ${bookmarkData.index}`);
+              }
+            }
+
+            // Fallback: search by text content
+            if (!foundElement) {
+              Array.from(allElements).forEach((el) => {
+                const elText = el.textContent?.trim() || '';
+                if (elText.startsWith(bookmarkData.text.substring(0, 30))) {
+                  foundElement = el;
+                  console.log(`✅ Found by text match`);
+                }
+              });
+            }
+
+            if (foundElement) {
+              console.log(`🔄 Auto-jumping to bookmarked element...`);
+              setDebugInfo(`⚡ Jumping to: "${bookmarkData.text.substring(0, 30)}..."`);
+
+              foundElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+              });
+
+              setTimeout(() => {
+                setDebugInfo(`✅ Jumped successfully!`);
+                setBookmarkNoticeMessage(`📌 Jumped to your bookmark!`);
+                setShowBookmarkNotice(true);
+
+                // Clear bookmark after use (one-shot)
+                setTimeout(() => {
+                  localStorage.removeItem(key);
+                  setManualBookmark(null);
+                  setShowJumpButton(false);
+                  setShowBookmarkNotice(false);
+                }, 3000);
+              }, 1000);
+            } else {
+              setDebugInfo(`⚠️ Can't find text - tap JUMP ⬇️`);
+              console.warn(`Could not find element with text: ${bookmarkData.text}`);
+            }
+          }, 2000);
+        } catch (e) {
+          console.error('Error loading bookmark:', e);
+        }
+      }
+    }
+  }, [book, isMobile, isLoading, content]);
+
   // Restore scroll position and narrator position for this book
   useEffect(() => {
-    if (!isLoading && book && content) {
+    if (!isLoading && book && content && !isMobile) { // DESKTOP ONLY - mobile uses element-based bookmarks
       const savedScrollPos = loadPreference<number>(`bookmark-${book.slug}`, 0);
 
       console.log(`📖 Loading "${book.title}" (slug: ${book.slug})`);
       console.log(`   Saved scroll position: ${savedScrollPos}`);
 
-      // Only restore narrator position on desktop (not mobile)
-      if (!isMobile) {
+      // Restore narrator position on desktop
+      if (true) {
         const savedNarratorPos = loadPreference<number>(`narrator-${book.slug}`, 0);
         console.log(`   Saved narrator position: ${savedNarratorPos}`);
         console.log(`   All localStorage keys:`, Object.keys(localStorage).filter(k => k.startsWith('bookmark-') || k.startsWith('narrator-')));
@@ -220,17 +302,15 @@ const LibraryBookPage: React.FC = () => {
         }
       }
 
-      // Restore scroll position (works on both mobile and desktop)
-      if (savedScrollPos > 0) {
-        // Wait for content to render, then scroll
-        setTimeout(() => {
-          // Always use window for restoration (same as scroll tracking fallback)
-          console.log(`🔄 Attempting to restore scroll to position ${savedScrollPos}`);
-          window.scrollTo({ top: savedScrollPos, behavior: 'auto' });
-          setShowBookmarkNotice(true);
-          console.log(`✅ Restored scroll to position ${savedScrollPos}`);
+      // Desktop: use auto-scroll position
+      const positionToRestore = savedScrollPos;
 
-          // Hide notice after 3 seconds
+      // Restore scroll position (Desktop only)
+      if (positionToRestore > 50) {
+        setTimeout(() => {
+          window.scrollTo({ top: positionToRestore, behavior: 'smooth' });
+          setBookmarkNoticeMessage("Continuing from where you left off");
+          setShowBookmarkNotice(true);
           setTimeout(() => setShowBookmarkNotice(false), 3000);
         }, 500);
       }
@@ -378,6 +458,134 @@ const LibraryBookPage: React.FC = () => {
       });
     }
   }, [narratorCharIndex, isNarratorOn, isPaused, isMobile]);
+
+  // NEW APPROACH: Element-based bookmark (doesn't rely on scroll position)
+  const handleMobileBookmark = () => {
+    console.log(`📌 Saving element-based bookmark...`);
+
+    // Find the paragraph that's currently visible in the center of viewport
+    const viewportCenter = window.innerHeight / 2;
+    const paragraphs = document.querySelectorAll('article p, article h1, article h2, article h3');
+
+    let closestEl: Element | undefined;
+    let closestDistance = Infinity;
+
+    paragraphs.forEach((el, index) => {
+      const rect = el.getBoundingClientRect();
+      const elementCenter = rect.top + rect.height / 2;
+      const distance = Math.abs(elementCenter - viewportCenter);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestEl = el;
+        // Add a unique ID if it doesn't have one
+        if (!el.id) {
+          el.id = `bookmark-target-${index}`;
+        }
+      }
+    });
+
+    if (closestEl) {
+      const el = closestEl as HTMLElement;
+      const key = `manual-bookmark-${book.slug}`;
+
+      // Save text and element type for reliable finding
+      const bookmarkData = {
+        text: el.textContent?.trim().substring(0, 100) || '',
+        tagName: el.tagName.toLowerCase(),
+        index: Array.from(paragraphs).indexOf(el)
+      };
+
+      localStorage.setItem(key, JSON.stringify(bookmarkData));
+      setManualBookmark(1);
+
+      setDebugInfo(`✓ Saved: "${bookmarkData.text.substring(0, 40)}..."`);
+      setBookmarkNoticeMessage(`📌 Bookmark saved!`);
+      console.log(`✅ Saved bookmark:`, bookmarkData);
+    } else {
+      setDebugInfo(`❌ No text found - scroll to text first`);
+      setBookmarkNoticeMessage(`⚠️ Scroll to some text first!`);
+    }
+
+    setShowBookmarkNotice(true);
+    setTimeout(() => setShowBookmarkNotice(false), 2000);
+  };
+
+  // Clear mobile bookmark
+  const handleClearBookmark = () => {
+    localStorage.removeItem(`manual-bookmark-${book.slug}`);
+    setManualBookmark(null);
+    setShowJumpButton(false);
+
+    setBookmarkNoticeMessage("🗑️ Bookmark cleared");
+    setShowBookmarkNotice(true);
+    setTimeout(() => setShowBookmarkNotice(false), 2000);
+
+    console.log(`🗑️ Mobile bookmark cleared for: ${book.slug}`);
+  };
+
+  // Manual jump to bookmark - search by text content
+  const handleJumpToBookmark = () => {
+    const key = `manual-bookmark-${book.slug}`;
+    const savedData = localStorage.getItem(key);
+
+    if (!savedData) {
+      setDebugInfo(`❌ No bookmark found`);
+      return;
+    }
+
+    try {
+      const bookmarkData = JSON.parse(savedData);
+
+      // Find element by text content and index
+      const allElements = document.querySelectorAll('article p, article h1, article h2, article h3');
+      let foundElement: Element | null = null;
+
+      // Try by index first
+      if (bookmarkData.index !== undefined && allElements[bookmarkData.index]) {
+        const el = allElements[bookmarkData.index];
+        if (el.textContent?.trim().startsWith(bookmarkData.text.substring(0, 30))) {
+          foundElement = el;
+        }
+      }
+
+      // Fallback: search by text
+      if (!foundElement) {
+        Array.from(allElements).forEach((el) => {
+          const elText = el.textContent?.trim() || '';
+          if (elText.startsWith(bookmarkData.text.substring(0, 30))) {
+            foundElement = el;
+          }
+        });
+      }
+
+      if (foundElement) {
+        setDebugInfo(`⚡ Manual jump: "${bookmarkData.text.substring(0, 30)}..."`);
+        console.log(`⚡ Manual jump triggered`);
+
+        foundElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+
+        setTimeout(() => {
+          setDebugInfo(`✅ Jumped successfully!`);
+
+          // Clear bookmark after successful jump
+          setTimeout(() => {
+            localStorage.removeItem(key);
+            setManualBookmark(null);
+            setShowJumpButton(false);
+          }, 2000);
+        }, 1000);
+      } else {
+        setDebugInfo(`❌ Can't find: "${bookmarkData.text.substring(0, 20)}..."`);
+      }
+    } catch (e) {
+      console.error('Error jumping:', e);
+      setDebugInfo(`❌ Error: ${e}`);
+    }
+  };
 
   // Theme styles
   const themeStyles = {
@@ -897,29 +1105,80 @@ const LibraryBookPage: React.FC = () => {
           }}
         >
           <div className="max-w-4xl mx-auto px-4 py-2">
-            <div className="flex items-center gap-2">
-              <Link
-                to="/"
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                style={{
-                  background: currentTheme.bg,
-                  boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
-                }}
-              >
-                <Home className="w-3 h-3" />
-              </Link>
-              <Link
-                to="/library"
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                style={{
-                  background: currentTheme.bg,
-                  boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
-                }}
-              >
-                <ArrowLeft className="w-3 h-3" />
-                <span>Library</span>
-              </Link>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: currentTheme.bg,
+                    boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
+                  }}
+                >
+                  <Home className="w-3 h-3" />
+                </Link>
+                <Link
+                  to="/library"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: currentTheme.bg,
+                    boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
+                  }}
+                >
+                  <ArrowLeft className="w-3 h-3" />
+                  <span>Library</span>
+                </Link>
+              </div>
+
+              {/* Mobile Bookmark Button */}
+              {manualBookmark === null ? (
+                <button
+                  onClick={handleMobileBookmark}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95"
+                  style={{
+                    background: currentTheme.bg,
+                    boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
+                  }}
+                >
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" style={{ color: "#ffd700" }}>
+                    <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                  </svg>
+                  <span>Add</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleClearBookmark}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95"
+                  style={{
+                    background: currentTheme.bg,
+                    boxShadow: `inset 2px 2px 4px ${currentTheme.shadow}, inset -2px -2px 4px rgba(255,255,255,0.5)`,
+                  }}
+                >
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" style={{ color: "#ffd700" }}>
+                    <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                  </svg>
+                  <span>Clear</span>
+                </button>
+              )}
             </div>
+
+            {/* Manual Jump Button */}
+            {showJumpButton && manualBookmark !== null && (
+              <button
+                onClick={handleJumpToBookmark}
+                className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all active:scale-95"
+                style={{
+                  background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
+                  boxShadow: `3px 3px 8px ${currentTheme.shadow}, -2px -2px 6px rgba(255,255,255,0.5)`,
+                  color: '#1e293b',
+                }}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                </svg>
+                <span>JUMP TO BOOKMARK</span>
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -1364,7 +1623,7 @@ const LibraryBookPage: React.FC = () => {
         >
           <p className="text-sm font-medium flex items-center gap-2">
             <Check className="w-4 h-4" style={{ color: "#22c55e" }} />
-            <span>Continuing from where you left off</span>
+            <span>{bookmarkNoticeMessage}</span>
           </p>
         </div>
       )}
