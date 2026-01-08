@@ -394,13 +394,13 @@ ${hsRecap}
 
         {/* Page Title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 text-gray-900">🎓 CLOUD CODEX v2.1: Epistemic Depth Protocol</h1>
+          <h1 className="text-4xl font-bold mb-4 text-gray-900">🎓 CLOUD CODEX v2.2: Epistemic Depth Protocol</h1>
           <p className="text-lg text-gray-600">
             A research-validated framework that guides language models toward epistemic humility, measures reasoning depth, and prevents hallucination through automatic operation with --careful defaults.
           </p>
         </div>
 
-        {/* How to (and why) use the CODEX - v2.1 specific */}
+        {/* How to (and why) use the CODEX - v2.2 specific */}
         <details className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-indigo-200">
           <summary className="flex items-center gap-2 cursor-pointer select-none">
             <Info className="w-4 h-4 text-indigo-600" />
@@ -412,7 +412,8 @@ ${hsRecap}
               <p>
                 The CLOUD CODEX is a system prompt that fundamentally changes how AI models approach answering questions.
                 Instead of rushing to appear helpful and confident, it teaches models to pause, explore multiple angles,
-                check their reasoning, and only crystallize an answer when it's actually ready.
+                check their reasoning, and only crystallize an answer when it's actually ready. It also verifies that 
+                information claimed from tools (like web search or file reading) actually came from those tools.
               </p>
             </div>
 
@@ -429,8 +430,9 @@ ${hsRecap}
               <h4 className="font-semibold text-gray-900 mb-2">What it does:</h4>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li><strong>Phase A/B distinction</strong> - Explores freely on creative tasks, but enforces strict checks on factual claims</li>
-                <li><strong>CDM measurement</strong> - Ensures the model has explored enough perspectives before answering</li>
-                <li><strong>Process Interlocks</strong> - Blocks fabricated details, false memories, and helpfulness-over-truth traps</li>
+                <li><strong>CDM measurement</strong> - Ensures the model has explored enough perspectives before answering (qualitative or quantified scoring)</li>
+                <li><strong>Tool use verification</strong> - Ensures specifics claimed from search results or file contents actually appear in those results</li>
+                <li><strong>Process Interlocks</strong> - Blocks fabricated details, false memories, and helpfulness-over-truth traps, and tool-assisted confabulation</li>
                 <li><strong>Citation policy</strong> - Auto-cites sources when stakes are medium/high or confidence is low</li>
                 <li><strong>Context decay protection</strong> - Auto-recaps after long conversations to prevent drift</li>
                 <li><strong>Failure modes</strong> - When uncertain, the model will refuse, hedge, or ask instead of bluffing</li>
@@ -441,8 +443,10 @@ ${hsRecap}
               <h4 className="font-semibold text-gray-900 mb-2">Why you need this:</h4>
               <p>
                 AI models are trained to be helpful and confident, which often means they'll invent plausible-sounding
-                answers rather than admit uncertainty. The CODEX creates mandatory checkpoints that force the model to
-                distinguish between "what I can verify" vs "what I'm guessing" - preventing the confident bullshit that
+                answers rather than admit uncertainty. Models with tool access can even fabricate specifics that appear 
+                to come from search results or documents but were never actually retrieved. The CODEX creates mandatory checkpoints that force the model to
+                distinguish between "what I can verify" vs "what I'm guessing" and 
+                "what the tool returned" vs "what I'm inventing" - preventing the confident bullshit that
                 makes AI unreliable for serious work.
               </p>
             </div>
@@ -451,26 +455,27 @@ ${hsRecap}
               <p className="text-sm font-medium">
                 <strong>Pro tip:</strong> The CODEX operates in --careful mode by default (safe, verified answers).
                 If you need faster responses for brainstorming, you can tell the model "use --direct mode" at any time.
+                You can also request "quantified CDM scoring" if you want detailed 0-100 depth measurements.
               </p>
             </div>
           </div>
         </details>
 
-        {/* v2.1 CLOUD CODEX - PRIMARY */}
+        {/* v2.2 CLOUD CODEX - PRIMARY */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8 border border-slate-200">
           <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-            CLOUD CODEX v2.1 — Epistemic Depth Protocol
+            CLOUD CODEX v2.2 — Epistemic Depth Protocol
           </h2>
           <p className="text-sm text-slate-600 mb-4">
-            Automatic operation with --careful defaults. Combines reasoning depth measurement with practical epistemic guardrails.
+            Automatic operation with --careful defaults. Combines reasoning depth measurement with practical epistemic guardrails and tool use verification.
           </p>
           <div className="flex flex-wrap gap-3">
             <button
-              onClick={() => copy(v21Codex, setCopiedV21Codex)}
+              onClick={() => copy(v22Codex, setCopiedV22Codex)}
               className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition font-medium"
             >
-              {copiedV21Codex ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-              {copiedV21Codex ? "Copied!" : "Copy CLOUD CODEX v2.1"}
+              {copiedV22Codex ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+              {copiedV22Codex ? "Copied!" : "Copy CLOUD CODEX v2.2"}
             </button>
           </div>
         </div>
