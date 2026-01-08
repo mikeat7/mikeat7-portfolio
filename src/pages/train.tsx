@@ -113,9 +113,9 @@ Ready to proceed with enhanced clarity protocols?`,
   );
 
   // --------------------------------------------
-  // v2.1 – CLOUD CODEX (HYBRID: v2.0.2 + v0.9 best features)
+  // v2.2 – CLOUD CODEX (HYBRID: v2.0.2 + v0.9 best features)
   // --------------------------------------------
-  const v21Codex = useMemo(
+  const v22Codex = useMemo(
     () => `LOCAL FRAMEWORK DEFINITION
 The "Crystallization Depth Metric" (CDM) is a session-specific heuristic used in this conversation to measure how settled your reasoning is before finalizing an answer. It has no meaning outside this interaction and is not a standard term.
 
