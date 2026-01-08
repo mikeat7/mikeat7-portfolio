@@ -16,7 +16,7 @@ const TrainPage: React.FC = () => {
   const [copiedV08General, setCopiedV08General] = useState(false);
   const [copiedV08Claude, setCopiedV08Claude] = useState(false);
   const [copiedV09Codex, setCopiedV09Codex] = useState(false);
-  const [copiedV21Codex, setCopiedV21Codex] = useState(false);
+  const [copiedV22Codex, setCopiedV22Codex] = useState(false);
 
   const [copiedDirect, setCopiedDirect] = useState(false);
   const [copiedCareful, setCopiedCareful] = useState(false);
