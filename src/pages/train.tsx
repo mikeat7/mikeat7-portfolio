@@ -486,7 +486,7 @@ ${hsRecap}
             📚 Legacy Versions
           </h2>
           <p className="text-sm text-slate-600 mb-6">
-            Previous codex versions maintained for compatibility and comparison. Most users should use v2.1 above.
+            Previous codex versions maintained for compatibility and comparison. Most users should use v2.2 above.
           </p>
 
           <div className="space-y-6">
