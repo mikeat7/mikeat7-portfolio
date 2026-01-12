@@ -70,8 +70,8 @@ export const cdmLibraryBooks: LibraryBook[] = [
     readTime: '20 min',
     mainMessage: 'The CRYSTAL Depth Metric (CDM) v3 represents a breakthrough in real-time reasoning depth measurement for large language models.',
     description: 'This chapter documents the complete journey — from failure to validated, production-ready system — and establishes CDM as a practical tool for monitoring and understanding model reasoning quality',
-    githubUrl: 'https://github.com/mikeat7/crystal-manual/blob/main/CDM_v3_From_OOM_Failure_to_Real-Time_Reasoning_Measurement.md',
-    downloadUrl: 'https://raw.githubusercontent.com/mikeat7/crystal-manual/main/CDM_v3_From_OOM_Failure_to_Real-Time_Reasoning_Measurement.md',
+    githubUrl: 'https://github.com/mikeat7/crystal-manual/blob/main/cdm-os/core/CDM_v3_From_OOM_Failure_to_Real-Time_Reasoning_Measurement.md',
+    downloadUrl: 'https://raw.githubusercontent.com/mikeat7/crystal-manual/main/cdm-os/core/CDM_v3_From_OOM_Failure_to_Real-Time_Reasoning_Measurement.md',
     featured: true,
   },
  
