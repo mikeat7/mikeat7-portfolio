@@ -6,7 +6,7 @@ import { LibraryBook } from "./libraryData";
 
 export const cdmLibraryBooks: LibraryBook[] = [
   // ============================================
-  // SECTION 1: FOUNDATION (4 books)
+  // SECTION 1: FOUNDATION (5 books)
   // ============================================
 
   {
@@ -61,6 +61,20 @@ export const cdmLibraryBooks: LibraryBook[] = [
     downloadUrl: 'https://raw.githubusercontent.com/mikeat7/crystal-manual/main/cdm-os/core/CDM-OS_A_Self-Measuring_Self-Improving_Reasoning_Engine_for_Local_Large_Language_Models.md',
     featured: true,
   },
+  {
+    slug: 'cdm-v3-from-oom-failure-to-real-time-reasoning-measurement',
+    title: 'CDM v3 From OOM Failure to Real-Time Reasoning Measurement',
+    subtitle: 'CDM v3 on Qwen 32B — Final Validation Report Ceiling at 65–70, Variance Achieved',
+    author: 'Professor Elias Rook',
+    category: 'CDM Foundation',
+    readTime: '20 min',
+    mainMessage: 'The CRYSTAL Depth Metric (CDM) v3 represents a breakthrough in real-time reasoning depth measurement for large language models.',
+    description: 'This chapter documents the complete journey — from failure to validated, production-ready system — and establishes CDM as a practical tool for monitoring and understanding model reasoning quality',
+    githubUrl: 'https://github.com/mikeat7/crystal-manual/blob/main/CDM_v3_From_OOM_Failure_to_Real-Time_Reasoning_Measurement.md',
+    downloadUrl: 'https://raw.githubusercontent.com/mikeat7/crystal-manual/main/CDM_v3_From_OOM_Failure_to_Real-Time_Reasoning_Measurement.md',
+    featured: true,
+  },
+ 
 
   // ============================================
   // SECTION 2: CORE SPECIFICATIONS (4 books)
