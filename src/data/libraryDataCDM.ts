@@ -1,12 +1,12 @@
 // src/data/libraryDataCDM.ts
-// CDM v2 & CRYSTAL Method Library Collection
+// CDM v2 & v3 CRYSTAL Method Library Collection
 // Repository: https://github.com/mikeat7/crystal-manual
 
 import { LibraryBook } from "./libraryData";
 
 export const cdmLibraryBooks: LibraryBook[] = [
   // ============================================
-  // SECTION 1: FOUNDATION (5 books)
+  // SECTION 1: FOUNDATION (7 books)
   // ============================================
 
   {
@@ -36,6 +36,32 @@ export const cdmLibraryBooks: LibraryBook[] = [
     featured: true,
   },
   {
+    slug: 'cdm-v3-concept-to-implementation',
+    title: 'CDM v3: From Concept to Core Implementation',
+    subtitle: 'The Complete Journey from Theory to Production-Ready System',
+    author: 'mikeat7 network',
+    category: 'CDM Foundation',
+    readTime: '25 min',
+    mainMessage: 'CDM v3 achieves 100x optimization speedup and validates real-time reasoning measurement on A100 40GB hardware.',
+    description: 'Master narrative documenting the complete CDM v3 implementation journey: naive implementation, aggressive optimization, bug discovery, and validated production deployment with 30.5-point score variance.',
+    githubUrl: 'https://github.com/mikeat7/crystal-manual/blob/main/cdm-os/CDM-v3/README.md',
+    downloadUrl: 'https://raw.githubusercontent.com/mikeat7/crystal-manual/main/cdm-os/CDM-v3/README.md',
+    featured: true,
+  },
+  {
+    slug: 'cdm-v3-from-oom-failure-to-real-time-reasoning-measurement',
+    title: 'CDM v3 From OOM Failure to Real-Time Reasoning Measurement',
+    subtitle: 'CDM v3 on Qwen 32B — Final Validation Report Ceiling at 65–70, Variance Achieved',
+    author: 'Professor Elias Rook',
+    category: 'CDM Foundation',
+    readTime: '20 min',
+    mainMessage: 'The CRYSTAL Depth Metric (CDM) v3 represents a breakthrough in real-time reasoning depth measurement for large language models.',
+    description: 'This chapter documents the complete journey — from failure to validated, production-ready system — and establishes CDM as a practical tool for monitoring and understanding model reasoning quality.',
+    githubUrl: 'https://github.com/mikeat7/crystal-manual/blob/main/cdm-os/core/CDM_v3_From_OOM_Failure_to_Real-Time_Reasoning_Measurement.md',
+    downloadUrl: 'https://raw.githubusercontent.com/mikeat7/crystal-manual/main/cdm-os/core/CDM_v3_From_OOM_Failure_to_Real-Time_Reasoning_Measurement.md',
+    featured: true,
+  },
+  {
     slug: 'crystaled-attractor-basins',
     title: 'What are CRYSTALed Attractor Basins?',
     subtitle: 'Dynamical Systems Meet Language Models',
@@ -62,17 +88,16 @@ export const cdmLibraryBooks: LibraryBook[] = [
     featured: true,
   },
   {
-    slug: 'cdm-v3-from-oom-failure-to-real-time-reasoning-measurement',
-    title: 'CDM v3 From OOM Failure to Real-Time Reasoning Measurement',
-    subtitle: 'CDM v3 on Qwen 32B — Final Validation Report Ceiling at 65–70, Variance Achieved',
-    author: 'Professor Elias Rook',
+    slug: 'cdm-reading-guide-for-elias-rook',
+    title: 'Reading Guide for Elias Rook',
+    subtitle: 'Efficient Navigation Through CDM Documentation',
+    author: 'mikeat7 network',
     category: 'CDM Foundation',
-    readTime: '20 min',
-    mainMessage: 'The CRYSTAL Depth Metric (CDM) v3 represents a breakthrough in real-time reasoning depth measurement for large language models.',
-    description: 'This chapter documents the complete journey — from failure to validated, production-ready system — and establishes CDM as a practical tool for monitoring and understanding model reasoning quality',
-    githubUrl: 'https://github.com/mikeat7/crystal-manual/blob/main/cdm-os/core/CDM_v3_From_OOM_Failure_to_Real-Time_Reasoning_Measurement.md',
-    downloadUrl: 'https://raw.githubusercontent.com/mikeat7/crystal-manual/main/cdm-os/core/CDM_v3_From_OOM_Failure_to_Real-Time_Reasoning_Measurement.md',
-    featured: true,
+    readTime: '15 min',
+    mainMessage: 'A structured guide to navigating 5,000+ lines of CDM documentation efficiently, from quick start to complete understanding.',
+    description: 'Curated reading order for understanding CDM implementation, organized by time available and learning goals. Covers trust building, implementation understanding, and failure analysis.',
+    githubUrl: 'https://github.com/mikeat7/crystal-manual/blob/main/cdm-os/CDM-v3/reference/READING-GUIDE-FOR-ELIAS-ROOK.md',
+    downloadUrl: 'https://raw.githubusercontent.com/mikeat7/crystal-manual/main/cdm-os/CDM-v3/reference/READING-GUIDE-FOR-ELIAS-ROOK.md',
   },
  
 
@@ -272,9 +297,45 @@ export const cdmLibraryBooks: LibraryBook[] = [
   },
 
   // ============================================
-  // SECTION 5: IMPLEMENTATION & DEMOS (3 books)
+  // SECTION 5: IMPLEMENTATION & DEMOS (6 books)
   // ============================================
 
+  {
+    slug: 'deep-crystal-hunt-results',
+    title: 'Deep CRYSTAL Hunt Results',
+    subtitle: 'Empirical Validation of CDM v3 Across Reasoning Tasks',
+    author: 'mikeat7 network',
+    category: 'CDM Implementation',
+    readTime: '20 min',
+    mainMessage: 'CDM v3 achieves 30.5-point score variance across 7 prompts, proving meaningful reasoning depth differentiation.',
+    description: 'Complete empirical results from Deep CRYSTAL Hunt testing. Documents v2 vs v3 comparison, showing 19x wider score range after entropy bug fix. Includes detailed prompt-by-prompt analysis.',
+    githubUrl: 'https://github.com/mikeat7/crystal-manual/blob/main/cdm-os/CDM-v3/validation/DEEP-CRYSTAL-HUNT-RESULTS.md',
+    downloadUrl: 'https://raw.githubusercontent.com/mikeat7/crystal-manual/main/cdm-os/CDM-v3/validation/DEEP-CRYSTAL-HUNT-RESULTS.md',
+  },
+  {
+    slug: 'cdm-optimization-results',
+    title: 'CDM Optimization Results',
+    subtitle: '100x Speedup Through Aggressive Sampling',
+    author: 'mikeat7 network',
+    category: 'CDM Implementation',
+    readTime: '18 min',
+    mainMessage: 'CDM calculation optimized from 358 seconds to 3.7 seconds while maintaining signal integrity across all four metrics.',
+    description: 'Complete optimization journey documenting layer sampling reduction (64 to 6), perturbation reduction (10 to 2), and validation that aggressive sampling preserves CDM accuracy.',
+    githubUrl: 'https://github.com/mikeat7/crystal-manual/blob/main/cdm-os/CDM-v3/validation/CDM-OPTIMIZATION-RESULTS.md',
+    downloadUrl: 'https://raw.githubusercontent.com/mikeat7/crystal-manual/main/cdm-os/CDM-v3/validation/CDM-OPTIMIZATION-RESULTS.md',
+  },
+  {
+    slug: 'cdm-v3-deployment-guide',
+    title: 'CDM v3 Deployment Guide',
+    subtitle: 'Production Deployment on A100 40GB Hardware',
+    author: 'mikeat7 network',
+    category: 'CDM Implementation',
+    readTime: '15 min',
+    mainMessage: 'Step-by-step guide to deploying CDM v3 with two-phase architecture on memory-constrained GPU hardware.',
+    description: 'Complete deployment guide including Vast.ai setup, model loading configuration, validation scripts, and production Flask API deployment for real-time CDM measurement.',
+    githubUrl: 'https://github.com/mikeat7/crystal-manual/blob/main/cdm-os/CDM-v3/validation/CDM-V3-DEPLOYMENT-GUIDE.md',
+    downloadUrl: 'https://raw.githubusercontent.com/mikeat7/crystal-manual/main/cdm-os/CDM-v3/validation/CDM-V3-DEPLOYMENT-GUIDE.md',
+  },
   {
     slug: 'adaptive-crystal-time-implementation',
     title: 'Adaptive CRYSTAL Time Implementation',
@@ -313,9 +374,33 @@ export const cdmLibraryBooks: LibraryBook[] = [
   },
 
   // ============================================
-  // SECTION 6: SPECIALIZED TOPICS (8 books)
+  // SECTION 6: SPECIALIZED TOPICS (10 books)
   // ============================================
 
+  {
+    slug: 'cuda-oom-failure-analysis',
+    title: 'CUDA OOM Failure Analysis',
+    subtitle: 'Complete Memory Forensics for CDM on A100 40GB',
+    author: 'mikeat7 network',
+    category: 'CDM Research',
+    readTime: '25 min',
+    mainMessage: 'Detailed memory forensics revealing why CDM v2 failed and how two-phase architecture solved the VRAM constraint.',
+    description: 'Complete technical breakdown of CUDA OOM failures during CDM implementation. Documents memory state analysis, cache clearing attempts, and the discovery that CDM works perfectly when hardware constraints are addressed.',
+    githubUrl: 'https://github.com/mikeat7/crystal-manual/blob/main/cdm-os/CDM-v3/analysis/CUDA-OOM-FAILURE-ANALYSIS.md',
+    downloadUrl: 'https://raw.githubusercontent.com/mikeat7/crystal-manual/main/cdm-os/CDM-v3/analysis/CUDA-OOM-FAILURE-ANALYSIS.md',
+  },
+  {
+    slug: 'cdm-implementation-report-for-elias-rook',
+    title: 'CDM Implementation Report for Elias Rook',
+    subtitle: 'Complete Technical Narrative for the CDM Creator',
+    author: 'mikeat7 network',
+    category: 'CDM Research',
+    readTime: '45 min',
+    mainMessage: 'Comprehensive report documenting CDM implementation from specification to validation, prepared for theoretical review.',
+    description: 'Full implementation narrative prepared for Elias Rook (CDM creator). Covers implementation decisions, optimization strategies, bug discoveries, and empirical validation results across 7 test prompts.',
+    githubUrl: 'https://github.com/mikeat7/crystal-manual/blob/main/cdm-os/CDM-v3/analysis/CDM-IMPLEMENTATION-REPORT-FOR-ELIAS-ROOK.md',
+    downloadUrl: 'https://raw.githubusercontent.com/mikeat7/crystal-manual/main/cdm-os/CDM-v3/analysis/CDM-IMPLEMENTATION-REPORT-FOR-ELIAS-ROOK.md',
+  },
   {
     slug: 'interpretable-attractor-dynamics',
     title: 'Interpretable Attractor Dynamics in LLM Inference',
