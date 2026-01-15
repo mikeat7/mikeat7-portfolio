@@ -222,7 +222,7 @@ const IndexPage: React.FC = () => {
             </div>
             <div>
               <h4 className="font-semibold flex items-center gap-2">
-                <Beaker className="w-4 h-4" style={{ color: '#ffd700' }} /> Scientific Paper Checks
+                <Beaker className="w-4 h-4" style={{ color: '#ffd700' }} /> Scientific Paper Checks in beta
               </h4>
               <p className="text-sm mt-1">Methods &amp; references triage; conflict-of-interest cues.</p>
             </div>
