@@ -66,7 +66,7 @@ const IndexPage: React.FC = () => {
                 <h3 className="text-2xl md:text-3xl font-semibold">Guiding AI Epistemic Humility</h3>
               </div>
               <p className="mt-3 text-sm md:text-base text-slate-700">
-                Copy the Cloud CODEX v2.2 :includes default handshake or finetune to govern AIs response accuracy and overconfidence (v2.2 &amp; legacy v0.9).
+                <strong>Copy the Cloud CODEX v2.2</strong> Includes default handshake or finetune to govern AI's response accuracy and overconfidence (v2.2 &amp; legacy v0.9).
               </p>
               <div className="mt-5 inline-flex items-center text-sm font-medium text-slate-900">
                 Open tools
@@ -119,7 +119,7 @@ const IndexPage: React.FC = () => {
               </div>
               <p className="mt-2 text-sm text-slate-700">
                 Run the VX reflex engine with semantic & cluster detection. Also handles{" "}
-                <strong>Scientific Paper Checks</strong> and <strong>Link &amp; Article Audits</strong>.
+                <strong>Scientific Paper Checks in beta</strong> and <strong>Link &amp; Article Audits</strong>.
               </p>
               <div className="mt-4 inline-flex items-center text-sm font-medium text-slate-900">
                 Open analyzer
