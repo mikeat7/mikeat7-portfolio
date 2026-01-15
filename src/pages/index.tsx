@@ -35,7 +35,7 @@ const IndexPage: React.FC = () => {
             <div className="inline-flex items-center text-xs md:text-sm text-slate-600">
               <Cpu className="w-4 h-4 mr-2" style={{ color: '#ffd700' }} />
               <span className="font-semibold">AWS Agent Ready</span> ·
-              <span className="ml-1">Codex v0.9 Handshake</span>
+              <span className="ml-1">Cloud CODEX v2.2</span>
             </div>
 
             <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900">
@@ -44,7 +44,7 @@ const IndexPage: React.FC = () => {
 
             <p className="text-base md:text-lg text-slate-700">
               AI-powered epistemic truth detection. Analyze language, detect manipulation,
-              and build clarity—with agent-grade handshakes, context decay, and failure semantics.
+              and build clarity—with default and agent-grade handshakes, context decay, and failure semantics.
             </p>
           </div>
 
@@ -66,7 +66,7 @@ const IndexPage: React.FC = () => {
                 <h3 className="text-2xl md:text-3xl font-semibold">Guiding AI Epistemic Humility</h3>
               </div>
               <p className="mt-3 text-sm md:text-base text-slate-700">
-                Copy the codex &amp; handshakes to govern AIs response accuracy and overconfidence (v0.8 &amp; v0.9).
+                Copy the Cloud CODEX v2.2 &amp; default handshakes or finetune to govern AIs response accuracy and overconfidence (v2.2 &amp; legacy v0.9).
               </p>
               <div className="mt-5 inline-flex items-center text-sm font-medium text-slate-900">
                 Open tools
