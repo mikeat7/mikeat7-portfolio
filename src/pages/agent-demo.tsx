@@ -131,13 +131,47 @@ const AgentDemo: React.FC = () => {
     setErr(null);
   }
 
+  // Truncate content to ~4000 tokens (roughly 16000 chars) to control costs
+  function truncateContent(text: string, maxChars = 16000): string {
+    if (text.length <= maxChars) return text;
+    return text.slice(0, maxChars) + "\n\n[Content truncated to limit token usage]";
+  }
+
   async function onFetch() {
+    if (!url.trim()) return;
+
     setErr(null);
     setBusy(true);
     setFetchResp(null);
+
     try {
       const out = await agentFetchUrl(url);
       setFetchResp(out);
+
+      // Extract text content from response
+      const fetchedText = out?.text || JSON.stringify(out);
+      const truncatedContent = truncateContent(fetchedText);
+
+      // Create session if none exists
+      let currentSessionId = sessionId;
+      if (!currentSessionId) {
+        currentSessionId = await createNewSession(`Fetched: ${url}`, {
+          mode,
+          stakes,
+          min_confidence: handshake.min_confidence,
+          cite_policy: cite,
+          omission_scan: omit,
+          reflex_profile: profile,
+          codex_version: "0.9.0",
+        });
+      }
+
+      // Add fetched content as a system message so agent can see it
+      const contextMessage = `[FETCHED URL: ${url}]\n\n${truncatedContent}\n\n[END FETCHED CONTENT]`;
+      await addMessage("system", contextMessage, {
+        metadata: { source: "url_fetch", url, original_length: fetchedText.length }
+      }, currentSessionId);
+
     } catch (e: any) {
       setErr(e?.message || "fetch-url error");
     } finally {
@@ -268,25 +302,49 @@ const AgentDemo: React.FC = () => {
 
       {/* URL Fetch Tool */}
       <section className="border rounded-lg p-3 space-y-2">
-        <h2 className="font-medium">URL Fetch Tool</h2>
+        <h2 className="font-medium">Fetch URL into Conversation</h2>
+        <p className="text-xs text-gray-500">
+          Fetch a webpage and add its content to the conversation. The agent will be able to read and discuss it.
+        </p>
         <div className="flex gap-2">
           <input
             className="flex-1 border rounded p-2"
             placeholder="https://example.com"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                onFetch();
+              }
+            }}
           />
-          <button onClick={onFetch} disabled={busy} className="px-3 py-2 border rounded hover:bg-gray-50">
-            {busy ? "Fetching..." : "Fetch URL"}
+          <button
+            onClick={onFetch}
+            disabled={busy || !url.trim()}
+            className="px-3 py-2 border rounded hover:bg-gray-50 disabled:opacity-50"
+          >
+            {busy ? "Fetching..." : "Fetch & Add"}
           </button>
         </div>
         {fetchResp && (
-          <pre
-            ref={fetchRef}
-            className="border rounded p-3 overflow-y-auto text-xs bg-gray-50 max-h-48"
-          >
-            {JSON.stringify(fetchResp, null, 2)}
-          </pre>
+          <div className="space-y-2">
+            <div className="text-xs text-green-600 font-medium">
+              Content fetched and added to conversation. You can now ask the agent about it.
+            </div>
+            <details className="text-xs">
+              <summary className="cursor-pointer text-gray-500 hover:text-gray-700">
+                View raw response ({fetchResp?.text?.length || 0} chars)
+              </summary>
+              <pre
+                ref={fetchRef}
+                className="border rounded p-3 overflow-y-auto bg-gray-50 max-h-48 mt-2"
+              >
+                {fetchResp?.text?.slice(0, 2000) || JSON.stringify(fetchResp, null, 2)}
+                {fetchResp?.text?.length > 2000 && "\n\n[Preview truncated...]"}
+              </pre>
+            </details>
+          </div>
         )}
       </section>
     </div>
