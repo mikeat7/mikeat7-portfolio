@@ -110,7 +110,8 @@ const AgentDemo: React.FC = () => {
       });
 
       // Extract assistant response and save to Supabase
-      const assistantText = out?.response || out?.text || out?.completion || JSON.stringify(out);
+      // Backend returns { message, tools } - check 'message' first
+      const assistantText = out?.message || out?.response || out?.text || out?.completion || JSON.stringify(out);
       await addMessage("assistant", assistantText, {
         vx_frames: out?.vx_frames || out?.frames || [],
         metadata: { raw_response: out },
@@ -166,9 +167,10 @@ const AgentDemo: React.FC = () => {
         });
       }
 
-      // Add fetched content as a system message so agent can see it
-      const contextMessage = `[FETCHED URL: ${url}]\n\n${truncatedContent}\n\n[END FETCHED CONTENT]`;
-      await addMessage("system", contextMessage, {
+      // Add fetched content as a user message so agent definitely sees it
+      // Using "user" role because some backends may filter/ignore "system" in history
+      const contextMessage = `I've fetched this webpage for you to analyze:\n\nURL: ${url}\n\n--- BEGIN PAGE CONTENT ---\n${truncatedContent}\n--- END PAGE CONTENT ---\n\nPlease acknowledge that you can see this content.`;
+      await addMessage("user", contextMessage, {
         metadata: { source: "url_fetch", url, original_length: fetchedText.length }
       }, currentSessionId);
 
