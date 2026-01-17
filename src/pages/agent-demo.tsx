@@ -169,9 +169,15 @@ const AgentDemo: React.FC = () => {
 
       // Add fetched content as a user message so agent definitely sees it
       // Using "user" role because some backends may filter/ignore "system" in history
-      const contextMessage = `I've fetched this webpage for you to analyze:\n\nURL: ${url}\n\n--- BEGIN PAGE CONTENT ---\n${truncatedContent}\n--- END PAGE CONTENT ---\n\nPlease acknowledge that you can see this content.`;
+      const contextMessage = `I've fetched this webpage for you to analyze:\n\nURL: ${url}\n\n--- BEGIN PAGE CONTENT ---\n${truncatedContent}\n--- END PAGE CONTENT ---`;
       await addMessage("user", contextMessage, {
         metadata: { source: "url_fetch", url, original_length: fetchedText.length }
+      }, currentSessionId);
+
+      // Add assistant acknowledgment to maintain proper user/assistant alternation
+      // (Claude API requires alternating roles - can't have two user messages in a row)
+      await addMessage("assistant", `I've received the content from ${url} (${truncatedContent.length} characters). I'm ready to analyze it - what would you like to know?`, {
+        metadata: { source: "url_fetch_ack", url }
       }, currentSessionId);
 
     } catch (e: any) {
