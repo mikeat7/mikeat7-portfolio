@@ -7,6 +7,7 @@ import {
   clearSessionFromLocalStorage,
   getUserId,
   buildCrossSessionPrompt,
+  runPeriodicCleanup,
   ConversationMessage,
   ConversationSession
 } from '@/lib/sessionManager';
@@ -46,6 +47,9 @@ export function useConversationSession(): UseConversationSessionResult {
     buildCrossSessionPrompt(userId, savedSessionId || undefined)
       .then(context => setCrossSessionContext(context))
       .catch(console.error);
+
+    // Run periodic cleanup (throttled to once per day)
+    runPeriodicCleanup().catch(console.error);
   }, [userId]);
 
   const refreshCrossSessionContext = useCallback(async () => {

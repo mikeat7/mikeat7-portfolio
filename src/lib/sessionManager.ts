@@ -273,3 +273,117 @@ Use this context to provide more personalized, continuous assistance. Reference 
 
 `;
 }
+
+// --- Auto-Cleanup System ---
+
+const CLEANUP_INTERVAL_KEY = 'tsca_last_cleanup';
+const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // Run cleanup at most once per day
+const SESSION_MAX_AGE_DAYS = 90; // Delete sessions older than 90 days
+const MAX_MESSAGES_PER_SESSION = 100; // Cap messages per session
+
+/**
+ * Check if cleanup should run (throttled to once per day)
+ */
+function shouldRunCleanup(): boolean {
+  try {
+    const lastCleanup = localStorage.getItem(CLEANUP_INTERVAL_KEY);
+    if (!lastCleanup) return true;
+
+    const elapsed = Date.now() - parseInt(lastCleanup, 10);
+    return elapsed > CLEANUP_INTERVAL_MS;
+  } catch {
+    return false; // Don't run cleanup if localStorage unavailable
+  }
+}
+
+/**
+ * Mark cleanup as completed
+ */
+function markCleanupComplete(): void {
+  try {
+    localStorage.setItem(CLEANUP_INTERVAL_KEY, Date.now().toString());
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+/**
+ * Delete sessions older than maxAgeDays
+ */
+export async function cleanupOldSessions(maxAgeDays = SESSION_MAX_AGE_DAYS): Promise<number> {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - maxAgeDays);
+
+  const { data, error } = await supabase
+    .from('web_sessions')
+    .delete()
+    .lt('updated_at', cutoffDate.toISOString())
+    .select('id');
+
+  if (error) {
+    console.warn('Failed to cleanup old sessions:', error.message);
+    return 0;
+  }
+
+  return data?.length || 0;
+}
+
+/**
+ * Trim messages in a session to keep only the most recent ones
+ */
+export async function trimSessionMessages(
+  sessionId: string,
+  maxMessages = MAX_MESSAGES_PER_SESSION
+): Promise<number> {
+  // Get all message IDs ordered by creation
+  const { data: messages, error: fetchError } = await supabase
+    .from('web_messages')
+    .select('id, created_at')
+    .eq('session_id', sessionId)
+    .order('created_at', { ascending: false });
+
+  if (fetchError || !messages || messages.length <= maxMessages) {
+    return 0;
+  }
+
+  // Delete messages beyond the limit (keep newest)
+  const idsToDelete = messages.slice(maxMessages).map(m => m.id);
+
+  const { error: deleteError } = await supabase
+    .from('web_messages')
+    .delete()
+    .in('id', idsToDelete);
+
+  if (deleteError) {
+    console.warn('Failed to trim session messages:', deleteError.message);
+    return 0;
+  }
+
+  return idsToDelete.length;
+}
+
+/**
+ * Run periodic cleanup (call on app init, throttled internally)
+ */
+export async function runPeriodicCleanup(): Promise<{
+  ran: boolean;
+  sessionsDeleted?: number;
+}> {
+  if (!shouldRunCleanup()) {
+    return { ran: false };
+  }
+
+  try {
+    const sessionsDeleted = await cleanupOldSessions();
+    markCleanupComplete();
+
+    if (sessionsDeleted > 0) {
+      console.log(`Cleanup: removed ${sessionsDeleted} old session(s)`);
+    }
+
+    return { ran: true, sessionsDeleted };
+  } catch (e) {
+    console.warn('Cleanup failed:', e);
+    return { ran: true, sessionsDeleted: 0 };
+  }
+}
