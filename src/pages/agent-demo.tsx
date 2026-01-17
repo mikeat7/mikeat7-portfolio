@@ -138,6 +138,20 @@ const AgentDemo: React.FC = () => {
     return text.slice(0, maxChars) + "\n\n[Content truncated to limit token usage]";
   }
 
+  // Convert GitHub blob URLs to raw URLs for direct content access
+  function normalizeUrl(inputUrl: string): string {
+    // GitHub blob URL: https://github.com/user/repo/blob/branch/path
+    // Raw URL: https://raw.githubusercontent.com/user/repo/branch/path
+    const githubBlobMatch = inputUrl.match(
+      /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/
+    );
+    if (githubBlobMatch) {
+      const [, user, repo, rest] = githubBlobMatch;
+      return `https://raw.githubusercontent.com/${user}/${repo}/${rest}`;
+    }
+    return inputUrl;
+  }
+
   async function onFetch() {
     if (!url.trim()) return;
 
@@ -145,8 +159,11 @@ const AgentDemo: React.FC = () => {
     setBusy(true);
     setFetchResp(null);
 
+    // Auto-convert GitHub URLs to raw format
+    const fetchUrl = normalizeUrl(url.trim());
+
     try {
-      const out = await agentFetchUrl(url);
+      const out = await agentFetchUrl(fetchUrl);
       setFetchResp(out);
 
       // Extract text content from response
@@ -169,15 +186,16 @@ const AgentDemo: React.FC = () => {
 
       // Add fetched content as a user message so agent definitely sees it
       // Using "user" role because some backends may filter/ignore "system" in history
-      const contextMessage = `I've fetched this webpage for you to analyze:\n\nURL: ${url}\n\n--- BEGIN PAGE CONTENT ---\n${truncatedContent}\n--- END PAGE CONTENT ---`;
+      const urlNote = fetchUrl !== url.trim() ? `\n(Auto-converted from: ${url.trim()})` : '';
+      const contextMessage = `I've fetched this webpage for you to analyze:\n\nURL: ${fetchUrl}${urlNote}\n\n--- BEGIN PAGE CONTENT ---\n${truncatedContent}\n--- END PAGE CONTENT ---`;
       await addMessage("user", contextMessage, {
-        metadata: { source: "url_fetch", url, original_length: fetchedText.length }
+        metadata: { source: "url_fetch", url: fetchUrl, original_url: url.trim(), original_length: fetchedText.length }
       }, currentSessionId);
 
       // Add assistant acknowledgment to maintain proper user/assistant alternation
       // (Claude API requires alternating roles - can't have two user messages in a row)
-      await addMessage("assistant", `I've received the content from ${url} (${truncatedContent.length} characters). I'm ready to analyze it - what would you like to know?`, {
-        metadata: { source: "url_fetch_ack", url }
+      await addMessage("assistant", `I've received the content from ${fetchUrl} (${truncatedContent.length} characters). I'm ready to analyze it - what would you like to know?`, {
+        metadata: { source: "url_fetch_ack", url: fetchUrl }
       }, currentSessionId);
 
     } catch (e: any) {
