@@ -3,7 +3,7 @@ import { supabase, ConversationSession, ConversationMessage } from './supabaseCl
 export type { ConversationSession, ConversationMessage };
 
 export interface SessionManager {
-  createSession: (title?: string, handshakeConfig?: ConversationSession['handshake_config']) => Promise<string>;
+  createSession: (title?: string, handshakeConfig?: ConversationSession['handshake_config'], userId?: string) => Promise<string>;
   getSession: (sessionId: string) => Promise<ConversationSession | null>;
   listSessions: (limit?: number) => Promise<ConversationSession[]>;
   deleteSession: (sessionId: string) => Promise<void>;
@@ -13,7 +13,7 @@ export interface SessionManager {
 }
 
 export const sessionManager: SessionManager = {
-  async createSession(title = 'New Conversation', handshakeConfig) {
+  async createSession(title = 'New Conversation', handshakeConfig, userId?: string) {
     const defaultHandshake = {
       mode: '--careful' as const,
       stakes: 'medium' as const,
@@ -24,11 +24,15 @@ export const sessionManager: SessionManager = {
       codex_version: '0.9.0',
     };
 
+    // Include user_id in metadata for cross-session memory
+    const metadata = userId ? { user_id: userId } : {};
+
     const { data, error } = await supabase
-      .from('conversation_sessions')
+      .from('web_sessions')
       .insert({
         title,
         handshake_config: handshakeConfig || defaultHandshake,
+        metadata,
       })
       .select('id')
       .single();
@@ -41,7 +45,7 @@ export const sessionManager: SessionManager = {
 
   async getSession(sessionId: string) {
     const { data, error } = await supabase
-      .from('conversation_sessions')
+      .from('web_sessions')
       .select('*')
       .eq('id', sessionId)
       .maybeSingle();
@@ -52,7 +56,7 @@ export const sessionManager: SessionManager = {
 
   async listSessions(limit = 20) {
     const { data, error } = await supabase
-      .from('conversation_sessions')
+      .from('web_sessions')
       .select('*')
       .order('updated_at', { ascending: false })
       .limit(limit);
@@ -63,7 +67,7 @@ export const sessionManager: SessionManager = {
 
   async deleteSession(sessionId: string) {
     const { error } = await supabase
-      .from('conversation_sessions')
+      .from('web_sessions')
       .delete()
       .eq('id', sessionId);
 
@@ -72,7 +76,7 @@ export const sessionManager: SessionManager = {
 
   async addMessage(sessionId: string, role: ConversationMessage['role'], content: string, extras = {}) {
     const { data, error } = await supabase
-      .from('conversation_messages')
+      .from('web_messages')
       .insert({
         session_id: sessionId,
         role,
@@ -91,7 +95,7 @@ export const sessionManager: SessionManager = {
 
   async getMessages(sessionId: string) {
     const { data, error } = await supabase
-      .from('conversation_messages')
+      .from('web_messages')
       .select('*')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true });
@@ -102,7 +106,7 @@ export const sessionManager: SessionManager = {
 
   async updateSessionTitle(sessionId: string, title: string) {
     const { error } = await supabase
-      .from('conversation_sessions')
+      .from('web_sessions')
       .update({ title })
       .eq('id', sessionId);
 
@@ -141,4 +145,131 @@ export function clearSessionFromLocalStorage(): void {
   } catch (e) {
     console.warn('Failed to clear session from localStorage:', e);
   }
+}
+
+// --- Cross-Session Memory System ---
+
+const USER_ID_KEY = 'tsca_user_id';
+
+/**
+ * Get or create a persistent user ID for cross-session memory
+ */
+export function getUserId(): string {
+  try {
+    let userId = localStorage.getItem(USER_ID_KEY);
+    if (!userId) {
+      userId = `user_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+      localStorage.setItem(USER_ID_KEY, userId);
+    }
+    return userId;
+  } catch {
+    // Fallback for SSR or localStorage unavailable
+    return `anon_${Date.now()}`;
+  }
+}
+
+/**
+ * Get past sessions for a user (excluding current session)
+ */
+export async function getPastSessionsForUser(
+  userId: string,
+  currentSessionId?: string,
+  limit = 5
+): Promise<ConversationSession[]> {
+  let query = supabase
+    .from('web_sessions')
+    .select('*')
+    .eq('metadata->>user_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(limit);
+
+  if (currentSessionId) {
+    query = query.neq('id', currentSessionId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.warn('Failed to get past sessions:', error.message);
+    return [];
+  }
+
+  return (data || []) as ConversationSession[];
+}
+
+/**
+ * Get key messages from past sessions for context injection
+ */
+export async function getCrossSessionContext(
+  userId: string,
+  currentSessionId?: string,
+  maxMessages = 10
+): Promise<{ summary: string; topics: string[]; messageCount: number }> {
+  const pastSessions = await getPastSessionsForUser(userId, currentSessionId, 3);
+
+  if (pastSessions.length === 0) {
+    return { summary: '', topics: [], messageCount: 0 };
+  }
+
+  // Get messages from past sessions
+  const sessionIds = pastSessions.map(s => s.id);
+  const { data: messages, error } = await supabase
+    .from('web_messages')
+    .select('role, content, session_id, created_at')
+    .in('session_id', sessionIds)
+    .order('created_at', { ascending: false })
+    .limit(maxMessages * 2); // Get more, will filter
+
+  if (error || !messages?.length) {
+    return { summary: '', topics: [], messageCount: 0 };
+  }
+
+  // Extract user questions and key topics
+  const userMessages = messages
+    .filter(m => m.role === 'user')
+    .slice(0, maxMessages);
+
+  const topics = userMessages
+    .map(m => {
+      // Extract first line or first 100 chars as topic
+      const content = m.content.trim();
+      const firstLine = content.split('\n')[0];
+      return firstLine.length > 100 ? firstLine.slice(0, 97) + '...' : firstLine;
+    })
+    .filter((t, i, arr) => arr.indexOf(t) === i); // Dedupe
+
+  // Build summary
+  const sessionCount = pastSessions.length;
+  const totalMessages = pastSessions.reduce((sum, s) => sum + (s.message_count || 0), 0);
+
+  const summary = `This user has ${sessionCount} previous session(s) with ${totalMessages} total messages. Recent topics discussed: ${topics.slice(0, 5).join('; ')}`;
+
+  return {
+    summary,
+    topics: topics.slice(0, 5),
+    messageCount: totalMessages,
+  };
+}
+
+/**
+ * Build the cross-session context prompt injection
+ */
+export async function buildCrossSessionPrompt(
+  userId: string,
+  currentSessionId?: string
+): Promise<string | null> {
+  const context = await getCrossSessionContext(userId, currentSessionId);
+
+  if (context.messageCount === 0) {
+    return null; // First-time user, no context
+  }
+
+  return `[CROSS-SESSION CONTEXT]
+You have interacted with this user before. Here is relevant context:
+- ${context.summary}
+- Previous topics: ${context.topics.join(', ')}
+Use this context to provide more personalized, continuous assistance. Reference past topics naturally if relevant to the current question.
+[END CROSS-SESSION CONTEXT]
+
+`;
 }

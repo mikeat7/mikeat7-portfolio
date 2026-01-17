@@ -6,6 +6,7 @@ import runReflexAnalysis from "@/lib/analysis/runReflexAnalysis";
 import { callAgentSummarize } from "@/lib/llmClient";
 import { agentChat, agentFetchUrl, type ChatMessage } from "@/lib/agentClient";
 import { buildHandshake, type Mode, type Stakes, type CitePolicy } from "@/lib/codex-runtime";
+import { useConversationSession } from "@/hooks/useConversationSession";
 import codex from "@/data/front-end-codex.v0.9.json";
 import CoFirePanel from "@/components/CoFirePanel";
 import BackButton from "@/components/BackButton";
@@ -315,11 +316,30 @@ const AnalyzePage: React.FC = () => {
   );
 };
 
-/** Chat panel with strict defaults + URL auto-fetch + clearer errors */
+/** Chat panel with strict defaults + URL auto-fetch + clearer errors + Supabase persistence */
 const ChatPanel: React.FC = () => {
   type RolePlus = ChatMessage["role"] | "tool";
   type ChatMsg = { role: RolePlus; text: string; frames?: any[]; tools?: any[] };
-  const STORAGE_KEY = "tsca_chat_history_v1";
+
+  // Supabase session persistence with cross-session memory
+  const {
+    sessionId,
+    userId,
+    messages: supabaseMessages,
+    isLoading: sessionLoading,
+    crossSessionContext,
+    createNewSession,
+    addMessage: addSupabaseMessage,
+    clearSession,
+  } = useConversationSession();
+
+  // Convert Supabase messages to local format for display
+  const history: ChatMsg[] = supabaseMessages.map((m) => ({
+    role: m.role as RolePlus,
+    text: m.content,
+    frames: m.vx_frames as any[] || [],
+    tools: (m.metadata as any)?.tools || [],
+  }));
 
   // Robust/strict defaults per your request
   const [mode, setMode] = useState<Mode>("--careful");
@@ -330,7 +350,6 @@ const ChatPanel: React.FC = () => {
   const omission_scan: "auto" | boolean = omissionUI === "auto" ? "auto" : omissionUI === "true";
   const [reflexProfile, setReflexProfile] = useState<"default" | "strict" | "lenient">("strict");
 
-  const [history, setHistory] = useState<ChatMsg[]>([]);
   const [text, setText] = useState(""); // start empty, use placeholder
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -340,28 +359,6 @@ const ChatPanel: React.FC = () => {
   function clearDocContext() {
     setActiveDoc(null);
   }
-
-  // Load persisted chat on mount
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) setHistory(parsed as ChatMsg[]);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  // Persist chat after each change
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-    } catch {
-      /* ignore */
-    }
-  }, [history]);
 
   // NEW: autoscroll to latest message
   const threadRef = useRef<HTMLDivElement | null>(null);
@@ -384,9 +381,23 @@ const ChatPanel: React.FC = () => {
     setBusy(true);
     setError(null);
     try {
+      // Create session if none exists
+      let currentSessionId = sessionId;
+      if (!currentSessionId) {
+        currentSessionId = await createNewSession(`URL fetch: ${url}`, {
+          mode,
+          stakes,
+          min_confidence: minConfidence,
+          cite_policy: citePolicy,
+          omission_scan: omission_scan,
+          reflex_profile: reflexProfile,
+          codex_version: "0.9.0",
+        });
+      }
+
       const data = await withRetry(() => agentFetchUrl(url));
       const plain = String(data?.text ?? "").slice(0, 4000);
-      setHistory((h) => [...h, { role: "tool", text: `fetch_url(${url}) →\n\n${plain}` }]);
+      await addSupabaseMessage("tool", `fetch_url(${url}) →\n\n${plain}`, {}, currentSessionId);
     } catch (e: any) {
       const msg = e?.message || e?.toString?.() || "Unknown error";
       if (/403|blocked server requests/i.test(msg)) {
@@ -400,14 +411,9 @@ const ChatPanel: React.FC = () => {
     }
   }
 
-  // NEW: reset chat thread + localStorage
+  // NEW: reset chat thread + Supabase session
   function resetChat() {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      /* ignore */
-    }
-    setHistory([]);
+    clearSession();
     setError(null);
     clearDocContext();
     if (threadRef.current) threadRef.current.scrollTo({ top: 0, behavior: "smooth" });
@@ -626,7 +632,7 @@ const ChatPanel: React.FC = () => {
       <hr className="my-3 border-black" />
 
       {/* Send button ABOVE the textarea, left-aligned */}
-      <div className="flex">
+      <div className="flex gap-2 items-center">
         <button
           onClick={async () => {
             const content = text.trim();
@@ -635,21 +641,33 @@ const ChatPanel: React.FC = () => {
             setBusy(true);
             setError(null);
 
-            // Prior convo history (user/assistant only)
-            const priorHistory = history
-              .filter((m) => m.role === "user" || m.role === "assistant")
-              .map(({ role, text }) => ({ role: role as ChatMessage["role"], text }));
-
-            // Add user's raw message immediately
-            const userMsg = { role: "user" as const, text: content };
-            const nextHist = [...history, userMsg];
-            setHistory(nextHist);
-
             try {
+              // Create session if none exists
+              let currentSessionId = sessionId;
+              if (!currentSessionId) {
+                currentSessionId = await createNewSession(content, {
+                  mode,
+                  stakes,
+                  min_confidence: minConfidence,
+                  cite_policy: citePolicy,
+                  omission_scan: omission_scan,
+                  reflex_profile: reflexProfile,
+                  codex_version: "0.9.0",
+                });
+              }
+
               // Local reflex analysis on user's input
               const userFrames = await runReflexAnalysis(content);
-              nextHist[nextHist.length - 1] = { ...userMsg, frames: userFrames };
-              setHistory([...nextHist]);
+
+              // Save user message to Supabase
+              await addSupabaseMessage("user", content, {
+                vx_frames: userFrames,
+              }, currentSessionId);
+
+              // Prior convo history (user/assistant only) for agent context
+              const priorHistory = history
+                .filter((m) => m.role === "user" || m.role === "assistant")
+                .map(({ role, text }) => ({ role: role as ChatMessage["role"], text }));
 
               let textToSend = content;
 
@@ -686,6 +704,11 @@ ${activeDoc.textBlock}
 User: ${content}`;
               }
 
+              // Inject cross-session context for returning users (first message of new session)
+              if (crossSessionContext && priorHistory.length === 0) {
+                textToSend = crossSessionContext + textToSend;
+              }
+
               const hs = buildHandshake(codex as any, {
                 mode,
                 stakes,
@@ -708,9 +731,14 @@ User: ${content}`;
               );
 
               const assistantText = String(resp?.message ?? "").trim() || "(no reply)";
-              const assistantMsg = { role: "assistant" as const, text: assistantText, tools: resp?.tools ?? [] };
-              (assistantMsg as any).frames = await runReflexAnalysis(assistantText);
-              setHistory((h) => [...h, assistantMsg]);
+              const assistantFrames = await runReflexAnalysis(assistantText);
+
+              // Save assistant message to Supabase
+              await addSupabaseMessage("assistant", assistantText, {
+                vx_frames: assistantFrames,
+                metadata: { tools: resp?.tools ?? [] },
+              }, currentSessionId);
+
             } catch (e: any) {
               const msg = e?.message || e?.toString?.() || "Unknown error";
               if (/403|blocked server requests/i.test(msg)) {
@@ -733,6 +761,11 @@ User: ${content}`;
         >
           {busy ? "Sending…" : "Send"}
         </button>
+        {sessionId && (
+          <span className="text-xs text-slate-500">
+            Session: {sessionId.slice(0, 8)}...
+          </span>
+        )}
       </div>
 
       {/* Optional second straight line */}

@@ -720,6 +720,25 @@ ${hsRecap}
                 ) as Array<unknown>;
                 (existing as Array<unknown>).push(experience);
                 localStorage.setItem("train_ai_experiences", JSON.stringify(existing));
+
+                // Email to Mike
+                const emailSubject = `CODEX Feedback - Rating: ${score}/5`;
+                const emailBody = `Hi Mike,
+
+New CODEX experience feedback submitted:
+
+RATING: ${score}/5
+FEEDBACK:
+${feedback.trim()}
+
+Submitted: ${new Date().toLocaleString()}
+
+Best regards,
+Truth Serum + Clarity Armor Platform`;
+
+                const mailtoLink = `mailto:ekimat7@rogers.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+                window.open(mailtoLink, '_blank');
+
                 setSubmitted(true);
                 setTimeout(() => {
                   setFeedback("");
