@@ -92,6 +92,13 @@ const AgentDemo: React.FC = () => {
       // Get conversation history for context
       const history = getHistoryForAgent();
 
+      // DEBUG: Log history being sent to agent
+      console.log('[agent-demo] History being sent to agent:', {
+        messageCount: history.length,
+        roles: history.map(h => h.role),
+        preview: history.map(h => ({ role: h.role, textLength: h.text?.length, textPreview: h.text?.slice(0, 100) }))
+      });
+
       // Prepend cross-session context if available (returning user)
       let textWithContext = text;
       if (crossSessionContext && history.length === 0) {
@@ -161,9 +168,11 @@ const AgentDemo: React.FC = () => {
 
     // Auto-convert GitHub URLs to raw format
     const fetchUrl = normalizeUrl(url.trim());
+    console.log('[agent-demo] Fetching URL:', { original: url.trim(), normalized: fetchUrl });
 
     try {
       const out = await agentFetchUrl(fetchUrl);
+      console.log('[agent-demo] Fetch response:', { textLength: out?.text?.length, contentType: out?.contentType, normalized: out?.normalized });
       setFetchResp(out);
 
       // Extract text content from response
