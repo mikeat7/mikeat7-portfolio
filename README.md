@@ -8,9 +8,9 @@
 
 ## 🤖 For AI Assistants - Context Handoff
 
-> **Last Updated:** 2025-12-29
-> **Last Major Work:** Mobile bookmark feature for library books
-> **Active Development Area:** Library reading experience
+> **Last Updated:** 2026-01-17
+> **Last Major Work:** Supabase session persistence, cross-session memory, URL fetch for agent
+> **Active Development Area:** Chat functionality and agent context
 
 ### What This Project Is
 
@@ -20,9 +20,34 @@ A multi-faceted platform combining:
 3. **CDM v2 Library** - CRYSTAL Method documentation for transformer reasoning analysis
 4. **Education Hub** - Critical thinking and epistemic humility training
 
-### Recent Changes (December 2025)
+### Recent Changes (January 2026)
 
-**Mobile Bookmark Feature** (Most Recent - Dec 29):
+**Supabase Session Persistence & Cross-Session Memory** (Jan 17):
+- **Files Modified:**
+  - `src/lib/sessionManager.ts` - Core session CRUD + cross-session memory functions
+  - `src/hooks/useConversationSession.ts` - React hook with userId and context injection
+  - `src/pages/analyze.tsx` - Chat panel now uses Supabase persistence
+  - `netlify/functions/agent-fetch-url.ts` - GitHub URL normalization + content handling
+- **New Features:**
+  - **Session Persistence:** Conversations saved to Supabase `web_sessions` and `web_messages` tables
+  - **Cross-Session Memory:** Returning users get context from past sessions injected into prompts
+  - **URL Fetch into Context:** Fetched URLs are added as user messages, agent can analyze them
+  - **GitHub URL Auto-Conversion:** `github.com/blob/` URLs auto-convert to `raw.githubusercontent.com`
+  - **Auto-Cleanup System:** Sessions older than 90 days automatically deleted (runs once/day)
+- **Security:**
+  - Row Level Security (RLS) policies: public read/insert, restricted delete
+  - Delete policy only allows removing sessions > 90 days old
+- **Removed:**
+  - `/agent-demo` page - redundant with `/analyze?tab=chat` (caused confusion)
+- **Database Schema:**
+  ```sql
+  -- Tables: web_sessions, web_messages
+  -- RLS: Allow read/insert, restrict delete to old sessions only
+  ```
+
+### Previous Changes (December 2025)
+
+**Mobile Bookmark Feature** (Dec 29):
 - **Files Modified:**
   - `src/pages/library/[slug].tsx` - Book reader with element-based bookmarking
   - `src/pages/library/index.tsx` - Library index with bookmark badges
@@ -55,10 +80,9 @@ src/
 │   ├── cdm/
 │   │   ├── index.tsx           # CDM library grid
 │   │   └── [slug].tsx          # CDM document reader
-│   ├── analyze.tsx             # VX reflex manipulation detection engine
+│   ├── analyze.tsx             # VX reflex manipulation detection + chat with agent
 │   ├── train.tsx               # Codex handshake governance tools
 │   ├── educate/                # Critical thinking lessons
-│   ├── agent-demo.tsx          # AWS Bedrock agent demonstration
 │   └── index.tsx               # Homepage with 6-tier priority layout
 ├── data/
 │   ├── libraryData.ts          # Network Library metadata (13 books)
@@ -574,12 +598,12 @@ http://localhost:5173/analyze
 
 **Session Persistence:**
 ```bash
-# Visit agent demo
-http://localhost:5173/agent-demo
+# Visit analyze page chat tab
+http://localhost:5173/analyze?tab=chat
 
 # Start conversation
 # Refresh page
-# Verify conversation persists
+# Verify conversation persists (stored in Supabase)
 ```
 
 ### Test Scripts
@@ -812,12 +836,11 @@ mikeat7-network_portfolio/
 │   │   ├── cdm/
 │   │   │   ├── index.tsx                # CDM library grid
 │   │   │   └── [slug].tsx               # CDM document reader
-│   │   ├── analyze.tsx                  # VX analysis engine
+│   │   ├── analyze.tsx                  # VX analysis engine + chat with agent
 │   │   ├── train.tsx                    # Codex handshake tools
 │   │   ├── educate/
 │   │   │   ├── index.tsx                # Education hub
 │   │   │   └── lessons/                 # Individual lessons
-│   │   ├── agent-demo.tsx               # AWS agent demo
 │   │   ├── paper.tsx                    # Scientific paper analysis
 │   │   └── wisdom.tsx                   # Quotes collection
 │   ├── components/
@@ -985,7 +1008,7 @@ MIT License - See LICENSE file for details
 
 ---
 
-**Last Updated:** 2025-12-29
-**Version:** 2.1 (with mobile bookmarks)
+**Last Updated:** 2026-01-17
+**Version:** 2.2 (with Supabase session persistence and cross-session memory)
 **Codex Version:** 0.9.0
-**Architecture Version:** 1.2 (dual-agent routing + session persistence + library systems)
+**Architecture Version:** 1.3 (dual-agent routing + Supabase persistence + cross-session memory + URL fetch)
