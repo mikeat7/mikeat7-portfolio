@@ -377,14 +377,28 @@ const ChatPanel: React.FC = () => {
     return `${msg}${status}`;
   }
 
+  // Convert GitHub blob URLs to raw URLs for direct content access
+  function normalizeGitHubUrl(inputUrl: string): string {
+    const match = inputUrl.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/);
+    if (match) {
+      const [, user, repo, rest] = match;
+      return `https://raw.githubusercontent.com/${user}/${repo}/${rest}`;
+    }
+    return inputUrl;
+  }
+
   async function fetchUrlToHistory(url: string) {
     setBusy(true);
     setError(null);
     try {
+      // Normalize GitHub URLs to raw format
+      const fetchUrl = normalizeGitHubUrl(url.trim());
+      console.log('[analyze] Fetching URL:', { original: url, normalized: fetchUrl });
+
       // Create session if none exists
       let currentSessionId = sessionId;
       if (!currentSessionId) {
-        currentSessionId = await createNewSession(`URL fetch: ${url}`, {
+        currentSessionId = await createNewSession(`URL fetch: ${fetchUrl}`, {
           mode,
           stakes,
           min_confidence: minConfidence,
@@ -395,9 +409,20 @@ const ChatPanel: React.FC = () => {
         });
       }
 
-      const data = await withRetry(() => agentFetchUrl(url));
-      const plain = String(data?.text ?? "").slice(0, 4000);
-      await addSupabaseMessage("tool", `fetch_url(${url}) →\n\n${plain}`, {}, currentSessionId);
+      const data = await withRetry(() => agentFetchUrl(fetchUrl));
+      const plain = String(data?.text ?? "").slice(0, 16000); // Increased limit
+      console.log('[analyze] Fetch response:', { textLength: plain.length });
+
+      // Add as "user" message (Claude API only accepts user/assistant in history)
+      const urlNote = fetchUrl !== url.trim() ? `\n(Auto-converted from: ${url.trim()})` : '';
+      await addSupabaseMessage("user", `I've fetched this webpage for you to analyze:\n\nURL: ${fetchUrl}${urlNote}\n\n--- BEGIN PAGE CONTENT ---\n${plain}\n--- END PAGE CONTENT ---`, {
+        metadata: { source: "url_fetch", url: fetchUrl }
+      }, currentSessionId);
+
+      // Add assistant acknowledgment for proper message alternation
+      await addSupabaseMessage("assistant", `I've received the content from ${fetchUrl} (${plain.length} characters). I'm ready to analyze it - what would you like to know?`, {
+        metadata: { source: "url_fetch_ack" }
+      }, currentSessionId);
     } catch (e: any) {
       const msg = e?.message || e?.toString?.() || "Unknown error";
       if (/403|blocked server requests/i.test(msg)) {
@@ -668,6 +693,14 @@ const ChatPanel: React.FC = () => {
               const priorHistory = history
                 .filter((m) => m.role === "user" || m.role === "assistant")
                 .map(({ role, text }) => ({ role: role as ChatMessage["role"], text }));
+
+              // DEBUG: Log history being sent to agent
+              console.log('[analyze] History being sent to agent:', {
+                totalMessages: history.length,
+                filteredCount: priorHistory.length,
+                roles: priorHistory.map(h => h.role),
+                preview: priorHistory.map(h => ({ role: h.role, textLength: h.text?.length, textPreview: h.text?.slice(0, 100) }))
+              });
 
               let textToSend = content;
 
