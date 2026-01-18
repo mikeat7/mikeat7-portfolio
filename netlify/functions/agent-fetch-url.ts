@@ -49,9 +49,21 @@ export const handler: Handler = async (event) => {
     return { statusCode: 401, headers: cors, body: "Unauthorized" };
   }
 
+  // Convert GitHub blob URLs to raw URLs
+  function normalizeGitHubUrl(inputUrl: string): string {
+    const match = inputUrl.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/);
+    if (match) {
+      const [, user, repo, rest] = match;
+      return `https://raw.githubusercontent.com/${user}/${repo}/${rest}`;
+    }
+    return inputUrl;
+  }
+
   try {
     const { url } = JSON.parse(event.body || "{}");
-    const u = new URL(String(url || ""));
+    // Normalize GitHub URLs to raw format
+    const normalizedUrl = normalizeGitHubUrl(String(url || "").trim());
+    const u = new URL(normalizedUrl);
     if (!/^https?:$/.test(u.protocol)) {
       return {
         statusCode: 400,
@@ -81,7 +93,7 @@ export const handler: Handler = async (event) => {
 
     const ct = String(resp.headers.get("content-type") || "");
     // Only text-ish content; skip binaries
-    if (!/text\/html|text\/plain|application\/xhtml\+xml/i.test(ct)) {
+    if (!/text\/|application\/json|application\/xml|application\/xhtml\+xml/i.test(ct)) {
       return {
         statusCode: 200,
         headers: { "Content-Type": "application/json", ...cors },
@@ -89,12 +101,16 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const html = await resp.text();
-    const text = stripHtml(html).slice(0, 20000); // keep token costs sane
+    const rawText = await resp.text();
+
+    // Only strip HTML if content-type indicates HTML
+    const isHtml = /text\/html|application\/xhtml\+xml/i.test(ct);
+    const text = isHtml ? stripHtml(rawText).slice(0, 20000) : rawText.slice(0, 20000);
+
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json", ...cors },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, contentType: ct, normalized: normalizedUrl !== String(url || "").trim() }),
     };
   } catch (e: any) {
     return {
