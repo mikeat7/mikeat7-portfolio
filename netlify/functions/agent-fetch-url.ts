@@ -1,5 +1,6 @@
 import type { Handler } from "@netlify/functions";
 import { isRateLimited } from "./_rateLimit";
+import { checkDailyLimit } from "./_dailyLimit";
 
 // ✅ allow either secret (server) or public (browser) key
 const REQUIRED_KEY = process.env.TSCA_API_KEY;
@@ -57,6 +58,16 @@ export const handler: Handler = async (event) => {
       statusCode: 429,
       headers: { ...cors, "Retry-After": String(Math.ceil(retryAfterMs / 1000)) },
       body: JSON.stringify({ error: "Too many requests. Try again shortly." }),
+    };
+  }
+
+  // Persistent daily limit (survives cold starts) - higher limit since no Bedrock cost
+  const daily = await checkDailyLimit(clientIp, 200);
+  if (!daily.allowed) {
+    return {
+      statusCode: 429,
+      headers: cors,
+      body: JSON.stringify({ error: "Daily limit reached. Try again tomorrow.", count: daily.count, limit: daily.limit }),
     };
   }
 

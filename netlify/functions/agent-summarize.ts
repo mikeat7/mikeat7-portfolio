@@ -2,6 +2,7 @@ import type { Handler } from "@netlify/functions";
 import { InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import { bedrock, modelId, corsHeaders } from "./_bedrock";
 import { isRateLimited } from "./_rateLimit";
+import { checkDailyLimit } from "./_dailyLimit";
 
 const REQUIRED_KEY = process.env.TSCA_API_KEY;            // secret (server-only)
 const PUBLIC_KEY   = process.env.VITE_TSCA_PUBLIC_KEY;    // public (also in client)
@@ -36,6 +37,16 @@ export const handler: Handler = async (event) => {
       statusCode: 429,
       headers: { ...headers, "Retry-After": String(Math.ceil(retryAfterMs / 1000)) },
       body: JSON.stringify({ error: "Too many requests. Try again shortly." }),
+    };
+  }
+
+  // Persistent daily limit (survives cold starts)
+  const daily = await checkDailyLimit(clientIp, 100);
+  if (!daily.allowed) {
+    return {
+      statusCode: 429,
+      headers,
+      body: JSON.stringify({ error: "Daily limit reached. Try again tomorrow.", count: daily.count, limit: daily.limit }),
     };
   }
 
