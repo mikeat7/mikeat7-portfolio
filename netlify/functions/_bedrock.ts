@@ -59,7 +59,7 @@ export const modelId =
   "anthropic.claude-3-5-sonnet-20240620-v1:0";
 
 export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://clarityarmor.com",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
 };

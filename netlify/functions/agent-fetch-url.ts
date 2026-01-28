@@ -27,7 +27,7 @@ const BROWSER_HEADERS: Record<string, string> = {
 
 export const handler: Handler = async (event) => {
   const cors = {
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": "https://clarityarmor.com",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "content-type,x-tsca-key",
   };
