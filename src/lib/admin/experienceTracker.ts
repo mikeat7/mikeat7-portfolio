@@ -105,16 +105,16 @@ export class ExperienceTracker {
   }
 }
 
-// Console helper functions for admin access
-if (typeof window !== 'undefined') {
+// Console helper functions for admin access (development only)
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
   (window as any).getTrainingExperiences = () => {
     console.log('=== TRAINING EXPERIENCES ===');
     const stats = ExperienceTracker.getExperienceStats();
     console.log('Stats:', stats);
-    
+
     const recent = ExperienceTracker.getRecentFeedback(5);
     console.log('Recent Feedback:', recent);
-    
+
     return {
       stats,
       recent,
@@ -126,7 +126,7 @@ if (typeof window !== 'undefined') {
     const csv = ExperienceTracker.exportToCSV();
     console.log('CSV Export:');
     console.log(csv);
-    
+
     // Create downloadable file
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -135,7 +135,7 @@ if (typeof window !== 'undefined') {
     a.download = `training-experiences-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
-    
+
     return csv;
   };
 }

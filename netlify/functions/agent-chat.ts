@@ -1,6 +1,7 @@
 import type { Handler } from "@netlify/functions";
 import { InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import { bedrock, modelId, corsHeaders } from "./_bedrock";
+import { isRateLimited } from "./_rateLimit";
 
 type Mode = "--direct" | "--careful" | "--recap";
 type Stakes = "low" | "medium" | "high";
@@ -64,6 +65,16 @@ export const handler: Handler = async (event) => {
 
   if (!ok) {
     return { statusCode: 401, headers, body: "Unauthorized" };
+  }
+
+  const clientIp = event.headers["x-forwarded-for"]?.split(",")[0]?.trim() || "unknown";
+  const { limited, retryAfterMs } = isRateLimited(clientIp, 10, 60_000);
+  if (limited) {
+    return {
+      statusCode: 429,
+      headers: { ...headers, "Retry-After": String(Math.ceil(retryAfterMs / 1000)) },
+      body: JSON.stringify({ error: "Too many requests. Try again shortly." }),
+    };
   }
 
   try {

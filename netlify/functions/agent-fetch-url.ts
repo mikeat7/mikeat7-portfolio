@@ -1,4 +1,5 @@
 import type { Handler } from "@netlify/functions";
+import { isRateLimited } from "./_rateLimit";
 
 // ✅ allow either secret (server) or public (browser) key
 const REQUIRED_KEY = process.env.TSCA_API_KEY;
@@ -47,6 +48,16 @@ export const handler: Handler = async (event) => {
 
   if (!ok) {
     return { statusCode: 401, headers: cors, body: "Unauthorized" };
+  }
+
+  const clientIp = event.headers["x-forwarded-for"]?.split(",")[0]?.trim() || "unknown";
+  const { limited, retryAfterMs } = isRateLimited(clientIp, 20, 60_000);
+  if (limited) {
+    return {
+      statusCode: 429,
+      headers: { ...cors, "Retry-After": String(Math.ceil(retryAfterMs / 1000)) },
+      body: JSON.stringify({ error: "Too many requests. Try again shortly." }),
+    };
   }
 
   // Convert GitHub blob URLs to raw URLs
