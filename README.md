@@ -33,6 +33,13 @@ A multi-faceted platform combining:
   - Visit `https://clarityarmor.com/agent/keepalive` to trigger manually
   - Returns JSON with success status and session count
 - **Why:** Supabase free tier pauses projects after 7 days of no database activity
+- **Before vs After:**
+  | Before | After |
+  |--------|-------|
+  | Client-side `runPeriodicCleanup()` in `sessionManager.ts` | Server-side scheduled function |
+  | Only ran when users visited the site | Runs automatically every 5 days |
+  | No visitors for 7 days = Supabase pauses | Works regardless of site traffic |
+  | Depended on localStorage throttling | Netlify cron schedule (`0 3 */5 * *`) |
 
 **Security Hardening** (Jan 28-29):
 - **Files Modified:**
