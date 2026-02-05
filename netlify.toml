@@ -37,6 +37,11 @@
   to = "/.netlify/functions/agent-summarize"
   status = 200
 
+[[redirects]]
+  from = "/agent/keepalive"
+  to = "/.netlify/functions/supabase-keepalive"
+  status = 200
+
 # --- SPA CATCH-ALL MUST BE LAST ---
 [[redirects]]
   from = "/*"

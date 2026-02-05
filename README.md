@@ -8,9 +8,9 @@
 
 ## 🤖 For AI Assistants - Context Handoff
 
-> **Last Updated:** 2026-01-17
-> **Last Major Work:** Supabase session persistence, cross-session memory, URL fetch for agent
-> **Active Development Area:** Chat functionality and agent context
+> **Last Updated:** 2026-02-05
+> **Last Major Work:** Supabase keep-alive scheduled function
+> **Active Development Area:** Infrastructure reliability
 
 ### What This Project Is
 
@@ -20,7 +20,41 @@ A multi-faceted platform combining:
 3. **CDM v2 Library** - CRYSTAL Method documentation for transformer reasoning analysis
 4. **Education Hub** - Critical thinking and epistemic humility training
 
-### Recent Changes (January 2026)
+### Recent Changes (January-February 2026)
+
+**Supabase Keep-Alive Function** (Feb 5):
+- **Files Added:**
+  - `netlify/functions/supabase-keepalive.ts` - Scheduled function to prevent Supabase pause
+- **What It Does:**
+  - Runs automatically every 5 days via Netlify Scheduled Functions
+  - Makes a lightweight query to Supabase (`SELECT count(*) FROM web_sessions`)
+  - Prevents free-tier Supabase projects from pausing due to inactivity
+- **Manual Testing:**
+  - Visit `https://clarityarmor.com/agent/keepalive` to trigger manually
+  - Returns JSON with success status and session count
+- **Why:** Supabase free tier pauses projects after 7 days of no database activity
+
+**Security Hardening** (Jan 28-29):
+- **Files Modified:**
+  - `netlify/functions/_rateLimit.ts` - In-memory rate limiter (10 req/min per IP)
+  - `netlify/functions/_dailyLimit.ts` - Persistent daily limiter via Supabase (100 req/day per IP)
+  - `netlify/functions/agent-chat.ts` - Integrated both rate limiters + API key auth
+  - `netlify/functions/agent-fetch-url.ts` - Same security layer
+  - `netlify/functions/agent-summarize.ts` - Same security layer
+  - `public/_headers` - Content Security Policy allowing GitHub raw content fetch
+- **New Features:**
+  - **Dual Rate Limiting:** In-memory (burst protection) + Supabase (persistent daily caps)
+  - **Privacy-Preserving:** IP addresses are SHA-256 hashed before storage
+  - **API Key Authentication:** Header-based auth (`x-tsca-key`) required for all agent endpoints
+  - **Fail-Open Design:** DB errors allow requests through (don't block legitimate users on Supabase outage)
+  - **CSP Headers:** Strict Content-Security-Policy with allowlist for Supabase, Netlify, GitHub
+- **Security Tables (Supabase):**
+  ```sql
+  -- Table: daily_rate_limits
+  -- Columns: ip_hash, request_date, request_count, updated_at
+  -- Auto-cleanup: Records older than 7 days can be purged
+  ```
+- **Why:** Prevents AWS Bedrock cost abuse and protects against malicious automated requests
 
 **Supabase Session Persistence & Cross-Session Memory** (Jan 17):
 - **Files Modified:**
@@ -401,6 +435,59 @@ const runReflexAnalysis = async (input: string): Promise<VXFrame[]> => {
   return results.flat().sort((a, b) => b.confidence - a.confidence);
 };
 ```
+
+---
+
+## 🛡️ Security Layer
+
+### Rate Limiting (Abuse Prevention)
+
+**Two-Tier System:**
+
+1. **In-Memory Burst Limiter** (`_rateLimit.ts`)
+   - 10 requests per minute per IP
+   - Sliding window, resets on cold start
+   - Protects against rapid-fire abuse
+
+2. **Persistent Daily Limiter** (`_dailyLimit.ts`)
+   - 100 requests per day per IP (configurable)
+   - Stored in Supabase `daily_rate_limits` table
+   - Survives Netlify function cold starts
+   - IP addresses hashed with SHA-256 (privacy-preserving)
+
+**Fail-Open Design:** If Supabase is unreachable, requests are allowed through. This prevents legitimate users from being blocked during infrastructure issues.
+
+### API Authentication
+
+All agent endpoints require `x-tsca-key` header:
+- Server validates against `TSCA_API_KEY` (secret) or `VITE_TSCA_PUBLIC_KEY` (public)
+- Unauthorized requests return 401
+
+### Security Headers (`public/_headers`)
+
+Applied to all routes via Netlify:
+```
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+Content-Security-Policy: [strict allowlist for self, Supabase, Netlify, GitHub]
+```
+
+### Supabase Row Level Security (RLS)
+
+- `web_sessions` / `web_messages`: Public read/insert, restricted delete (only sessions > 90 days)
+- `daily_rate_limits`: Server-only access via service role key
+
+### Environment Variables (Security-Critical)
+
+| Variable | Location | Purpose |
+|----------|----------|---------|
+| `TSCA_API_KEY` | Netlify env only | Server-side API auth (never in client) |
+| `VITE_TSCA_PUBLIC_KEY` | Netlify env + client | Public key for client requests |
+| `SUPABASE_SERVICE_ROLE_KEY` | Netlify env only | Bypasses RLS for rate limit table |
+| `RATE_LIMIT_SALT` | Netlify env only | Additional entropy for IP hashing |
 
 ---
 
@@ -872,10 +959,14 @@ mikeat7-network_portfolio/
 │   └── styles/
 │       └── index.css                    # Tailwind + custom styles
 ├── netlify/
-│   └── functions/                       # Proxy layer
-│       ├── agent-chat.ts                # Chat endpoint
-│       ├── agent-analyze.ts             # Analysis endpoint
-│       └── agent-fetch-url.ts           # URL ingestion
+│   └── functions/                       # Proxy layer + security
+│       ├── _bedrock.ts                  # AWS Bedrock client config
+│       ├── _rateLimit.ts                # In-memory burst rate limiter
+│       ├── _dailyLimit.ts               # Persistent daily limiter (Supabase)
+│       ├── agent-chat.ts                # Chat endpoint (with security)
+│       ├── agent-summarize.ts           # Summarization endpoint
+│       ├── agent-fetch-url.ts           # URL ingestion
+│       └── supabase-keepalive.ts        # Scheduled ping to prevent Supabase pause
 ├── backend/                             # AWS Lambda (not in use currently)
 │   ├── src/handlers/
 │   │   ├── chat.ts
@@ -1008,7 +1099,7 @@ MIT License - See LICENSE file for details
 
 ---
 
-**Last Updated:** 2026-01-17
-**Version:** 2.2 (with Supabase session persistence and cross-session memory)
+**Last Updated:** 2026-02-05
+**Version:** 2.4 (with Supabase keep-alive scheduled function)
 **Codex Version:** 0.9.0
-**Architecture Version:** 1.3 (dual-agent routing + Supabase persistence + cross-session memory + URL fetch)
+**Architecture Version:** 1.4 (dual-agent routing + Supabase persistence + cross-session memory + URL fetch + security layer)
