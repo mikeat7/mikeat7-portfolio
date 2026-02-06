@@ -11,10 +11,6 @@
   node_bundler = "esbuild"
   external_node_modules = ["@aws-sdk/client-bedrock-runtime"]
 
-# Schedule: Run every 5 days at 3:00 AM UTC to prevent Supabase free-tier pause
-[functions."supabase-keepalive"]
-  schedule = "0 3 */5 * *"
-
 # --- API FIRST (must be above the SPA catch-all) ---
 # Specific function mappings (names don't match the splat pattern,
 # so these MUST come before any wildcard fallback)

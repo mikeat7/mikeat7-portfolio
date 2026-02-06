@@ -1,19 +1,16 @@
 /**
  * Supabase Keep-Alive Function
  *
- * Runs on a schedule to prevent Supabase free-tier projects from pausing
- * due to inactivity. Makes a simple query every 5 days.
- *
- * Schedule is configured in netlify.toml under [functions."supabase-keepalive"]
+ * Prevents Supabase free-tier projects from pausing due to inactivity.
+ * Hit /agent/keepalive to trigger manually.
  */
 
-import type { Handler } from "@netlify/functions";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
 
-export const handler: Handler = async (event) => {
+export const handler = async () => {
   console.log("[keepalive] Starting Supabase keep-alive ping...");
 
   if (!supabaseUrl || !supabaseKey) {
