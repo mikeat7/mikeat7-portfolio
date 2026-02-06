@@ -1,4 +1,8 @@
 /robots.txt               /robots.txt               200
 /sitemap.xml              /sitemap.xml              200
 /manifest.webmanifest     /manifest.webmanifest     200
+/agent/chat               /.netlify/functions/agent-chat           200!
+/agent/fetch-url          /.netlify/functions/agent-fetch-url      200!
+/agent/summarize          /.netlify/functions/agent-summarize      200!
+/agent/keepalive          /.netlify/functions/supabase-keepalive   200!
 /*                        /index.html               200
