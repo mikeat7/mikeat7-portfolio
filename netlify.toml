@@ -12,35 +12,32 @@
   external_node_modules = ["@aws-sdk/client-bedrock-runtime"]
 
 # --- API FIRST (must be above the SPA catch-all) ---
-# One wildcard covers all /agent/* endpoints
-[[redirects]]
-  from = "/agent/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-  force = true
-
-# (Optional: the explicit mappings below are redundant with the wildcard,
-# but safe to keep if you like the clarity.)
+# Specific function mappings (names don't match the splat pattern,
+# so these MUST come before any wildcard fallback)
 
 [[redirects]]
   from = "/agent/chat"
   to = "/.netlify/functions/agent-chat"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/agent/fetch-url"
   to = "/.netlify/functions/agent-fetch-url"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/agent/summarize"
   to = "/.netlify/functions/agent-summarize"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/agent/keepalive"
   to = "/.netlify/functions/supabase-keepalive"
   status = 200
+  force = true
 
 # --- SPA CATCH-ALL MUST BE LAST ---
 [[redirects]]

@@ -8,8 +8,8 @@
 
 ## 🤖 For AI Assistants - Context Handoff
 
-> **Last Updated:** 2026-02-05
-> **Last Major Work:** Supabase keep-alive scheduled function
+> **Last Updated:** 2026-02-06
+> **Last Major Work:** Fixed netlify.toml redirect ordering for keep-alive + all agent routes
 > **Active Development Area:** Infrastructure reliability
 
 ### What This Project Is
@@ -22,9 +22,10 @@ A multi-faceted platform combining:
 
 ### Recent Changes (January-February 2026)
 
-**Supabase Keep-Alive Function** (Feb 5):
-- **Files Added:**
+**Supabase Keep-Alive Function** (Feb 5-6):
+- **Files Added/Modified:**
   - `netlify/functions/supabase-keepalive.ts` - Scheduled function to prevent Supabase pause
+  - `netlify.toml` - Fixed redirect ordering (wildcard was intercepting specific rules)
 - **What It Does:**
   - Runs automatically every 5 days via Netlify Scheduled Functions
   - Makes a lightweight query to Supabase (`SELECT count(*) FROM web_sessions`)
@@ -33,6 +34,11 @@ A multi-faceted platform combining:
   - Visit `https://clarityarmor.com/agent/keepalive` to trigger manually
   - Returns JSON with success status and session count
 - **Why:** Supabase free tier pauses projects after 7 days of no database activity
+- **Redirect Fix (Feb 6):** The original wildcard redirect (`/agent/*` with `force = true`)
+  was intercepting all agent routes and mapping them to wrong function names (e.g.,
+  `/agent/chat` → `/.netlify/functions/chat` instead of `agent-chat`). Fixed by removing
+  the wildcard and using only the specific, correctly-mapped redirects with `force = true`.
+  The frontend was unaffected because it calls `/.netlify/functions/agent-*` directly.
 - **Before vs After:**
   | Before | After |
   |--------|-------|
@@ -40,6 +46,8 @@ A multi-faceted platform combining:
   | Only ran when users visited the site | Runs automatically every 5 days |
   | No visitors for 7 days = Supabase pauses | Works regardless of site traffic |
   | Depended on localStorage throttling | Netlify cron schedule (`0 3 */5 * *`) |
+- **Important:** This function prevents pausing but cannot unpause an already-paused project.
+  If Supabase is already paused, unpause manually from the Supabase dashboard first.
 
 **Security Hardening** (Jan 28-29):
 - **Files Modified:**
@@ -1106,7 +1114,7 @@ MIT License - See LICENSE file for details
 
 ---
 
-**Last Updated:** 2026-02-05
-**Version:** 2.4 (with Supabase keep-alive scheduled function)
+**Last Updated:** 2026-02-06
+**Version:** 2.4.1 (keep-alive + redirect fix)
 **Codex Version:** 0.9.0
 **Architecture Version:** 1.4 (dual-agent routing + Supabase persistence + cross-session memory + URL fetch + security layer)
