@@ -4,24 +4,25 @@
  * Runs on a schedule to prevent Supabase free-tier projects from pausing
  * due to inactivity. Makes a simple query every 5 days.
  *
- * Netlify Scheduled Functions: https://docs.netlify.com/functions/scheduled-functions/
+ * Schedule is configured in netlify.toml under [functions."supabase-keepalive"]
  */
 
+import type { Handler } from "@netlify/functions";
 import { createClient } from "@supabase/supabase-js";
-import type { Config, Context } from "@netlify/functions";
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
 
-export default async function handler(req: Request, context: Context) {
+export const handler: Handler = async (event) => {
   console.log("[keepalive] Starting Supabase keep-alive ping...");
 
   if (!supabaseUrl || !supabaseKey) {
     console.error("[keepalive] Missing Supabase credentials");
-    return new Response(JSON.stringify({ error: "Missing Supabase credentials" }), {
-      status: 500,
+    return {
+      statusCode: 500,
       headers: { "Content-Type": "application/json" },
-    });
+      body: JSON.stringify({ error: "Missing Supabase credentials" }),
+    };
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey);
@@ -35,42 +36,37 @@ export default async function handler(req: Request, context: Context) {
 
     if (error) {
       console.error("[keepalive] Supabase query error:", error.message);
-      return new Response(JSON.stringify({
-        error: error.message,
-        timestamp: new Date().toISOString()
-      }), {
-        status: 500,
+      return {
+        statusCode: 500,
         headers: { "Content-Type": "application/json" },
-      });
+        body: JSON.stringify({
+          error: error.message,
+          timestamp: new Date().toISOString(),
+        }),
+      };
     }
 
     console.log(`[keepalive] Success! Sessions count: ${count}`);
 
-    return new Response(JSON.stringify({
-      success: true,
-      message: "Supabase pinged successfully",
-      sessions_count: count,
-      timestamp: new Date().toISOString()
-    }), {
-      status: 200,
+    return {
+      statusCode: 200,
       headers: { "Content-Type": "application/json" },
-    });
-
+      body: JSON.stringify({
+        success: true,
+        message: "Supabase pinged successfully",
+        sessions_count: count,
+        timestamp: new Date().toISOString(),
+      }),
+    };
   } catch (err) {
     console.error("[keepalive] Exception:", err);
-    return new Response(JSON.stringify({
-      error: String(err),
-      timestamp: new Date().toISOString()
-    }), {
-      status: 500,
+    return {
+      statusCode: 500,
       headers: { "Content-Type": "application/json" },
-    });
+      body: JSON.stringify({
+        error: String(err),
+        timestamp: new Date().toISOString(),
+      }),
+    };
   }
-}
-
-// Schedule: Run every 5 days at 3:00 AM UTC
-// Cron format: minute hour day-of-month month day-of-week
-// "0 3 */5 * *" = At 03:00 on every 5th day
-export const config: Config = {
-  schedule: "0 3 */5 * *"
 };
