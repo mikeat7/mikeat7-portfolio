@@ -22,30 +22,35 @@ A multi-faceted platform combining:
 
 ### Recent Changes (January-February 2026)
 
-**Supabase Keep-Alive Function** (Feb 5-6):
+**Supabase Keep-Alive System** (Feb 5-6):
 - **Files Added/Modified:**
-  - `netlify/functions/supabase-keepalive.ts` - Scheduled function to prevent Supabase pause
-  - `netlify.toml` - Fixed redirect ordering (wildcard was intercepting specific rules)
-- **What It Does:**
-  - Runs automatically every 5 days via Netlify Scheduled Functions
-  - Makes a lightweight query to Supabase (`SELECT count(*) FROM web_sessions`)
+  - `netlify/functions/supabase-keepalive.ts` - HTTP function to ping Supabase
+  - `.github/workflows/supabase-keepalive.yml` - GitHub Actions cron (every 5 days)
+  - `public/_redirects` - Added agent routes before SPA catch-all
+  - `netlify.toml` - Fixed redirect ordering (removed broken wildcard)
+- **How It Works:**
+  - GitHub Actions cron runs every 5 days at 3 AM UTC (`0 3 */5 * *`)
+  - Curls `https://clarityarmor.com/agent/keepalive`
+  - Netlify function makes a lightweight count query to Supabase `web_sessions`
   - Prevents free-tier Supabase projects from pausing due to inactivity
 - **Manual Testing:**
   - Visit `https://clarityarmor.com/agent/keepalive` to trigger manually
-  - Returns JSON with success status and session count
+  - Or: GitHub repo → Actions tab → "Supabase Keep-Alive" → "Run workflow"
+  - Returns JSON: `{"success": true, "sessions_count": N, "timestamp": "..."}`
 - **Why:** Supabase free tier pauses projects after 7 days of no database activity
-- **Redirect Fix (Feb 6):** The original wildcard redirect (`/agent/*` with `force = true`)
-  was intercepting all agent routes and mapping them to wrong function names (e.g.,
-  `/agent/chat` → `/.netlify/functions/chat` instead of `agent-chat`). Fixed by removing
-  the wildcard and using only the specific, correctly-mapped redirects with `force = true`.
-  The frontend was unaffected because it calls `/.netlify/functions/agent-*` directly.
+- **Architecture Note:** Netlify Scheduled Functions block HTTP access, so we use
+  GitHub Actions cron → Netlify HTTP function instead. This also allows manual testing.
+- **Redirect Fixes (Feb 6):**
+  - Removed broken wildcard redirect (`/agent/*`) that mapped to wrong function names
+  - Added agent routes to `public/_redirects` (processed before `netlify.toml` by Netlify)
+  - Both `_redirects` and `netlify.toml` now have correct specific mappings
 - **Before vs After:**
   | Before | After |
   |--------|-------|
-  | Client-side `runPeriodicCleanup()` in `sessionManager.ts` | Server-side scheduled function |
+  | Client-side `runPeriodicCleanup()` in `sessionManager.ts` | GitHub Actions cron + Netlify function |
   | Only ran when users visited the site | Runs automatically every 5 days |
   | No visitors for 7 days = Supabase pauses | Works regardless of site traffic |
-  | Depended on localStorage throttling | Netlify cron schedule (`0 3 */5 * *`) |
+  | Depended on localStorage throttling | GitHub Actions cron (`0 3 */5 * *`) |
 - **Important:** This function prevents pausing but cannot unpause an already-paused project.
   If Supabase is already paused, unpause manually from the Supabase dashboard first.
 
