@@ -1,10 +1,9 @@
 name: Supabase Keep-Alive
-
 on:
   schedule:
-    # Every 5 days at 3:00 AM UTC
-    - cron: "0 3 */5 * *"
-  workflow_dispatch: # Allow manual trigger from GitHub Actions tab
+    # Runs on days 1,5,9,13,17,21,25,29 — never more than 4 days apart
+    - cron: "0 3 1,5,9,13,17,21,25,29 * *"
+  workflow_dispatch:
 
 jobs:
   ping:
