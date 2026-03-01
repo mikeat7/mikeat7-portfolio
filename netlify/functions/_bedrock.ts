@@ -54,9 +54,11 @@ export const bedrock = new BedrockRuntimeClient(
     : { region }
 );
 
+// Updated from retired claude-3-5-sonnet-20240620-v1:0 to active Haiku 4.5
+// Use BEDROCK_MODEL_ID env var to override without a code deploy
 export const modelId =
   process.env.BEDROCK_MODEL_ID ||
-  "anthropic.claude-3-5-sonnet-20240620-v1:0";
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "https://clarityarmor.com",
@@ -75,4 +77,3 @@ if (process.env.DEBUG_BEDROCK) {
     akPreview: mask(creds.accessKeyId),
   });
 }
-
