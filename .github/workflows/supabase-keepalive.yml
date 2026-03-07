@@ -1,22 +1,48 @@
 name: Supabase Keep-Alive
+
 on:
   schedule:
-    # Runs on days 1,5,9,13,17,21,25,29 — never more than 4 days apart
-    - cron: "0 3 1,5,9,13,17,21,25,29 * *"
+    # every 10 minutes
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase keep-alive endpoint
+      - name: Ping Supabase REST endpoint (keep-alive)
+        env:
+          SUPABASE_URL: https://vcjxwlruvtstyvjytnaj.supabase.co
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          response=$(curl -s -w "\n%{http_code}" https://clarityarmor.com/agent/keepalive)
-          body=$(echo "$response" | head -n -1)
-          status=$(echo "$response" | tail -n 1)
-          echo "Status: $status"
-          echo "Response: $body"
-          if [ "$status" -ne 200 ]; then
-            echo "::error::Keep-alive ping failed with status $status"
-            exit 1
-          fi
+          set -euo pipefail
+
+          url="$SUPABASE_URL/rest/v1/keep_alive_ping?select=id&limit=1"
+          max_attempts=3
+          attempt=1
+
+          until [ $attempt -gt $max_attempts ]; do
+            echo "Attempt $attempt: GET $url"
+            # include both Authorization and apikey headers for compatibility with some proxies
+            response=$(curl -sS -w "\n%{http_code}" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              "$url" || true)
+
+            body=$(echo "$response" | sed '$d' )
+            status=$(echo "$response" | tail -n1)
+
+            echo "HTTP Status: $status"
+            echo "Body: $body"
+
+            if [ "$status" = "200" ]; then
+              echo "Keep-alive succeeded."
+              exit 0
+            fi
+
+            attempt=$((attempt+1))
+            sleep $(( attempt * 2 ))
+          done
+
+          echo "::error::Keep-alive ping failed after $max_attempts attempts."
+          exit 1
