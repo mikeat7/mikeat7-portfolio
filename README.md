@@ -1,3 +1,4 @@
+2026-05-05
 # Truth Serum + Clarity Armor
 
 **Live:** https://clarityarmor.com
