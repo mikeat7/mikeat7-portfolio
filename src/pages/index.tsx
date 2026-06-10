@@ -1,7 +1,7 @@
 // src/pages/index.tsx
 import React from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Beaker, Cpu, ArrowRight, Bot, GraduationCap, Quote, Library, Brain } from "lucide-react";
+import { ShieldCheck, Beaker, Cpu, ArrowRight, Bot, GraduationCap, Quote, Library, Brain, Wrench, User } from "lucide-react";
 import { buildHandshake } from "@/lib/codex-runtime";
 import codex from "@/data/front-end-codex.v0.9.json";
 
@@ -180,9 +180,53 @@ const IndexPage: React.FC = () => {
             </Link>
           </div>
 
-          {/* Row 4: Quotes of Wisdom (smallest) */}
+          {/* Row 4: Tools, About, Quotes (equal size, smallest tier) */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* QUOTES — smallest */}
+            {/* TOOLS */}
+            <Link
+              to="/tools"
+              className="group block rounded-2xl p-4 md:p-5 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
+              style={{
+                background: "#e9eef5",
+                boxShadow:
+                  "inset 5px 5px 10px #cfd6e0, inset -5px -5px 10px #ffffff",
+              }}
+              aria-label="Visit tools"
+            >
+              <div className="flex items-center gap-3">
+                <Wrench className="w-5 h-5" style={{ color: '#ffd700' }} />
+                <h3 className="text-lg font-semibold">Tools</h3>
+              </div>
+              <p className="mt-2 text-sm text-slate-700">Standalone HTML utilities built by the author</p>
+              <div className="mt-3 inline-flex items-center text-sm font-medium text-slate-900">
+                Explore tools
+                <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </Link>
+
+            {/* ABOUT */}
+            <Link
+              to="/about"
+              className="group block rounded-2xl p-4 md:p-5 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"
+              style={{
+                background: "#e9eef5",
+                boxShadow:
+                  "inset 5px 5px 10px #cfd6e0, inset -5px -5px 10px #ffffff",
+              }}
+              aria-label="About the author"
+            >
+              <div className="flex items-center gap-3">
+                <User className="w-5 h-5" style={{ color: '#ffd700' }} />
+                <h3 className="text-lg font-semibold">About the Author</h3>
+              </div>
+              <p className="mt-2 text-sm text-slate-700">The person behind the research</p>
+              <div className="mt-3 inline-flex items-center text-sm font-medium text-slate-900">
+                Meet Mike
+                <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </Link>
+
+            {/* QUOTES */}
             <Link
               to="/wisdom"
               className="group block rounded-2xl p-4 md:p-5 cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none"

@@ -52,6 +52,8 @@ import LibraryIndex from "@/pages/library/index";
 import LibraryBook from "@/pages/library/[slug]";
 import CDMIndex from "@/pages/cdm/index";
 import CDMBook from "@/pages/cdm/[slug]";
+import Tools from "@/pages/tools";
+import About from "@/pages/about";
 import ScrollManager from "@/components/ScrollManager"; // ← use ScrollManager
 
 const App: React.FC = () => {
@@ -110,6 +112,8 @@ const App: React.FC = () => {
           <Route path="/library/:slug" element={<LibraryBook />} />
           <Route path="/cdm" element={<CDMIndex />} />
           <Route path="/cdm/:slug" element={<CDMBook />} />
+          <Route path="/tools" element={<Tools />} />
+          <Route path="/about" element={<About />} />
         </Routes>
       </Router>
     </VXProvider>

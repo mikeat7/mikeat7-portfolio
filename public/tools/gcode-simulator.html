@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Universal G-Code Simulator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
+:root{
+  --bg:#08090c;--panel:#0d0f14;--panel2:#0f1118;--border:#1a1f2a;--border2:#2e3440;
+  --accent:#c8a84b;--accent2:#4bc8c0;--text:#dedad0;--dim:#8a8578;--dim2:#5a5d65;
+  --ok:#4bc870;--warn:#e08030;--bad:#e05050;--info:#6090e0;
+  font-size:13px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;
+  font-size:1.15rem;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── HEADER ────────────────────────────────────────────────── */
+header{padding:9px 18px 8px;border-bottom:1px solid var(--border);
+  background:var(--panel);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.hd-left .title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.15rem;
+  color:var(--accent);letter-spacing:0.14em;}
+.hd-left .sub{font-size:0.82rem;color:var(--dim);margin-top:1px;}
+.hd-right{display:flex;align-items:center;gap:8px;}
+.mode-badge{font-size:0.77rem;padding:2px 9px;border-radius:10px;border:1px solid;
+  font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:0.08em;}
+.mode-generic{color:var(--accent2);border-color:var(--accent2);background:rgba(75,200,192,0.08);}
+.mode-project{color:var(--accent);border-color:var(--accent);background:rgba(200,168,75,0.08);}
+.ver{font-size:0.73rem;color:var(--dim2);}
+
+/* ── LAYOUT ────────────────────────────────────────────────── */
+.main{display:flex;flex:1;overflow:hidden;}
+
+/* ── SIDEBAR ────────────────────────────────────────────────── */
+.sidebar{width:310px;min-width:310px;border-right:1px solid var(--border);
+  background:var(--panel);display:flex;flex-direction:column;overflow:hidden;}
+
+/* Drop zone */
+.dz{margin:10px 10px 6px;border:2px dashed var(--border);border-radius:3px;
+  padding:14px 10px;text-align:center;cursor:pointer;transition:all 0.2s;flex-shrink:0;}
+.dz:hover,.dz.drag{border-color:var(--accent);background:rgba(200,168,75,0.05);}
+.dz input{display:none;}
+.dz-t,.dz-s,.dz-f{pointer-events:none;}
+.dz-t{font-family:'Rajdhani',sans-serif;font-size:1.1rem;color:var(--accent);font-weight:600;}
+.dz-s{font-size:0.82rem;color:var(--dim);}
+.dz-f{font-size:0.86rem;color:var(--accent2);margin-top:4px;word-break:break-all;}
+
+/* Scrollable info area */
+.ip{flex:1;overflow-y:auto;padding:0 10px 10px;display:flex;flex-direction:column;gap:0;}
+
+/* Section headers */
+.sec{border-bottom:1px solid var(--border);padding:8px 0 7px;margin:0;}
+.sec-t{font-size:0.76rem;color:var(--accent);letter-spacing:0.18em;margin-bottom:5px;
+  display:flex;align-items:center;justify-content:space-between;}
+.sec-toggle{font-size:1.0rem;color:var(--dim);cursor:pointer;padding:1px 5px;
+  border:1px solid var(--border2);border-radius:2px;transition:all 0.15s;}
+.sec-toggle:hover{color:var(--accent2);border-color:var(--accent2);}
+
+/* Info rows */
+.row{display:flex;justify-content:space-between;align-items:baseline;
+  font-size:0.84rem;margin-bottom:2px;gap:4px;}
+.lbl{color:var(--dim);flex-shrink:0;}
+.val{color:var(--accent2);text-align:right;}
+.val.ok{color:var(--ok);}
+.val.bad{color:var(--bad);}
+.val.warn{color:var(--warn);}
+.val.info{color:var(--info);}
+/* Dual unit display */
+.dual{display:flex;gap:4px;align-items:baseline;}
+.mm{color:var(--accent2);}
+.inch{color:var(--dim);font-size:1.0rem;}
+
+/* Summary box */
+.summary-box{background:var(--panel2);border:1px solid var(--border2);border-radius:2px;
+  padding:7px 8px;margin:6px 0 4px;font-size:0.84rem;line-height:1.7;color:var(--text);}
+.summary-box strong{color:var(--accent);font-family:'Rajdhani',sans-serif;font-size:0.90rem;
+  letter-spacing:0.06em;}
+
+/* Verdict banner */
+.verdict{padding:6px 8px;border-radius:2px;border:1px solid;margin:0 0 6px;
+  font-family:'Rajdhani',sans-serif;font-weight:600;font-size:1.0rem;
+  letter-spacing:0.06em;text-align:center;}
+.verdict-ok{color:var(--ok);border-color:var(--ok);background:rgba(75,200,112,0.08);}
+.verdict-warn{color:var(--warn);border-color:var(--warn);background:rgba(224,128,48,0.08);}
+.verdict-bad{color:var(--bad);border-color:var(--bad);background:rgba(224,80,80,0.08);}
+.verdict-none{color:var(--dim);border-color:var(--border2);background:transparent;
+  font-family:'Share Tech Mono',monospace;font-size:0.84rem;font-weight:400;}
+
+/* Checks */
+.check-item{display:flex;align-items:flex-start;gap:5px;font-size:0.82rem;
+  margin-bottom:3px;line-height:1.45;}
+.ci-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:2px;}
+
+/* Auto-detect status */
+#auto-status{display:none;font-size:0.77rem;padding:4px 7px;margin:4px 0 2px;
+  border-radius:2px;border:1px solid;line-height:1.6;}
+
+/* Advanced params (collapsible) */
+#adv-params{display:none;}
+.params-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:5px;}
+.param{display:flex;flex-direction:column;gap:2px;}
+.param label{font-size:1.0rem;color:var(--dim);}
+.param input{background:var(--bg);border:1px solid var(--border);color:var(--accent2);
+  font-family:'Share Tech Mono',monospace;font-size:0.88rem;padding:3px 5px;
+  border-radius:2px;width:100%;outline:none;}
+.param input:focus{border-color:var(--accent);}
+.param-hint{font-size:0.72rem;color:var(--dim);}
+.preset-row{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:5px;}
+.preset{padding:2px 6px;font-family:'Share Tech Mono',monospace;font-size:0.76rem;
+  background:var(--bg);border:1px solid var(--border2);color:var(--dim);cursor:pointer;
+  border-radius:2px;transition:all 0.15s;}
+.preset:hover{border-color:var(--accent2);color:var(--accent2);}
+.apply-btn{width:100%;padding:5px;background:rgba(200,168,75,0.1);border:1px solid var(--accent);
+  color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:0.86rem;
+  cursor:pointer;border-radius:2px;margin-top:2px;}
+.apply-btn:hover{background:rgba(200,168,75,0.2);}
+
+/* Layer toggles */
+.layer-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-bottom:4px;}
+.lb{padding:3px 4px;font-family:'Share Tech Mono',monospace;font-size:0.76rem;
+  background:var(--bg);border:1px solid var(--border2);color:var(--dim);cursor:pointer;
+  border-radius:2px;transition:all 0.15s;text-align:center;}
+.lb.on{border-color:var(--accent2);color:var(--accent2);background:rgba(75,200,192,0.07);}
+
+/* Depth legend */
+.dl{display:flex;height:8px;border-radius:2px;overflow:hidden;margin:3px 0;}
+.dlb{display:flex;justify-content:space-between;font-size:0.72rem;color:var(--dim);}
+
+/* Legend */
+.lr{display:flex;align-items:center;gap:5px;font-size:0.77rem;color:var(--dim);margin-bottom:2px;}
+.sw{width:16px;height:5px;border-radius:1px;flex-shrink:0;}
+
+/* Log */
+#log{font-size:0.76rem;color:var(--dim);max-height:80px;overflow-y:auto;
+  border:1px solid var(--border);padding:4px;border-radius:2px;margin-top:3px;line-height:1.6;}
+.lo{color:var(--ok);}.lw{color:var(--warn);}.lb2{color:var(--bad);}
+
+.rbtn{width:100%;padding:5px;background:rgba(200,168,75,0.08);border:1px solid var(--accent);
+  color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:0.85rem;
+  cursor:pointer;border-radius:2px;margin-top:4px;}
+.rbtn:hover{background:rgba(200,168,75,0.18);}
+
+/* ── CANVAS AREA ────────────────────────────────────────────── */
+.cw{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.ca{flex:1;display:flex;align-items:center;justify-content:center;
+  padding:8px;position:relative;overflow:hidden;}
+canvas{border:1px solid var(--border);}
+.ov{position:absolute;top:12px;left:50%;transform:translateX(-50%);
+  font-size:0.95rem;font-family:'Rajdhani',sans-serif;font-weight:600;
+  letter-spacing:0.1em;padding:3px 14px;border-radius:2px;pointer-events:none;
+  border:1px solid;white-space:nowrap;}
+.ov-ok{color:var(--ok);border-color:var(--ok);background:rgba(75,200,112,0.1);}
+.ov-bad{color:var(--bad);border-color:var(--bad);background:rgba(224,80,80,0.1);}
+.ov-warn{color:var(--warn);border-color:var(--warn);background:rgba(224,128,48,0.1);}
+.ov-none{display:none;}
+.cb{border-top:1px solid var(--border);padding:3px 12px;font-size:0.77rem;
+  color:var(--dim);display:flex;gap:20px;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd-left">
+    <div class="title">UNIVERSAL G-CODE SIMULATOR</div>
+    <div class="sub">Drop any G-code file · automatic analysis · plain English · dual units mm / inch · no setup required</div>
+  </div>
+  <div class="hd-right">
+    <div class="mode-badge mode-generic" id="mode-badge">GENERIC MODE</div>
+    <div class="ver">v4 · MAD Project</div>
+  </div>
+</header>
+
+<div class="main">
+  <!-- ── SIDEBAR ── -->
+  <div class="sidebar">
+    <!-- Drop zone -->
+    <div class="dz" id="dz">
+      <input type="file" id="fi" accept=".gcode,.nc,.cnc,.txt,.tap,.ngc">
+      <div class="dz-t">DROP G-CODE HERE</div>
+      <div class="dz-s">.gcode · .nc · .tap · .ngc · any CNC file</div>
+      <div class="dz-f" id="fn">no file loaded</div>
+    </div>
+
+    <div class="ip">
+
+      <!-- VERDICT -->
+      <div class="verdict verdict-none" id="verdict">Load a G-code file to begin analysis</div>
+
+      <!-- PLAIN ENGLISH SUMMARY -->
+      <div class="sec" id="sec-summary" style="display:none">
+        <div class="sec-t">WHAT THIS FILE DOES</div>
+        <div class="summary-box" id="summary-text">—</div>
+      </div>
+
+      <!-- FILE INFO -->
+      <div class="sec">
+        <div class="sec-t">FILE INFO</div>
+        <div class="row"><span class="lbl">File</span>
+          <span class="val" id="i-fn" style="max-width:155px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</span></div>
+        <div class="row"><span class="lbl">Lines / Moves</span>
+          <span class="val" id="i-lm">—</span></div>
+        <div class="row"><span class="lbl">Cutting arcs</span>
+          <span class="val" id="i-ar">—</span></div>
+        <div class="row"><span class="lbl">Cutting linears</span>
+          <span class="val" id="i-li">—</span></div>
+        <div class="row"><span class="lbl">Rapids</span>
+          <span class="val" id="i-rp">—</span></div>
+        <div class="row"><span class="lbl">Max arc radius</span>
+          <span class="val" id="i-mr">—</span></div>
+        <div class="row"><span class="lbl">Feed rates</span>
+          <span class="val" id="i-fr">—</span></div>
+        <div class="row"><span class="lbl">File type detected</span>
+          <span class="val" id="i-ft">—</span></div>
+      </div>
+
+      <!-- DIMENSIONS — dual units -->
+      <div class="sec">
+        <div class="sec-t">DIMENSIONS <span style="font-size:0.72rem;color:var(--dim)">mm · inch</span></div>
+        <div class="row"><span class="lbl">XY extent</span>
+          <span class="dual"><span class="mm" id="d-xy-mm">—</span><span class="inch" id="d-xy-in"></span></span></div>
+        <div class="row"><span class="lbl">Z depth range</span>
+          <span class="dual"><span class="mm" id="d-z-mm">—</span><span class="inch" id="d-z-in"></span></span></div>
+        <div class="row"><span class="lbl">Deepest cut</span>
+          <span class="dual"><span class="mm" id="d-deep-mm">—</span><span class="inch" id="d-deep-in"></span></span></div>
+        <div class="row"><span class="lbl">Shallowest pocket</span>
+          <span class="dual"><span class="mm" id="d-shallow-mm">—</span><span class="inch" id="d-shallow-in"></span></span></div>
+        <div class="row"><span class="lbl">Est. material thickness</span>
+          <span class="dual"><span class="mm" id="d-mat-mm">—</span><span class="inch" id="d-mat-in"></span></span></div>
+        <div class="row"><span class="lbl">Est. bit diameter</span>
+          <span class="dual"><span class="mm" id="d-bit-mm">—</span><span class="inch" id="d-bit-in"></span></span></div>
+      </div>
+
+      <!-- UNIVERSAL SAFETY CHECKS -->
+      <div class="sec">
+        <div class="sec-t">SAFETY CHECKS</div>
+        <div id="chk-universal">
+          <div class="check-item"><div class="ci-dot" style="background:var(--dim)"></div>
+            <span style="color:var(--dim)">Load a file to run checks</span></div>
+        </div>
+      </div>
+
+      <!-- AUTO-DETECT STATUS -->
+      <div id="auto-status"></div>
+
+      <!-- DISPLAY LAYERS -->
+      <div class="sec">
+        <div class="sec-t">DISPLAY LAYERS</div>
+        <div class="layer-grid">
+          <button class="lb on" id="l-area"  onclick="tog('area')" >Cut Area</button>
+          <button class="lb on" id="l-arcs"  onclick="tog('arcs')" >Arcs</button>
+          <button class="lb on" id="l-lins"  onclick="tog('lins')" >Linears</button>
+          <button class="lb on" id="l-bnds"  onclick="tog('bnds')" >Boundary</button>
+          <button class="lb"    id="l-raps"  onclick="tog('raps')" >Rapids</button>
+          <button class="lb on" id="l-viol"  onclick="tog('viol')" >Violations</button>
+        </div>
+      </div>
+
+      <!-- DEPTH COLOUR -->
+      <div class="sec">
+        <div class="sec-t">DEPTH COLOUR</div>
+        <div class="dl" id="dl"></div>
+        <div class="dlb"><span id="dl0">—</span><span>surface</span></div>
+        <div style="font-size:1.0rem;color:var(--dim);margin-top:2px">Green=shallow (near surface) · Gold=mid · Red=deepest cut</div>
+      </div>
+
+      <!-- LEGEND -->
+      <div class="sec">
+        <div class="sec-t">LEGEND</div>
+        <div class="lr"><div class="sw" style="background:linear-gradient(90deg,#4bc8c0,#c8a84b,#e05050)"></div>Depth colour — actual cut sweep width</div>
+        <div class="lr"><div class="sw" style="background:rgba(200,168,75,0.55)"></div>Arc limit boundary (dashed)</div>
+        <div class="lr"><div class="sw" style="background:rgba(224,80,80,0.7);border-radius:50%"></div>Violation — arc exceeds boundary</div>
+        <div class="lr"><div class="sw" style="background:rgba(224,80,80,0.2)"></div>Rapids (non-cutting moves)</div>
+        <div class="lr"><div class="sw" style="background:rgba(200,168,75,0.6)"></div>Profile cuts (linear, gold)</div>
+      </div>
+
+      <!-- ADVANCED / PROJECT-SPECIFIC (collapsed by default) -->
+      <div class="sec">
+        <div class="sec-t">PROJECT-SPECIFIC CHECKS
+          <span class="sec-toggle" id="adv-toggle" onclick="toggleAdv()">▶ show</span>
+        </div>
+        <div id="adv-params">
+          <div style="font-size:0.76rem;color:var(--dim);margin-bottom:5px;line-height:1.5">
+            For FOL magnet arrays or other known projects. Auto-filled when recognized.
+          </div>
+          <div class="params-grid">
+            <div class="param">
+              <label>Bit dia (mm)</label>
+              <input type="number" id="p-bit" value="2.5" step="0.1" min="0.1" max="50">
+              <span class="param-hint" id="h-bit">e.g. 2.5 / 3.175</span>
+            </div>
+            <div class="param">
+              <label>Material thickness (mm)</label>
+              <input type="number" id="p-mat" value="15.875" step="0.125" min="1" max="100">
+              <span class="param-hint" id="h-mat">e.g. 15.875 = 5/8″</span>
+            </div>
+            <div class="param">
+              <label>Pocket depth (mm)</label>
+              <input type="number" id="p-pkt" value="8.4" step="0.1" min="0.1" max="99">
+              <span class="param-hint" id="h-pkt">magnet flush</span>
+            </div>
+            <div class="param">
+              <label>Recess depth (mm)</label>
+              <input type="number" id="p-rec" value="9.525" step="0.125" min="0.1" max="99">
+              <span class="param-hint" id="h-rec">3/8″ = 9.525</span>
+            </div>
+            <div class="param">
+              <label>Arc limit (mm)</label>
+              <input type="number" id="p-arc" value="83.5" step="0.5" min="1" max="500">
+              <span class="param-hint" id="h-arc">hex apothem</span>
+            </div>
+            <div class="param">
+              <label>Tolerance (mm)</label>
+              <input type="number" id="p-tol" value="0.15" step="0.05" min="0.01" max="2">
+              <span class="param-hint">depth tolerance</span>
+            </div>
+          </div>
+          <div class="preset-row">
+            <button class="preset" onclick="setPreset('fol-carrier')">FOL Carrier</button>
+            <button class="preset" onclick="setPreset('fol-cell')">FOL Cell</button>
+            <button class="preset" onclick="setPreset('half-inch')">1/2″</button>
+            <button class="preset" onclick="setPreset('three-quarter')">3/4″</button>
+            <button class="preset" onclick="setPreset('metric18')">18mm MDF</button>
+          </div>
+          <button class="apply-btn" onclick="reparse()">▶ APPLY &amp; SIMULATE</button>
+          <div id="chk-project" style="margin-top:6px;"></div>
+        </div>
+      </div>
+
+      <!-- LOG -->
+      <div class="sec">
+        <div class="sec-t">LOG</div>
+        <div id="log">Ready — drop any G-code file</div>
+      </div>
+      <button class="rbtn" onclick="render(getParams())">RE-RENDER</button>
+    </div>
+  </div>
+
+  <!-- ── CANVAS ── -->
+  <div class="cw">
+    <div class="ca" style="flex-direction:column;gap:6px;align-items:stretch;">
+      <!-- Top view (main) -->
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;" id="top-wrap">
+        <canvas id="sim"></canvas>
+        <div class="ov ov-none" id="ov"></div>
+      </div>
+      <!-- Side elevation view -->
+      <div style="flex-shrink:0;height:110px;display:flex;align-items:stretch;padding:0 8px 4px;gap:6px;" id="elev-wrap">
+        <div style="display:flex;flex-direction:column;justify-content:space-between;font-size:0.72rem;color:var(--dim);text-align:right;padding:4px 4px 14px 0;min-width:52px;" id="elev-labels"></div>
+        <div style="flex:1;position:relative;">
+          <canvas id="elev" style="width:100%;height:100%;border:1px solid var(--border);border-radius:2px;"></canvas>
+          <div style="position:absolute;top:3px;left:6px;font-size:0.72rem;color:var(--accent);font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:0.1em;">SIDE ELEVATION — DEPTH PROFILE</div>
+        </div>
+      </div>
+    </div>
+    <div class="cb">
+      <span id="coords">hover for coordinates (mm · inch)</span>
+      <span id="dh" style="color:var(--dim)"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONSTANTS & STATE ──────────────────────────────────────────
+const MM2IN = 1/25.4;
+function mm(v){ return v==null?'—':`${v.toFixed(2)}mm`; }
+function inch(v){ return v==null?'':`(${(v*MM2IN).toFixed(3)}")`; }
+function dual(el_mm, el_in, v){
+  if(el_mm) el_mm.textContent = v!=null ? `${v.toFixed(2)}mm` : '—';
+  if(el_in) el_in.textContent = v!=null ? `(${(v*MM2IN).toFixed(3)}")` : '';
+}
+
+let moves=[], minZ=0, viols=0, rawText='', isAdv=false;
+let L={area:true,arcs:true,lins:true,bnds:true,raps:false,viol:true};
+
+const PRESETS={
+  'fol-carrier':{bit:2.5,mat:15.875,pkt:9.525,rec:9.525,arc:83.5,tol:0.15},
+  'fol-cell':   {bit:2.5,mat:15.875,pkt:8.4,  rec:8.4,  arc:83.5,tol:0.15},
+  'half-inch':  {bit:3.175,mat:12.7, pkt:8.0, rec:6.35, arc:100, tol:0.2},
+  'three-quarter':{bit:3.175,mat:19.05,pkt:12.0,rec:9.525,arc:100,tol:0.2},
+  'metric18':   {bit:3.0,mat:18.0,  pkt:10.0, rec:9.0,  arc:100, tol:0.2},
+};
+
+function setPreset(n){
+  const p=PRESETS[n]; if(!p) return;
+  ['bit','mat','pkt','rec','arc','tol'].forEach(k=>{
+    const el=document.getElementById('p-'+k);
+    if(el) el.value=p[k];
+    const h=document.getElementById('h-'+k);
+    if(h){h.textContent=`preset: ${n}`;h.style.color='var(--accent)';}
+  });
+  if(rawText) reparse();
+}
+
+function getParams(){
+  return{
+    bitD:  parseFloat(document.getElementById('p-bit').value)||2.5,
+    matT:  parseFloat(document.getElementById('p-mat').value)||15.875,
+    pktD:  parseFloat(document.getElementById('p-pkt').value)||8.4,
+    recD:  parseFloat(document.getElementById('p-rec').value)||9.525,
+    arcLim:parseFloat(document.getElementById('p-arc').value)||83.5,
+    tol:   parseFloat(document.getElementById('p-tol').value)||0.15,
+    toolR: (parseFloat(document.getElementById('p-bit').value)||2.5)/2,
+  };
+}
+
+function toggleAdv(){
+  isAdv=!isAdv;
+  document.getElementById('adv-params').style.display=isAdv?'block':'none';
+  document.getElementById('adv-toggle').textContent=isAdv?'▼ hide':'▶ show';
+}
+
+// ── FILE LOADING ───────────────────────────────────────────────
+function loadText(text,name){
+  rawText=text;
+  document.getElementById('fn').textContent=name;
+  document.getElementById('i-fn').textContent=name;
+  autoDetect(text);
+  parse(text,getParams());
+}
+
+// ── FILE INPUT & DROP ZONE ─────────────────────────────────────
+const dzEl = document.getElementById('dz');
+const fiEl = document.getElementById('fi');
+
+// Click anywhere in drop zone opens file picker
+dzEl.addEventListener('click', e => {
+  // Don't re-trigger if the input itself was clicked
+  if(e.target === fiEl) return;
+  fiEl.value = ''; // reset so same file can be re-loaded
+  fiEl.click();
+});
+
+fiEl.addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => loadText(ev.target.result, f.name);
+  r.readAsText(f);
+});
+
+// Drag and drop
+dzEl.addEventListener('dragenter', e => { e.preventDefault(); dzEl.classList.add('drag'); });
+dzEl.addEventListener('dragover',  e => { e.preventDefault(); dzEl.classList.add('drag'); });
+dzEl.addEventListener('dragleave', e => { dzEl.classList.remove('drag'); });
+dzEl.addEventListener('drop', e => {
+  e.preventDefault();
+  dzEl.classList.remove('drag');
+  const f = e.dataTransfer.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => loadText(ev.target.result, f.name);
+  r.readAsText(f);
+});
+
+function reparse(){if(rawText)parse(rawText,getParams());}
+
+// ── G-CODE PARSER ──────────────────────────────────────────────
+function gc(line,letter){
+  const m=line.match(new RegExp(letter+'([+-]?\\d+\\.?\\d*)','i'));
+  return m?parseFloat(m[1]):null;
+}
+
+function parse(text,P){
+  const log=document.getElementById('log');
+  log.innerHTML='';
+  const addLog=(msg,c='')=>{log.innerHTML+=`<div class="${c}">${msg}</div>`;log.scrollTop=9999;};
+
+  const lines=text.split('\n');
+  moves=[];
+  let x=0,y=0,z=0;
+  const allZ=[], feedRates=new Set();
+
+  // Section detection
+  let profileLineIdx=-1;
+  lines.forEach((raw,i)=>{
+    const u=raw.trim().toUpperCase();
+    if(u.includes('CARRIER PROFILE START')||u.includes('; HEX PROFILE')||
+       u.includes('; RECT PROFILE')||u.includes('; BOARD PROFILE'))
+      profileLineIdx=i;
+  });
+
+  // Heuristic fallback
+  if(profileLineIdx<0){
+    let px=0,py=0,pz=0;
+    for(let i=0;i<lines.length;i++){
+      const line=lines[i].trim().toUpperCase();
+      if(!line||line.startsWith(';'))continue;
+      const nx=gc(line,'X')??px,ny=gc(line,'Y')??py,nz=gc(line,'Z')??pz;
+      if(line.match(/^G[01]\b/)){
+        if(Math.sqrt(nx*nx+ny*ny)>180&&nz<0){profileLineIdx=i;break;}
+        px=nx;py=ny;pz=nz;
+      }
+    }
+  }
+
+  lines.forEach((raw,i)=>{
+    const line=raw.trim().toUpperCase();
+    if(!line||line.startsWith(';'))return;
+    const nx=gc(line,'X')??x,ny=gc(line,'Y')??y,nz=gc(line,'Z')??z;
+    const I=gc(line,'I')??0,J=gc(line,'J')??0;
+    const inProfile=profileLineIdx>0&&i>profileLineIdx;
+    const sec=inProfile?'profile':'pocket';
+    const f=gc(line,'F');if(f&&f>0)feedRates.add(Math.round(f));
+
+    if(line.match(/^G0\b/)){
+      moves.push({t:'rapid',x1:x,y1:y,z1:z,x2:nx,y2:ny,z2:nz,sec});
+    }else if(line.match(/^G1\b/)){
+      const cut=nz<0||z<0;
+      moves.push({t:'linear',x1:x,y1:y,z1:z,x2:nx,y2:ny,z2:nz,sec,cut});
+      if(cut)allZ.push(nz<0?nz:z);
+    }else if(line.match(/^G[23]\b/)){
+      const acx=x+I,acy=y+J,ar=Math.sqrt(I*I+J*J);
+      const cut=z<0||nz<0;
+      moves.push({t:'arc',x1:x,y1:y,z1:z,x2:nx,y2:ny,z2:nz,cx:acx,cy:acy,r:ar,sec,cut});
+      if(cut)allZ.push(z<0?z:nz);
+    }
+    x=nx;y=ny;z=nz;
+  });
+
+  minZ=allZ.length?Math.min(...allZ):0;
+
+  const cArcs=moves.filter(m=>m.t==='arc'&&m.cut);
+  const cLins=moves.filter(m=>m.t==='linear'&&m.cut);
+  const rapids=moves.filter(m=>m.t==='rapid');
+  const maxArcR=cArcs.length?Math.max(...cArcs.map(m=>m.r)):0;
+  const allX=moves.flatMap(m=>[m.x1,m.x2]),allY=moves.flatMap(m=>[m.y1,m.y2]);
+  const extW=Math.max(...allX)-Math.min(...allX),extH=Math.max(...allY)-Math.min(...allY);
+
+  // Section depths
+  const isCarrierFile=profileLineIdx>=0;
+  const isRaster=cArcs.length===0&&isCarrierFile;
+  const pocketMoves=moves.filter(m=>m.sec==='pocket');
+  const profileMoves=moves.filter(m=>m.sec==='profile');
+  const pocketZ=pocketMoves.filter(m=>m.cut&&m.t!=='rapid').flatMap(m=>[m.z1,m.z2]).filter(z=>z<0);
+  const profileZ=profileMoves.filter(m=>m.cut&&m.t!=='rapid').flatMap(m=>[m.z1,m.z2]).filter(z=>z<0);
+  const maxPocketZ=pocketZ.length?Math.min(...pocketZ):0;
+  const maxProfileZ=profileZ.length?Math.min(...profileZ):0;
+  const effectivePocketZ=isRaster?(pocketZ.length?Math.min(...pocketZ):0):maxPocketZ;
+  const isCarrier=isCarrierFile&&(Math.abs(effectivePocketZ+P.recD)<2.0||(isRaster&&effectivePocketZ!==0));
+
+  // Pocket depth clusters (for generic description)
+  const uniqueZ=[...new Set(allZ.map(z=>Math.abs(Math.round(z*100)/100)))].sort((a,b)=>a-b);
+  const matGuess=P.matT||15.875;
+  // Section-based pocket depth: use pocketMoves section (before profile marker)
+  // This correctly excludes profile pass depths (e.g. -10mm board profile)
+  // which appear in uniqueZ but belong to a different cutting section
+  const pocketDepths=uniqueZ.filter(z=>z<matGuess*0.75); // display fallback only
+  const deepestPocket=pocketZ.length
+    ? Math.abs(Math.min(...pocketZ))   // from section split — excludes profile passes
+    : (pocketDepths.length ? Math.max(...pocketDepths) : 0);
+  const profileArcs=profileMoves.filter(m=>m.t==='arc'&&m.cut);
+
+  // Feed rate range
+  const frArr=[...feedRates].sort((a,b)=>a-b);
+  const frText=frArr.length?`${frArr[0]}–${frArr[frArr.length-1]} mm/min`:'not specified';
+
+  // File type label
+  let ftLabel='unknown';
+  if(isRaster)ftLabel='raster carrier (no arcs)';
+  else if(isCarrier)ftLabel='arc carrier';
+  else if(cArcs.length>50&&cLins.length>50)ftLabel='pocket/cell file';
+  else if(cArcs.length===0)ftLabel='contour/profile only';
+  else if(cArcs.length>0&&cLins.length>0)ftLabel='mixed pocket + profile';
+
+  // ── UPDATE FILE INFO PANEL ────────────────────────────────────
+  const v=id=>document.getElementById(id);
+  v('i-lm').textContent=`${lines.length} / ${moves.length}`;
+  v('i-ar').textContent=cArcs.length;
+  v('i-li').textContent=cLins.length;
+  v('i-rp').textContent=rapids.length;
+  v('i-mr').textContent=maxArcR>0?`${maxArcR.toFixed(2)}mm (${(maxArcR*MM2IN).toFixed(3)}")`:'none';
+  v('i-fr').textContent=frText;
+  v('i-ft').textContent=ftLabel;
+
+  // ── DIMENSIONS ───────────────────────────────────────────────
+  dual(v('d-xy-mm'),v('d-xy-in'),extW&&extH?(extW+extH)/2:null);
+  v('d-xy-mm').textContent=extW&&extH?`${extW.toFixed(1)}×${extH.toFixed(1)}mm`:'—';
+  v('d-xy-in').textContent=extW&&extH?`(${(extW*MM2IN).toFixed(2)}"×${(extH*MM2IN).toFixed(2)}")`:'';
+  v('d-z-mm').textContent=minZ?`${minZ.toFixed(3)} to 0mm`:'—';
+  v('d-z-in').textContent=minZ?`(${(minZ*MM2IN).toFixed(4)}" to 0")`:'';
+  dual(v('d-deep-mm'),v('d-deep-in'),minZ?Math.abs(minZ):null);
+  dual(v('d-shallow-mm'),v('d-shallow-in'),deepestPocket||null);
+  // Material thickness estimate
+  const deepestAll=Math.abs(minZ);
+  const stdMat=[6.0,6.35,9.0,9.525,12.0,12.7,15.875,18.0,19.05,25.4];
+  const nearestMat=stdMat.reduce((a,b)=>Math.abs(b-deepestAll)<Math.abs(a-deepestAll)?b:a);
+  const matEst=Math.abs(nearestMat-deepestAll)<1.5?nearestMat:deepestAll;
+  dual(v('d-mat-mm'),v('d-mat-in'),deepestAll>0?matEst:null);
+  // Bit diameter estimate from smallest arc
+  const arcR=cArcs.map(m=>m.r).filter(r=>r>0.3);
+  const bitEst=arcR.length?Math.round(Math.min(...arcR)*2*10)/10:null;
+  dual(v('d-bit-mm'),v('d-bit-in'),bitEst);
+
+  // ── UNIVERSAL SAFETY CHECKS ───────────────────────────────────
+  runUniversalChecks({
+    moves,cArcs,cLins,rapids,maxArcR,minZ,
+    profileArcs,isCarrierFile,isRaster,
+    extW,extH,frArr,allZ,uniqueZ,deepestPocket,
+    pocketDepths,matGuess,profileZ,pocketZ,P
+  });
+
+  // ── PROJECT-SPECIFIC CHECKS (only if adv panel open) ──────────
+  if(isAdv){
+    runProjectChecks(P,cArcs,maxArcR,effectivePocketZ,maxProfileZ,profileArcs.length,isCarrier,isRaster);
+  }
+
+  // ── PLAIN ENGLISH SUMMARY ─────────────────────────────────────
+  buildSummary({ftLabel,lines,moves,cArcs,cLins,rapids,extW,extH,
+    deepestPocket,matEst,bitEst,frArr,isCarrierFile,isRaster,
+    pocketDepths,uniqueZ});
+
+  // ── DEPTH LEGEND ──────────────────────────────────────────────
+  buildLegend();
+
+  addLog(`${lines.length} lines · ${moves.length} moves · ${cArcs.length} arcs · max depth ${Math.abs(minZ).toFixed(2)}mm (${(Math.abs(minZ)*MM2IN).toFixed(3)}")`); 
+  if(viols)addLog(`${viols} violation(s) found`,'lb2');
+  else addLog('Universal checks passed ✓','lo');
+
+  render(P);
+  renderElevation();
+}
+
+// ── PLAIN ENGLISH SUMMARY ─────────────────────────────────────
+function buildSummary({ftLabel,lines,moves,cArcs,cLins,rapids,extW,extH,
+    deepestPocket,matEst,bitEst,frArr,isCarrierFile,isRaster,pocketDepths,uniqueZ}){
+  const sec=document.getElementById('sec-summary');
+  const box=document.getElementById('summary-text');
+  sec.style.display='block';
+
+  const pktCount=cArcs.length>0?Math.round(cArcs.length/6):0; // rough pocket estimate
+  const hasProfile=isCarrierFile;
+  const matStr=matEst?`${matEst.toFixed(2)}mm (${(matEst*MM2IN).toFixed(3)}")`:' unknown thickness';
+  const bitStr=bitEst?`~${bitEst}mm (${(bitEst*MM2IN).toFixed(3)}")`:' unknown dia';
+  const frStr=frArr.length?`${frArr[0]}–${frArr[frArr.length-1]} mm/min`:'unspecified feed';
+  const extStr=extW&&extH?`${extW.toFixed(0)}×${extH.toFixed(0)}mm (${(extW*MM2IN).toFixed(1)}"×${(extH*MM2IN).toFixed(1)}")`:' unknown extent';
+
+  let parts=[];
+  if(isRaster)
+    parts.push(`Raster-clears ${extStr} to ${deepestPocket.toFixed(2)}mm (${(deepestPocket*MM2IN).toFixed(3)}") deep in parallel passes.`);
+  else if(cArcs.length>10)
+    parts.push(`Contains circular pocket operations — approximately ${Math.min(pktCount,99)} pockets, deepest ${deepestPocket.toFixed(2)}mm (${(deepestPocket*MM2IN).toFixed(3)}").`);
+  else if(cLins.length>5)
+    parts.push(`Linear cutting operations over ${extStr}.`);
+
+  if(hasProfile)
+    parts.push(`Outer profile cut separates the finished piece from stock.`);
+  if(matEst)
+    parts.push(`Material thickness estimated ${matStr}; bit ~${bitStr}.`);
+  if(frArr.length)
+    parts.push(`Feed rates: ${frStr}.`);
+  parts.push(`Work zero: center of stock, top surface — verify before running.`);
+
+  box.innerHTML=parts.map(p=>`<span>${p}</span>`).join('<br>');
+}
+
+// ── UNIVERSAL SAFETY CHECKS ───────────────────────────────────
+function runUniversalChecks(d){
+  viols=0;
+  const el=document.getElementById('chk-universal');
+  el.innerHTML='';
+  const issues=[];
+
+  function add(label,pass,detail='',explain=''){
+    const col=pass===null?'var(--dim)':pass?'var(--ok)':'var(--bad)';
+    const icon=pass===null?'○':pass?'✓':'✗';
+    el.innerHTML+=`<div class="check-item">
+      <div class="ci-dot" style="background:${col}"></div>
+      <span style="color:${col}">${icon} ${label}${detail?` — <em style="color:var(--dim)">${detail}</em>`:''}
+      ${explain?`<br><span style="color:var(--dim);font-size:0.73rem;opacity:0.8">${explain}</span>`:''}</span>
+    </div>`;
+    if(pass===false){viols++;issues.push(label);}
+  }
+
+  // 1. Rapid moves at or into material (G0 destination Z<0)
+  // Two cases: (a) true plunge — z1>0 and z2<0, (b) lateral at depth — z1<0 and z2<0 (no Z change)
+  // Both are flagged: a plunge is a crash risk, a lateral rapid drags the bit across the surface
+  const dangerousRapids = d.rapids.filter(m => m.z2 < -0.5);
+  const truePlunges     = dangerousRapids.filter(m => m.z1 > -0.5);   // was safe, now dangerous
+  const lateralAtDepth  = dangerousRapids.filter(m => m.z1 < -0.5);   // already at depth, lateral move
+
+  let rapidDetail = 'clean ✓';
+  let rapidExplain = '';
+  if(dangerousRapids.length) {
+    const parts = [];
+    if(truePlunges.length)    parts.push(`${truePlunges.length} plunge(s) into material at rapid speed`);
+    if(lateralAtDepth.length) parts.push(`${lateralAtDepth.length} lateral rapid(s) while bit is at cut depth`);
+    rapidDetail = parts.join(' · ');
+    rapidExplain = [
+      truePlunges.length    ? 'A plunge rapid drives the bit into material at full speed — can break the bit.' : '',
+      lateralAtDepth.length ? 'A lateral rapid while at cut depth drags the bit across the surface at full speed — check that the tool retracts before repositioning.' : '',
+    ].filter(Boolean).join(' ');
+  }
+  add('No rapids at cut depth', dangerousRapids.length===0, rapidDetail, rapidExplain);
+
+  // 2. Cuts below Z=0 at all (confirms something actually gets cut)
+  const hasCuts=d.allZ.some(z=>z<-0.1);
+  add('File has cutting moves',hasCuts,
+    hasCuts?`deepest ${Math.abs(d.minZ).toFixed(2)}mm (${(Math.abs(d.minZ)*MM2IN).toFixed(3)}")`:'no Z<0 cuts found — file may only contain rapids',
+    hasCuts?'':'If you expect this file to cut material, check that Z coordinates are negative (below work zero).');
+
+  // 3. Arc radius consistency (I/J errors cause controller alarms)
+  const badArcs=d.cArcs.filter(m=>{
+    const dist=Math.sqrt((m.x2-m.cx)**2+(m.y2-m.cy)**2);
+    return Math.abs(dist-m.r)>0.5&&m.r>1;
+  });
+  add('Arc endpoints consistent',badArcs.length===0,
+    badArcs.length?`${badArcs.length} arc(s) with I/J mismatch >0.5mm`:'all arcs valid ✓',
+    badArcs.length?'Arcs where start and end distances to the center differ cause controller alarms. The file may not run at all.':'');
+
+  // 4. Feed rate on all cutting moves
+  const cutWithNoFeed=d.cLins.filter(m=>m.z2<0&&m.z1===m.z2).length; // proxy
+  const noFeedAtAll=d.frArr.length===0;
+  add('Feed rates present',!noFeedAtAll,
+    noFeedAtAll?'no F values found — machine may run at unsafe speed':'F values found ✓',
+    noFeedAtAll?'Without a feed rate the controller may use a default that is far too fast for wood or may alarm.':'');
+
+  // 5. Profile cuts through material (confirms piece can be removed)
+  if(d.isCarrierFile){
+    const deepestProfile=d.profileZ.length?Math.abs(Math.min(...d.profileZ)):0;
+    const matGuess=d.matGuess||15.875;
+    const cutsThrough=deepestProfile>=matGuess*0.85;
+    add('Profile cuts through stock',cutsThrough||d.profileZ.length===0,
+      d.profileZ.length?`deepest profile: ${deepestProfile.toFixed(2)}mm vs est. stock ${matGuess.toFixed(2)}mm`:'no distinct profile section',
+      !cutsThrough&&d.profileZ.length?'The outer profile does not appear to cut all the way through. The finished piece may not separate from stock.':'');
+  }
+
+  // 6. Step-over coverage (arc files)
+  if(d.cArcs.length>3){
+    const radii=[...new Set(d.cArcs.map(m=>Math.round(m.r*100)/100))].sort((a,b)=>a-b).filter(r=>r>0.5);
+    if(radii.length>2){
+      let prev=0,maxGap=0;
+      radii.forEach(r=>{const g=(r-d.P.toolR)-prev;if(g>maxGap)maxGap=g;prev=r+d.P.toolR;});
+      const toolD=d.P.bitD||2.5;
+      const covOk=maxGap<toolD*0.6;
+      add('Arc step-over covers floor',covOk,
+        covOk?`max gap ${maxGap.toFixed(1)}mm ✓`:`${maxGap.toFixed(1)}mm uncut strips — step larger than bit`,
+        !covOk?'The gaps between concentric arc passes are wider than the bit. Ridges of uncut material will remain on the pocket floor.':'');
+    }
+  }
+
+  // 7. Raster step-over
+  if(d.isRaster&&d.cLins.length>3){
+    const yVals=[...new Set(d.cLins.filter(m=>m.sec==='pocket').map(m=>Math.round(m.y1*10)/10))].sort((a,b)=>a-b);
+    if(yVals.length>1){
+      const step=yVals[1]-yVals[0];
+      const toolD=d.P.bitD||2.5;
+      const ok=step<=toolD+0.1;
+      add('Raster step-over covers floor',ok,
+        ok?`step ${step.toFixed(2)}mm ≤ bit ${toolD}mm ✓`:`step ${step.toFixed(1)}mm > bit ${toolD}mm — ridges possible`,'');
+    }
+  }
+
+  // 7b. Depth per pass — catches single-plunge too deep (the Josh problem)
+  // Uses section-based depths only — pocket/raster section, NOT profile section.
+  // For carriers: use RASTER CLEARING → CARRIER PROFILE START window.
+  // For cell files: use start → HEX PROFILE window.
+  // This prevents profile section passes (2,4,6...15.875mm) from polluting the check.
+  {
+    const pocketMovesSec = d.moves.filter(m=>m.cut&&m.t!=='rapid'&&m.sec==='pocket');
+    const secZ = [...new Set(
+      pocketMovesSec.flatMap(m=>[m.z1,m.z2])
+        .filter(z=>z<-0.1)
+        .map(z=>Math.round(z*100)/100)
+    )].sort((a,b)=>b-a); // shallowest (least negative) first
+
+    if(secZ.length>0){
+      // Steps: surface→pass1, pass1→pass2, etc.
+      const steps=[Math.abs(secZ[0])]; // surface to shallowest pass
+      for(let i=1;i<secZ.length;i++)
+        steps.push(Math.abs(secZ[i]-secZ[i-1]));
+
+      const maxStep=Math.max(...steps);
+      const bitD=d.P.bitD||2.5;
+      const ratio=maxStep/bitD;
+      const passOk=ratio<=1.5;
+
+      add('Depth-per-pass safe',passOk,
+        passOk
+          ? `${secZ.length} pass${secZ.length>1?'es':''} · max step ${maxStep.toFixed(2)}mm (${ratio.toFixed(1)}× bit) ✓`
+          : `max step ${maxStep.toFixed(2)}mm = ${ratio.toFixed(1)}× bit dia — too aggressive`,
+        !passOk
+          ? `A single pass of ${maxStep.toFixed(2)}mm with a ${bitD}mm bit is ${ratio.toFixed(1)}× the bit diameter. Recommended maximum is 1–1.5× (${(bitD*1.5).toFixed(2)}mm). Break into multiple shallower passes to avoid bit breakage or burning.`
+          : '');
+    }
+  }
+
+
+  const minAbsX=Math.min(...d.moves.flatMap(m=>[Math.abs(m.x1),Math.abs(m.x2)]));
+  const minAbsY=Math.min(...d.moves.flatMap(m=>[Math.abs(m.y1),Math.abs(m.y2)]));
+  const nearOrigin=minAbsX<5||minAbsY<5;
+  add('Work zero plausible',nearOrigin,
+    nearOrigin?'cuts pass near X=0,Y=0 — work zero appears correctly centred':'cuts far from origin — verify work zero placement',
+    !nearOrigin?'All moves are far from X=0,Y=0. If work zero is set to board center this is expected, but if it should be at a corner the whole pattern may be off the board.':'');
+
+  // ── VERDICT ──────────────────────────────────────────────────
+  const ov=document.getElementById('ov');
+  const verd=document.getElementById('verdict');
+  if(!d.moves.length){
+    ov.className='ov ov-none';
+    verd.className='verdict verdict-none';
+    verd.textContent='Load a G-code file to begin analysis';
+  }else if(viols>=3||(viols>0&&dangerousRapids.length>0)){
+    ov.textContent=`⚠ ${viols} ISSUE${viols>1?'S':''} — REVIEW BEFORE CUTTING`;
+    ov.className='ov ov-bad';
+    verd.className='verdict verdict-bad';
+    verd.innerHTML=`⚠ ${viols} ISSUE${viols>1?'S':''} FOUND<br><span style="font-size:0.82rem;font-family:var(--font-mono,'Share Tech Mono')">${issues.slice(0,3).join(' · ')}</span>`;
+  }else if(viols>0){
+    ov.textContent=`${viols} ITEM${viols>1?'S':''} TO REVIEW`;
+    ov.className='ov ov-warn';
+    verd.className='verdict verdict-warn';
+    verd.innerHTML=`⚠ REVIEW BEFORE CUTTING<br><span style="font-size:0.82rem">${issues.join(' · ')}</span>`;
+  }else{
+    ov.textContent='✓ LOOKS SAFE — VERIFY WORK ZERO BEFORE STARTING';
+    ov.className='ov ov-ok';
+    verd.className='verdict verdict-ok';
+    verd.textContent='✓ NO ISSUES FOUND';
+  }
+
+  // Mode badge
+  const badge=document.getElementById('mode-badge');
+  badge.textContent=isAdv?'PROJECT MODE':'GENERIC MODE';
+  badge.className='mode-badge '+(isAdv?'mode-project':'mode-generic');
+}
+
+// ── PROJECT-SPECIFIC CHECKS ───────────────────────────────────
+function runProjectChecks(P,cArcs,maxArcR,maxPocketZ,maxProfileZ,profileArcCount,isCarrier,isRaster){
+  const el=document.getElementById('chk-project');
+  el.innerHTML='<div style="font-size:1.0rem;color:var(--accent);letter-spacing:0.15em;margin-bottom:4px">PROJECT CHECKS</div>';
+  function add(label,pass,detail=''){
+    const col=pass===null?'var(--dim)':pass?'var(--ok)':'var(--bad)';
+    el.innerHTML+=`<div class="check-item"><div class="ci-dot" style="background:${col}"></div>
+      <span style="color:${col};font-size:0.82rem">${pass?'✓':'✗'} ${label}${detail?' — '+detail:''}</span></div>`;
+  }
+  const bigArcs=cArcs.filter(m=>m.r>P.arcLim+0.05);
+  add(`Arcs ≤ limit (${P.arcLim}mm)`,bigArcs.length===0,bigArcs.length?`VIOLATION: r=${[...new Set(bigArcs.map(m=>m.r.toFixed(1)))].join(',')}mm`:`max=${maxArcR.toFixed(1)}mm ✓`);
+  add('No arcs in profile section',profileArcCount===0,profileArcCount?`${profileArcCount} arc(s)`:'clean ✓');
+  if(isCarrier){
+    const recOk=Math.abs(maxPocketZ+P.recD)<P.tol;
+    add(`Recess depth ~${P.recD}mm${isRaster?' (raster)':''}`,recOk,`actual=${maxPocketZ.toFixed(3)}mm`);
+    add(`Cuts through (≥${P.matT}mm)`,maxProfileZ<=-(P.matT-0.5),`deepest=${maxProfileZ.toFixed(3)}mm`);
+  }else{
+    const arcZ=cArcs.map(m=>Math.min(m.z1,m.z2)).filter(z=>z<0);
+    const maxArcZ=arcZ.length?Math.min(...arcZ):maxPocketZ;
+    add(`Pocket depth ~${P.pktD}mm`,Math.abs(maxArcZ+P.pktD)<P.tol,`actual=${maxArcZ.toFixed(3)}mm`);
+    add(`Profile cuts through (≥${P.matT}mm)`,Math.min(maxPocketZ,maxProfileZ)<=-(P.matT-0.5),`deepest=${Math.min(maxPocketZ,maxProfileZ).toFixed(3)}mm`);
+  }
+}
+
+// ── AUTO-DETECT ───────────────────────────────────────────────
+function autoDetect(text){
+  const lines=text.split('\n');
+  const detected={};
+  const ct=lines.filter(l=>l.trim().startsWith(';')).join(' ').toLowerCase();
+  let m;
+  m=ct.match(/bit=([0-9.]+)mm/);if(m)detected.bit=parseFloat(m[1]);
+  m=ct.match(/pocket depth=([0-9.]+)mm/);if(m)detected.pkt=parseFloat(m[1]);
+  m=ct.match(/depth=([0-9.]+)mm\s*\(3\/8/);if(m&&!detected.rec)detected.rec=parseFloat(m[1]);
+  m=ct.match(/apothem=([0-9.]+)mm/);if(m&&!detected.arc)detected.arc=parseFloat(m[1]);
+  const profileLine=lines.findIndex(l=>l.includes('CARRIER PROFILE START'));
+  const isC=profileLine>=0;
+  const zAll=[],zPkt=[],zProf=[];
+  lines.forEach((raw,i)=>{
+    const l=raw.trim();if(l.startsWith(';'))return;
+    const zm=l.match(/^G1\s+Z([+-]?\d+\.?\d+)\s+F300/i);
+    if(zm){const z=Math.abs(parseFloat(zm[1]));if(z<0.05)return;
+      zAll.push(z);if(isC&&i>profileLine)zProf.push(z);else zPkt.push(z);}
+  });
+  if(!detected.mat){const src=isC&&zProf.length?zProf:zAll;if(src.length){
+    const d=Math.max(...src);const std=[6.0,6.35,9.0,9.525,12.0,12.7,15.875,18.0,19.05,25.4];
+    const n=std.reduce((a,b)=>Math.abs(b-d)<Math.abs(a-d)?b:a);
+    detected.mat=Math.abs(n-d)<1.0?n:Math.round(d*100)/100;}}
+  if(!detected.pkt&&!detected.rec&&zPkt.length){
+    const mat=detected.mat||15.875;const po=zPkt.filter(z=>z<mat*0.7);
+    if(po.length){const d=Math.max(...po);if(isC)detected.rec=round3(d);else detected.pkt=round3(d);}}
+  if(!detected.rec&&isC&&zPkt.length){
+    const mat=detected.mat||15.875;const vals=zPkt.filter(z=>z<mat*0.75);
+    if(vals.length)detected.rec=round3(Math.max(...vals));}
+  const arcR=[];
+  lines.forEach(raw=>{const l=raw.trim();if(l.startsWith(';'))return;
+    if(!l.match(/^G[23]\b/i))return;
+    const im=l.match(/I([+-]?\d+\.?\d*)/i),jm=l.match(/J([+-]?\d+\.?\d*)/i);
+    const I=im?parseFloat(im[1]):0,J=jm?parseFloat(jm[1]):0;
+    const r=Math.sqrt(I*I+J*J);if(r>0.5)arcR.push(r);});
+  if(arcR.length){
+    const big=arcR.filter(r=>r>5);
+    if(!detected.arc&&big.length)detected.arc=Math.round(Math.max(...big)*10)/10;
+    if(!detected.bit){const inf=Math.round(Math.min(...arcR)*2*10)/10;
+      if(inf>=1&&inf<=25)detected.bit=inf;}}
+  if(!detected.arc&&isC){
+    const ri=lines.findIndex(l=>l.includes('RASTER CLEARING'));
+    const stop=ri>=0?ri:profileLine;const hv=[];
+    lines.forEach((raw,i)=>{if(i>=stop)return;const l=raw.trim();if(l.startsWith(';'))return;
+      const mm=l.match(/^G1\s+X([+-]?\d+\.?\d*)\s+Y([+-]?\d+\.?\d*)\s+F600/i);
+      if(mm){const r=Math.sqrt(parseFloat(mm[1])**2+parseFloat(mm[2])**2);
+        if(r>=80&&r<=110)hv.push(r);}});
+    if(hv.length)detected.arc=Math.round(Math.min(...hv)*Math.cos(30*Math.PI/180)*10)/10;}
+
+  const fieldMap={bit:'p-bit',mat:'p-mat',pkt:'p-pkt',rec:'p-rec',arc:'p-arc'};
+  const hintMap={bit:'h-bit',mat:'h-mat',pkt:'h-pkt',rec:'h-rec',arc:'h-arc'};
+  const found=[],missing=[],na=[];
+  Object.entries(fieldMap).forEach(([key,fid])=>{
+    const hel=document.getElementById(hintMap[key]);
+    if(key==='pkt'&&isC){if(hel){hel.textContent='n/a — carrier';hel.style.color='var(--dim)';}na.push('PKT');return;}
+    if(key==='rec'&&!isC){if(hel){hel.textContent='n/a — cell file';hel.style.color='var(--dim)';}na.push('REC');return;}
+    if(detected[key]!==undefined){
+      document.getElementById(fid).value=detected[key];
+      if(hel){hel.textContent=`⚡ ${detected[key]}mm (auto)`;hel.style.color='var(--accent2)';}
+      found.push(`${key.toUpperCase()}=${detected[key]}mm`);
+    }else{
+      if(hel){hel.textContent='⚠ not detected';hel.style.color='var(--warn)';}
+      missing.push(key.toUpperCase());}});
+
+  const st=document.getElementById('auto-status');
+  const ec=5-na.length;const allF=missing.length===0;
+  const ft=isC?(arcR.length===0?'raster carrier':'arc carrier'):'cell/pocket';
+  st.style.display='block';
+  st.style.color=allF?'var(--ok)':'var(--warn)';
+  st.style.borderColor=allF?'var(--ok)':'var(--warn)';
+  st.style.background=allF?'rgba(75,200,112,0.06)':'rgba(224,128,48,0.06)';
+  let html=`<strong>⚡ AUTO ${found.length}/${ec}</strong> <span style="opacity:0.55;font-size:0.72rem">[${ft}]</span><br>`;
+  if(found.length)html+=found.map(f=>`<span style="color:var(--ok)">✓${f}</span>`).join(' ');
+  if(missing.length)html+=`<br><span style="color:var(--warn)">⚠ ${missing.join(',')} not found</span>`;
+  if(na.length)html+=`<span style="color:var(--dim);font-size:0.72rem"> (${na.join(',')} n/a)</span>`;
+  st.innerHTML=html;
+}
+
+function round3(v){return Math.round(v*1000)/1000;}
+
+// ── DEPTH COLOUR ──────────────────────────────────────────────
+function depthCol(z){
+  if(!z||z>=0)return'rgba(75,200,192,0.04)';
+  const t=Math.max(0,Math.min(1,z/minZ));
+  let r,g,b;
+  if(t<0.5){const u=t*2;r=Math.round(75+(200-75)*u);g=Math.round(200+(168-200)*u);b=Math.round(192+(75-192)*u);}
+  else{const u=(t-0.5)*2;r=Math.round(200+(224-200)*u);g=Math.round(168+(80-168)*u);b=Math.round(75+(80-75)*u);}
+  return`rgba(${r},${g},${b},0.62)`;
+}
+function buildLegend(){
+  const el=document.getElementById('dl');let h='';
+  for(let i=0;i<28;i++){const t=i/27;let r,g,b;
+    if(t<0.5){const u=t*2;r=Math.round(75+(200-75)*u);g=Math.round(200+(168-200)*u);b=Math.round(192+(75-192)*u);}
+    else{const u=(t-0.5)*2;r=Math.round(200+(224-200)*u);g=Math.round(168+(80-168)*u);b=Math.round(75+(80-75)*u);}
+    h+=`<div style="flex:1;background:rgb(${r},${g},${b})"></div>`;}
+  el.innerHTML=h;
+  document.getElementById('dl0').textContent=minZ?`${minZ.toFixed(2)}mm (${(minZ*MM2IN).toFixed(3)}")`:'—';
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function render(P){
+  if(!moves.length)return;
+  P=P||getParams();
+  const canvas=document.getElementById('sim');
+  const area=document.getElementById('top-wrap');
+  const sz=Math.min(area.clientWidth-14,area.clientHeight-14,720);
+  canvas.width=sz;canvas.height=sz;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#08090c';ctx.fillRect(0,0,sz,sz);
+  ctx.strokeStyle='rgba(26,31,42,0.7)';ctx.lineWidth=0.5;
+  for(let xi=0;xi<sz;xi+=40){ctx.beginPath();ctx.moveTo(xi,0);ctx.lineTo(xi,sz);ctx.stroke();}
+  for(let yi=0;yi<sz;yi+=40){ctx.beginPath();ctx.moveTo(0,yi);ctx.lineTo(sz,yi);ctx.stroke();}
+  const allX=moves.flatMap(m=>[m.x1,m.x2]),allY=moves.flatMap(m=>[m.y1,m.y2]);
+  const mnX=Math.min(...allX),mxX=Math.max(...allX),mnY=Math.min(...allY),mxY=Math.max(...allY);
+  const mg=26;
+  const sc=Math.min((sz-mg*2)/Math.max(mxX-mnX,1),(sz-mg*2)/Math.max(mxY-mnY,1));
+  const ox=sz/2-(mnX+mxX)/2*sc,oy=sz/2+(mnY+mxY)/2*sc;
+  const S=(mx,my)=>[ox+mx*sc,oy-my*sc];
+  const TR=P.toolR||1.25;
+
+  // AREA
+  if(L.area){moves.forEach(m=>{
+    if(m.z2>=0&&m.z1>=0)return;
+    const z=Math.min(m.z1||0,m.z2||0);const col=depthCol(z);
+    if(m.t==='linear'||m.t==='plunge'){
+      const[x1s,y1s]=S(m.x1,m.y1),[x2s,y2s]=S(m.x2,m.y2);
+      const dx=x2s-x1s,dy=y2s-y1s,d=Math.sqrt(dx*dx+dy*dy);
+      const r=Math.max(1.5,TR*sc);
+      if(d<0.5){ctx.beginPath();ctx.arc(x1s,y1s,r,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();return;}
+      const nx=dy/d,ny=-dx/d;
+      ctx.beginPath();ctx.moveTo(x1s+nx*r,y1s+ny*r);ctx.lineTo(x2s+nx*r,y2s+ny*r);
+      ctx.arc(x2s,y2s,r,Math.atan2(ny,nx),Math.atan2(-ny,-nx),false);
+      ctx.lineTo(x1s-nx*r,y1s-ny*r);ctx.arc(x1s,y1s,r,Math.atan2(-ny,-nx),Math.atan2(ny,nx),false);
+      ctx.closePath();ctx.fillStyle=col;ctx.fill();
+    }else if(m.t==='arc'){
+      const[cxs,cys]=S(m.cx,m.cy);const ri=Math.max(0,(m.r-TR)*sc),ro=(m.r+TR)*sc;
+      if(ro<1)return;
+      ctx.beginPath();ctx.arc(cxs,cys,ro,0,Math.PI*2);
+      if(ri>0.5)ctx.arc(cxs,cys,ri,0,Math.PI*2,true);
+      ctx.fillStyle=col;ctx.fill();
+    }
+  });}
+
+  // ARC PATHS
+  if(L.arcs){moves.forEach(m=>{
+    if(m.t!=='arc'||!m.cut)return;
+    const[cxs,cys]=S(m.cx,m.cy);const r=m.r*sc;if(r<1)return;
+    const isV=m.r>P.arcLim+0.05;
+    ctx.beginPath();ctx.arc(cxs,cys,r,0,Math.PI*2);
+    ctx.strokeStyle=isV?'rgba(224,80,80,0.85)':'rgba(75,200,192,0.4)';
+    ctx.lineWidth=Math.max(0.5,TR*sc*0.28);ctx.stroke();
+  });}
+
+  // LINEAR CUTS
+  if(L.lins){moves.forEach(m=>{
+    if((m.t!=='linear'&&m.t!=='plunge')||!m.cut)return;
+    const[x1s,y1s]=S(m.x1,m.y1),[x2s,y2s]=S(m.x2,m.y2);
+    ctx.beginPath();ctx.moveTo(x1s,y1s);ctx.lineTo(x2s,y2s);
+    ctx.strokeStyle=m.sec==='profile'?'rgba(200,168,75,0.65)':'rgba(75,200,192,0.35)';
+    ctx.lineWidth=Math.max(0.5,TR*sc*0.3);ctx.stroke();
+  });}
+
+  // RAPIDS
+  if(L.raps){moves.forEach(m=>{
+    if(m.t!=='rapid')return;
+    const[x1s,y1s]=S(m.x1,m.y1),[x2s,y2s]=S(m.x2,m.y2);
+    const isDangerous=m.z2<-0.5||m.z1<-0.5;
+    ctx.beginPath();ctx.moveTo(x1s,y1s);ctx.lineTo(x2s,y2s);
+    ctx.strokeStyle=isDangerous?'rgba(224,80,80,0.6)':'rgba(224,80,80,0.2)';
+    ctx.lineWidth=isDangerous?1.2:0.6;ctx.setLineDash([3,6]);ctx.stroke();ctx.setLineDash([]);
+  });}
+
+  // BOUNDARIES
+  if(L.bnds&&P.arcLim>0){
+    const centers=new Map();
+    moves.filter(m=>m.t==='arc'&&m.cut&&m.sec!=='profile').forEach(m=>{
+      const k=`${Math.round(m.cx*8)},${Math.round(m.cy*8)}`;
+      if(!centers.has(k))centers.set(k,{cx:m.cx,cy:m.cy});
+    });
+    centers.forEach(({cx,cy})=>{
+      const[cxs,cys]=S(cx,cy);
+      const lim=P.arcLim*sc;
+      ctx.beginPath();ctx.arc(cxs,cys,lim,0,Math.PI*2);
+      ctx.strokeStyle='rgba(200,168,75,0.5)';ctx.lineWidth=1.1;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+      const lim2=P.arcLim*1.15*sc;
+      ctx.beginPath();ctx.arc(cxs,cys,lim2,0,Math.PI*2);
+      ctx.strokeStyle='rgba(200,168,75,0.15)';ctx.lineWidth=0.7;ctx.setLineDash([3,7]);ctx.stroke();ctx.setLineDash([]);
+    });
+  }
+
+  // VIOLATIONS
+  if(L.viol){moves.filter(m=>m.t==='arc'&&m.cut&&m.r>P.arcLim+0.05).forEach(m=>{
+    const[cxs,cys]=S(m.cx,m.cy);const r=(m.r+TR)*sc;
+    ctx.beginPath();ctx.arc(cxs,cys,r,0,Math.PI*2);
+    ctx.strokeStyle='rgba(224,80,80,0.85)';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='rgba(224,80,80,0.07)';ctx.fill();
+    ctx.fillStyle='rgba(224,80,80,0.95)';ctx.font='bold 9px Share Tech Mono';ctx.textAlign='center';
+    ctx.fillText(`⚠ r=${m.r.toFixed(1)}mm`,cxs,cys);
+  });}
+
+  // Scale bar — both units
+  const scaleVals=[1,2,5,10,20,50,100,200];
+  const targetPx=80;
+  const nearestMM=scaleVals.reduce((a,b)=>Math.abs(b*sc-targetPx)<Math.abs(a*sc-targetPx)?b:a);
+  const sl=nearestMM*sc,sx=sz-26-sl,sy=sz-10;
+  ctx.strokeStyle='rgba(200,168,75,0.65)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+sl,sy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(sx,sy-3);ctx.lineTo(sx,sy+3);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(sx+sl,sy-3);ctx.lineTo(sx+sl,sy+3);ctx.stroke();
+  ctx.fillStyle='rgba(200,168,75,0.7)';ctx.font='8px Share Tech Mono';ctx.textAlign='center';
+  ctx.fillText(`${nearestMM}mm · ${(nearestMM*MM2IN).toFixed(3)}"`,sx+sl/2,sy-5);
+
+  // Hover — both units
+  canvas.onmousemove=e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=(e.clientX-rect.left-ox)/sc,my=(oy-(e.clientY-rect.top))/sc;
+    document.getElementById('coords').textContent=
+      `X=${mx.toFixed(1)}mm (${(mx*MM2IN).toFixed(3)}")  Y=${my.toFixed(1)}mm (${(my*MM2IN).toFixed(3)}")`;
+  };
+}
+
+function tog(n){L[n]=!L[n];document.getElementById('l-'+n).classList.toggle('on',L[n]);render(getParams());}
+window.addEventListener('resize',()=>{if(moves.length){render(getParams());renderElevation();}});
+
+// ── SIDE ELEVATION RENDER ─────────────────────────────────────
+// Shows X-axis vs Z-axis — a cross-section looking from the front.
+// Each unique Z depth appears as a horizontal band. The number of distinct
+// depth levels = number of passes. Width of each band = horizontal extent
+// of moves at that depth. Immediately reveals single-pass vs multi-pass.
+function renderElevation(){
+  const canvas=document.getElementById('elev');
+  if(!canvas||!moves.length)return;
+  const wrap=document.getElementById('elev-wrap');
+  const W=wrap.clientWidth - 70; // subtract label column
+  const H=100;
+  canvas.width=Math.max(W,200);
+  canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#08090c';ctx.fillRect(0,0,canvas.width,H);
+
+  // Collect all cutting moves with their X range and Z depth
+  const cutMoves=moves.filter(m=>m.cut&&m.t!=='rapid'&&(m.z1<-0.1||m.z2<-0.1));
+  if(!cutMoves.length)return;
+
+  // Find extent
+  const allX=moves.flatMap(m=>[m.x1,m.x2]);
+  const mnX=Math.min(...allX),mxX=Math.max(...allX);
+  const xRange=Math.max(mxX-mnX,1);
+
+  // Unique Z depths (the distinct cutting levels)
+  const uniqueZSet=new Set(cutMoves.map(m=>Math.round(Math.min(m.z1<0?m.z1:0, m.z2<0?m.z2:0)*100)/100));
+  const uniqueZArr=[...uniqueZSet].filter(z=>z<-0.1).sort((a,b)=>b-a); // surface first (least negative)
+  const deepestZ=Math.min(...uniqueZArr);
+  const zRange=Math.abs(deepestZ)||1;
+
+  // Margins
+  const mg={t:22,b:18,l:4,r:8};
+  const pw=canvas.width-mg.l-mg.r;
+  const ph=H-mg.t-mg.b;
+
+  // Helper: map X to canvas X
+  const sx=x=>mg.l+((x-mnX)/xRange)*pw;
+  // Helper: map Z to canvas Y (surface=top, deep=bottom)
+  const sz=z=>mg.t+((Math.abs(z))/zRange)*ph;
+
+  // Draw grid lines at each depth level
+  uniqueZArr.forEach((z,i)=>{
+    const cy=sz(z);
+    const col=depthCol(z);
+    // Band fill between this depth and next shallower (or surface)
+    const prevZ=i===0?0:uniqueZArr[i-1];
+    const prevY=i===0?mg.t:sz(prevZ);
+    // Draw filled band across full width
+    ctx.fillStyle=col.replace('0.62','0.35');
+    ctx.fillRect(mg.l,prevY,pw,cy-prevY);
+    // Draw depth line
+    ctx.strokeStyle=col.replace('0.62','0.85');
+    ctx.lineWidth=1.5;
+    ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(mg.l,cy);ctx.lineTo(mg.l+pw,cy);ctx.stroke();
+    // Pass label on right side
+    ctx.fillStyle=col.replace('0.62','0.95');
+    ctx.font=`bold 9px Share Tech Mono`;ctx.textAlign='left';
+    ctx.fillText(`Pass ${i+1}: ${Math.abs(z).toFixed(2)}mm (${(Math.abs(z)*MM2IN).toFixed(3)}")`,mg.l+pw-160>mg.l?mg.l+pw-158:mg.l+4,cy-2);
+  });
+
+  // Draw material surface line (Z=0)
+  ctx.strokeStyle='rgba(200,168,75,0.6)';ctx.lineWidth=2;ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(mg.l,mg.t);ctx.lineTo(mg.l+pw,mg.t);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(200,168,75,0.7)';ctx.font='9px Share Tech Mono';ctx.textAlign='left';
+  ctx.fillText('Surface Z=0',mg.l+3,mg.t-3);
+
+  // Draw bottom (deepest cut)
+  ctx.strokeStyle='rgba(224,80,80,0.5)';ctx.lineWidth=1;ctx.setLineDash([2,4]);
+  ctx.beginPath();ctx.moveTo(mg.l,mg.t+ph);ctx.lineTo(mg.l+pw,mg.t+ph);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(224,80,80,0.7)';ctx.textAlign='left';
+  ctx.fillText(`${Math.abs(deepestZ).toFixed(2)}mm (${(Math.abs(deepestZ)*MM2IN).toFixed(3)}")`,mg.l+3,mg.t+ph+11);
+
+  // Pass count summary — the key diagnostic
+  const passCount=uniqueZArr.length;
+  const bitD=getParams().bitD||2.5;
+  const maxStep=uniqueZArr.length>1
+    ? Math.max(...uniqueZArr.slice(1).map((z,i)=>Math.abs(z-uniqueZArr[i])))
+    : Math.abs(deepestZ);
+  const ratio=maxStep/bitD;
+  const passOk=ratio<=1.5;
+  ctx.font='bold 10px Share Tech Mono';
+  ctx.textAlign='right';
+  ctx.fillStyle=passOk?'rgba(75,200,112,0.9)':'rgba(224,80,80,0.9)';
+  ctx.fillText(
+    `${passCount} pass${passCount>1?'es':''} · max step ${maxStep.toFixed(2)}mm (${ratio.toFixed(1)}× bit)`,
+    mg.l+pw-2, mg.t+ph+11
+  );
+
+  // Side label column
+  const lblEl=document.getElementById('elev-labels');
+  if(lblEl){
+    lblEl.innerHTML=`
+      <span style="color:var(--accent2)">surface</span>
+      <span style="color:var(--dim)">${Math.abs(deepestZ).toFixed(1)}mm</span>
+    `;
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrystalScope — Argument Depth Analyzer</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 1000px;
+  margin: 2em auto;
+  padding: 1em 1.5em 3em;
+  background: #090b0f;
+  color: #eae6de;
+  line-height: 1.7;
+  font-size: 1.05rem;
+}
+h1 { color: #7ecfff; font-size: 1.9rem; margin-bottom: 0.15em; letter-spacing: -0.01em; }
+.subtitle { color: #9096a4; font-size: 0.87rem; margin-bottom: 1.8em; }
+.subtitle a { color: #7ecfffaa; text-decoration: none; }
+
+textarea {
+  width: 100%;
+  height: 210px;
+  background: #111318;
+  color: #e0dcd4;
+  border: 1px solid #252b38;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-family: system-ui, sans-serif;
+  font-size: 0.95rem;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+}
+textarea:focus { border-color: #3a5a7a; }
+
+.btn-row { margin: 14px 0; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.btn-analyze { background: #1e3a52; color: #7ecfff; border: 1px solid #2a5070; }
+.btn-analyze:hover { background: #2a4a66; }
+.btn-reset { background: #2a1515; color: #ff9090; border: 1px solid #3a2020; }
+.btn-reset:hover { background: #3a2020; }
+#wordcount { font-size: 0.8rem; color: #555; }
+
+/* ── RESULTS ── */
+#results { display: none; margin-top: 2.5em; }
+
+.score-row {
+  display: flex;
+  gap: 2.5em;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 2em;
+  padding: 1.5em 2em;
+  background: #0e1118;
+  border-radius: 14px;
+  border: 1px solid #1e2430;
+}
+.score-main { text-align: center; min-width: 130px; }
+.score-number {
+  font-size: 5.5rem;
+  font-weight: 900;
+  line-height: 1;
+  background: linear-gradient(135deg, #7ecfff 0%, #a8f0c8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.score-denom { font-size: 1rem; color: #444; margin-top: -4px; }
+.score-grade {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-top: 0.5em;
+  letter-spacing: 0.02em;
+}
+
+#radar-wrap { flex: 1; min-width: 250px; display: flex; justify-content: center; }
+
+/* ── SIGNAL BARS ── */
+.signals { margin-top: 0; }
+.signals h3 { color: #7ecfff; margin-bottom: 1em; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; }
+.signal-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.signal-name {
+  width: 200px;
+  font-size: 0.92rem;
+  color: #aab0be;
+  flex-shrink: 0;
+  cursor: help;
+}
+.signal-bar-wrap {
+  flex: 1;
+  background: #141820;
+  border-radius: 6px;
+  height: 16px;
+  overflow: hidden;
+}
+.signal-bar {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+.signal-val {
+  width: 30px;
+  text-align: right;
+  font-size: 0.82rem;
+  font-family: 'Courier New', monospace;
+}
+
+/* ── EXPLANATION ── */
+#explanation {
+  margin-top: 1.8em;
+  padding: 18px 22px;
+  background: #0e1118;
+  border-radius: 12px;
+  border-left: 3px solid #7ecfff;
+  font-size: 0.88rem;
+}
+#explanation h3 { color: #7ecfff; margin-bottom: 0.7em; font-size: 0.95rem; }
+#explanation ul { padding-left: 1.3em; }
+#explanation li { margin-bottom: 0.5em; color: #9098a8; }
+#explanation li strong { color: #c0c8d8; }
+
+/* ── METHODOLOGY ── */
+.method {
+  margin-top: 1.8em;
+  padding: 14px 18px;
+  background: #0a0c10;
+  border-radius: 10px;
+  border: 1px solid #1a2030;
+}
+.method summary { cursor: pointer; font-size: 0.85rem; color: #6a7080; user-select: none; }
+.method summary:hover { color: #9098a8; }
+.method-body { margin-top: 1em; font-size: 0.82rem; color: #6a7080; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.8em; }
+.method-sig { padding: 10px 14px; background: #0e1118; border-radius: 8px; border-left: 2px solid; }
+.method-sig strong { display: block; margin-bottom: 0.3em; font-size: 0.83rem; }
+
+/* ── RADAR CAPTION ── */
+.radar-caption {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #8090a8;
+  margin-top: 0.5em;
+  font-style: italic;
+  max-width: 270px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── SCORE CONTEXT ── */
+.score-context {
+  font-size: 0.78rem;
+  color: #8090a8;
+  margin-top: 0.6em;
+  font-style: italic;
+}
+
+/* ── WRITING COACH ── */
+.coach {
+  margin-top: 1.8em;
+  padding: 14px 18px;
+  background: #0a0c10;
+  border-radius: 10px;
+  border: 1px solid #1e2a1e;
+}
+.coach-header { font-size: 0.9rem; color: #5a9060; font-weight: 600; margin-bottom: 0.4em; }
+.coach-intro { margin-top: 0.6em; font-size: 0.88rem; color: #9aaa9a; margin-bottom: 1em; }
+.coach-genre {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: #0e1a0e;
+  border: 1px solid #2a4a2a;
+  color: #8aba90;
+  margin-bottom: 1em;
+}
+.coach-bench {
+  font-size: 0.82rem;
+  color: #8aaa8a;
+  margin-bottom: 1.2em;
+  padding: 8px 14px;
+  background: #0e1118;
+  border-radius: 8px;
+  border-left: 2px solid #2a3a2a;
+}
+.coach-signals { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.8em; }
+.coach-sig {
+  padding: 12px 14px;
+  background: #0e1118;
+  border-radius: 8px;
+  border-left: 3px solid;
+  font-size: 0.82rem;
+}
+.coach-sig .sig-head { font-weight: 700; margin-bottom: 0.5em; display: flex; justify-content: space-between; align-items: center; }
+.coach-sig .sig-val { font-family: monospace; font-size: 0.9em; opacity: 0.8; }
+.coach-sig p { color: #7a8890; margin: 0 0 0.4em; }
+.coach-sig .sig-why { color: #9098a8; font-style: italic; margin-bottom: 0.55em; border-bottom: 1px solid #1e2a2e; padding-bottom: 0.45em; }
+.coach-sig code { background: #141c24; padding: 1px 5px; border-radius: 3px; font-size: 0.85em; color: #a8c8e8; }
+.coach-sig.good { border-color: #4a8a50; }
+.coach-sig.good .sig-head { color: #6aba70; }
+.coach-sig.mid  { border-color: #8a7a30; }
+.coach-sig.mid  .sig-head { color: #c0a840; }
+.coach-sig.weak { border-color: #8a3a30; }
+.coach-sig.weak .sig-head { color: #c06050; }
+
+/* ── WARNING / LIMITATION ── */
+.warning {
+  margin-top: 1.5em;
+  padding: 12px 16px;
+  background: #120f00;
+  border-radius: 8px;
+  border-left: 3px solid #a08030;
+  font-size: 0.8rem;
+  color: #807040;
+}
+.warning summary {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.warning summary::-webkit-details-marker { display: none; }
+.warning[open] summary { margin-bottom: 1.1em; color: #a08030; }
+.lim-section { margin-top: 1.1em; }
+.lim-head {
+  color: #c0a840;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  margin-bottom: 0.45em;
+}
+.lim-body { color: #b09870; font-size: 0.8rem; line-height: 1.68; }
+.lim-body p { margin-bottom: 0.65em; }
+.lim-body strong { color: #d0b870; font-weight: 600; }
+.lim-body em { color: #c0a860; font-style: italic; }
+.lim-dl { margin: 0.5em 0 0.2em 0; }
+.lim-dl dt {
+  color: #e0c870;
+  font-weight: 700;
+  margin-top: 0.75em;
+  font-size: 0.8rem;
+}
+.lim-dl dd {
+  color: #a89060;
+  margin-left: 1.1em;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  margin-bottom: 0.2em;
+}
+
+footer {
+  margin-top: 3em;
+  font-size: 0.75rem;
+  color: #6a7888;
+  border-top: 1px solid #1e2430;
+  padding-top: 1em;
+}
+</style>
+</head>
+<body>
+
+<h1>🔬 CrystalScope</h1>
+<p class="subtitle">
+  Argument Depth Analyzer · Inspired by the CRYSTAL / CDM framework (Elias Rook &amp; Mike Filippi, Dec 2025)<br>
+  Measures structural reasoning depth — not surface vocabulary. Genuinely hard to max out.
+</p>
+
+<textarea id="input" placeholder="Paste any text to analyze — essay, paper, AI output, argument, conversation. Works best at 100+ words."></textarea>
+
+<div class="btn-row">
+  <button class="btn-analyze" onclick="analyze()">Analyze Depth</button>
+  <button class="btn-reset" onclick="resetAll()">Reset</button>
+  <span id="wordcount"></span>
+</div>
+
+<div id="results">
+  <div class="score-row">
+    <div class="score-main">
+      <div class="score-number" id="scoreNum">—</div>
+      <div class="score-denom">out of 100</div>
+      <div class="score-grade" id="scoreGrade"></div>
+      <div class="score-context" id="scoreContext"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:250px;">
+      <svg id="radar" width="270" height="270" viewBox="0 0 270 270"></svg>
+      <p class="radar-caption">Each axis is one signal. The shaded polygon is your text's reasoning signature — a filled hexagon = crystallized depth across all dimensions. A lopsided shape reveals genre and style.</p>
+    </div>
+  </div>
+
+  <div class="signals">
+    <h3>Signal Breakdown</h3>
+    <div id="signal-bars"></div>
+  </div>
+
+  <div id="explanation"></div>
+
+  <div class="coach" id="coach-panel">
+    <div class="coach-header">📝 Writing Coach — genre, benchmarks &amp; signal-by-signal guidance</div>
+    <div id="coach-body"></div>
+  </div>
+
+  <details class="warning">
+    <summary>⚠ CrystalScope measures text-level proxies for reasoning depth — not reasoning itself. &nbsp;<span style="font-size:0.74rem;color:#907840;">(click to expand full explanation)</span></summary>
+
+    <div class="lim-section">
+      <div class="lim-head">What it measures</div>
+      <div class="lim-body">
+        <p>CrystalScope scores six text-level signals that tend to co-appear with rigorous reasoning: argument connectives, epistemic hedging, conceptual density per sentence, cohesion markers, cross-domain vocabulary, and quantitative precision. These are <em>proxies</em> — surface features that well-reasoned text often exhibits. They are not the reasoning itself.</p>
+      </div>
+    </div>
+
+    <div class="lim-section">
+      <div class="lim-head">What it cannot reach: the true CRYSTAL signals</div>
+      <div class="lim-body">
+        <p>The CDM (Crystal Depth Metric) framework this tool is based on defines four signals that exist <em>inside</em> a transformer model's computation. No browser tool can access them:</p>
+        <dl class="lim-dl">
+          <dt>Entropy Collapse (ΔH ≥ 2.3 bits)</dt>
+          <dd>When a model reasons toward a conclusion, the probability distribution over its next possible tokens narrows sharply. Entropy (H) measures that uncertainty — high entropy means many continuations seem equally plausible; low entropy means the model has committed to a direction. A collapse of 2.3 bits or more signals genuine convergence, not fluent pattern-completion. This lives in the model's probability layer, invisible in any text it produces.</dd>
+
+          <dt>Convergence Ratio (≤ 0.12)</dt>
+          <dd>At each layer of a transformer, an internal vector called the "hidden state" encodes the model's evolving representation of meaning. During deep reasoning, these vectors stabilize across layers — they stop drifting and settle into a coherent position. A ratio below 0.12 means that stabilization has occurred: like a tuning fork reaching its resonant frequency, the model's representation has found its answer. The output text cannot tell you this happened.</dd>
+
+          <dt>Attention-Gini Delta (≥ 0.28)</dt>
+          <dd>Transformer models distribute "attention" across all tokens in context simultaneously. During genuine reasoning, this attention sharpens — it concentrates on the tokens that actually matter rather than spreading uniformly. The Gini coefficient (borrowed from economics, where it measures income inequality across a population) quantifies that concentration. A delta of 0.28 or more means attention has focused significantly since the start of generation. You can see what the model wrote; you cannot see where it was looking.</dd>
+
+          <dt>Basin-Escape Probability (≥ 0.88)</dt>
+          <dd>In the high-dimensional space of possible outputs, a model can become trapped in a "basin" — a region of similar, fluent-sounding responses that are essentially sophisticated pattern-completions rather than inferences. High basin-escape probability means the reasoning state is robust: perturbing the inputs slightly does not change the conclusion. This distinguishes genuine inference from confident confabulation. Measuring it requires systematically probing the model with variations — something no single text can reveal.</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="lim-section">
+      <div class="lim-head">What recent test cases showed</div>
+      <div class="lim-body">
+        <p><strong>A children's story</strong> (narrative fiction) scored low on argument architecture and domain reach — not because it was poorly written, but because narrative writing isn't trying to construct an argument. It's trying to create a world, a character, an emotion. CrystalScope now detects narrative genre and stands down rather than giving absurd advice like "add inference markers."</p>
+        <p><strong>A philosophical encyclopedia entry</strong> (Stanford Encyclopedia of Philosophy) scored in the mid-range — not because the philosophy was shallow, but because analytic philosophy argues by <em>presenting and contrasting positions</em> rather than by explicit connective chains. "Nagel holds that subjective experience cannot be reduced to physical description" is a different argumentative syntax than "therefore, it follows that consciousness is non-physical." The tool partially misses the former style.</p>
+        <p><strong>A speculative science essay</strong> on the Primary Organism and Dark Matter scored high on domain reach (100 — genuinely rare) and conceptual density (82 — real and earned), while scoring lower on argument architecture because its primary mode was analogy and sustained assertion rather than connective chains. The tool accurately described the structure. It said nothing about whether the ideas were right, interesting, or original — because it cannot.</p>
+      </div>
+    </div>
+
+    <div class="lim-section">
+      <div class="lim-head">The shadow</div>
+      <div class="lim-body">
+        <p>A careful thinker, writing with precision, leaves structural traces in their text — explicit connectives, calibrated hedges, cross-domain references, numbered evidence, precise distinctions. CrystalScope detects those traces. It is reading the <em>shadow cast by deep reasoning</em> on the surface of the text.</p>
+        <p>A shadow has a real relationship to what casts it. But it flattens the object, loses dimension, and changes with the angle of the light. A manifesto casts a different shadow than a scientific paper. A poem casts almost none — and may be the most profound thing in the room.</p>
+        <p>Scores above 80 are genuinely rare. Above 90 is near-theoretical — it would require a text that simultaneously maxes most signals: explicitly chained inferences, calibrated hedging, dense cross-domain concepts, tight structural cohesion, and quantitative precision. Such texts exist. They are uncommon.</p>
+      </div>
+    </div>
+  </details>
+
+  <details class="method">
+    <summary>Methodology — how each signal is calculated</summary>
+    <div class="method-body" id="method-body"></div>
+  </details>
+</div>
+
+<footer>CrystalScope v1.4 · Built on CDM concepts by Elias Rook &amp; Mike Filippi · Implemented by Claude Sonnet 4.6 · 2026 · v1.4 adds "why it matters" per signal, always-visible Writing Coach, and section reordering for clarity</footer>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+
+const SIGNALS = [
+  {
+    key: 'chain',
+    label: 'Argument Architecture',
+    color: '#7ecfff',
+    weight: 0.22,
+    abbr: 'ARG',
+    why: 'Without explicit connectives, readers must reconstruct your reasoning themselves — and may get it wrong. Showing the logical path forces you to commit to it, and makes any weak steps visible. This is the difference between asserting and arguing.',
+    method: 'Counts logical connectives + philosophical inference markers (entails, implies, suppose) + attribution patterns ("X argues that", "according to") + Socratic probes ("it follows that", "one might argue"). Peak at ~0.35 per sentence.',
+  },
+  {
+    key: 'epistemic',
+    label: 'Epistemic Hygiene',
+    color: '#a8f0c8',
+    weight: 0.16,
+    abbr: 'EPI',
+    why: 'Overclaiming is the fastest way to lose a careful reader. Calibrated uncertainty — using hedges like <em>arguably</em>, <em>appears to</em>, <em>in most cases</em> — signals that you know the limits of your claims. It separates rigorous thinkers from confident bluffers.',
+    method: 'Ratio of hedges to certainty markers. Hedge list now includes philosophical hedges (purportedly, seemingly, generally), degree hedges (somewhat, largely), scope limiters (insofar, provisionally), scholarly citation (according to, in X\'s view), and multi-word philosophical hedges (in some sense, prima facie). Peaks at ~38% hedged.',
+  },
+  {
+    key: 'density',
+    label: 'Conceptual Density',
+    color: '#f0c8a8',
+    weight: 0.18,
+    abbr: 'DEN',
+    why: 'Thin sentences spread ideas thin. Dense sentences — packing 6–12 distinct concepts — force the writer to be specific and reward attentive readers with more per paragraph. Consistently low density often signals lists or dialogue where exposition should be.',
+    method: 'Unique content words per sentence after stop-word removal. Optimal: 6–12 per sentence. Very high scores may indicate jargon-stuffing.',
+  },
+  {
+    key: 'cohesion',
+    label: 'Structural Integrity',
+    color: '#c8a8f0',
+    weight: 0.17,
+    abbr: 'COH',
+    why: 'If you can shuffle the paragraphs without losing meaning, the text is a list, not an argument. Structural Integrity measures how much each sentence depends on what came before — how tightly the reasoning is woven together rather than stacked.',
+    method: 'Forward-reference and discourse-cohesion density (this, such, former, latter, thereby…). Measures how much sentences depend on prior context — a proxy for order-dependency.',
+  },
+  {
+    key: 'bridge',
+    label: 'Domain Reach',
+    color: '#f0a8c8',
+    weight: 0.13,
+    abbr: 'DOM',
+    why: 'The hardest problems live at intersections. A text that stays entirely inside one domain — only philosophy, only statistics, only law — misses the leverage that adjacent frameworks provide. Cross-domain synthesis is one of the strongest markers of crystallized thinking.',
+    method: 'Counts how many of 6 knowledge domains (empirical, philosophical, technical, mathematical, social, physical) have ≥2 keyword hits. Cross-domain synthesis is a strong depth signal.',
+  },
+  {
+    key: 'precision',
+    label: 'Precision Index',
+    color: '#f0f0a8',
+    weight: 0.14,
+    abbr: 'PRE',
+    why: 'Vague claims cannot be tested or refuted — which means they cannot really be argued with. Precision — naming the theory, making the distinction explicit, defining the term — is what turns an interesting opinion into a falsifiable claim.',
+    method: 'Rewards numbers and percentages (science style) AND named theories/concepts (Title Case sequences: "Global Workspace Theory"), conceptual distinctions ("distinction between", "as opposed to"), and definition markers ("is defined as", "in other words"). Penalises vague qualifiers.',
+  },
+];
+
+const STOP = new Set('the a an and or but to of in on with for is was are be this that it you i we he she they from at by as not have had has do did does will would could should may might can been being am were its our your their my his her all into about more also than so if up out no what when how just which who whom there here then through before after between each other some any very much even back only over down where while still around however actually really well now first last new old most one two three four five six seven eight nine ten'.split(' '));
+
+// ── TOKENISE & SENTENCE SPLIT ────────────────────────────────────────────────
+
+function tokenize(text) {
+  return (text.toLowerCase().match(/\b[a-z]+\b/g) || []);
+}
+
+function getSentences(text) {
+  return (text.match(/[^.!?]+[.!?]+/g) || [text])
+    .map(s => s.trim())
+    .filter(s => s.split(/\s+/).length >= 3);
+}
+
+// ── INDIVIDUAL SIGNAL SCORERS ────────────────────────────────────────────────
+
+function scoreChain(text, words, sentences) {
+  // Core logical connectives (science/general)
+  const conn = new Set(['because','therefore','since','however','although','thus','hence','consequently',
+    'furthermore','moreover','nevertheless','nonetheless','whereas','accordingly','thereby','despite',
+    'granted','admittedly','indeed','conversely','alternatively','otherwise','similarly','likewise',
+    'specifically','notably','crucially','fundamentally','notwithstanding','insofar','inasmuch',
+    // Philosophical inference markers (Toulmin / pragma-dialectics)
+    'entails','implies','suppose','consider','posit','stipulate','assume','granted',
+    // Concessive / rebuttal markers
+    'nonetheless','granted','conceding','acknowledging',
+    // Evidence-citing structure words
+    'demonstrates','indicates','reveals','confirms','supports','contradicts']);
+
+  const count = words.filter(w => conn.has(w)).length;
+  const slen = sentences.length || 1;
+
+  // Attribution patterns — the strongest discriminator for philosophical text.
+  // "X argues/maintains/holds/claims/contends that" signals structured debate engagement.
+  // "According to X" signals scholarly citation. Both are argument architecture, not hedging.
+  const attribVerbs = (text.match(/\b(argues?|maintains?|holds?|claims?|contends?|proposes?|asserts?|suggests?|states?)\s+that\b/gi) || []).length;
+  const accordingTo = (text.match(/\baccording\s+to\b/gi) || []).length;
+  const inXsView    = (text.match(/\bin\b.{1,20}\bview\b|\bon\b.{1,15}\baccount\b/gi) || []).length;
+  const attribTotal = attribVerbs + accordingTo + inXsView;
+
+  // Socratic / dialectical structure markers (separate regex — multi-word)
+  const socratic = (text.match(/\bit\s+follows\s+that\b|\bthis\s+(implies|entails|suggests|means)\s+that\b|\bone\s+might\s+(argue|object|think|say)\b|\bto\s+see\s+this\b|\bconsider\s+the\s+(case|fact|possibility)\b/gi) || []).length;
+
+  // Legal / judicial reasoning markers — "the Court holds/held/concludes", "we hold/conclude/agree",
+  // "in light of", "on the grounds that", "boils down to", "it follows from".
+  // Uses absolute count (not per-sentence) because legal conclusions appear once per section,
+  // not once per sentence — normalizing by 335 sentences would make 15 markers worth 0.8 points.
+  const legalConclusion = (text.match(
+    /\bthe\s+court\s+(?:holds?|held|concludes?|finds?|reasons?|observes?|affirms?)\b|\bwe\s+(?:hold|conclude|find|agree|reject|determine|rule)\b|\bit\s+is\s+(?:held|ordered)\b|\bin\s+light\s+of\b|\bon\s+(?:the\s+)?grounds?\s+that\b|\bboils?\s+down\s+to\b|\bit\s+follows\s+from\b/gi
+  ) || []).length;
+  const legalBonus = Math.min(22, legalConclusion * 2.2);
+
+  const ratio = count / slen;
+  const attribBonus = Math.min(18, (attribTotal / slen) * 22);
+  const socraticBonus = Math.min(10, socratic * 2.5);
+
+  let base;
+  if (ratio <= 0)    base = 3;
+  else if (ratio <= 0.05) base = Math.round(ratio / 0.05 * 18);
+  else if (ratio <= 0.35) base = Math.round(18 + (ratio - 0.05) / 0.30 * 70);
+  else if (ratio <= 0.55) base = Math.round(88 - (ratio - 0.35) / 0.20 * 12);
+  else base = Math.max(38, Math.round(76 - (ratio - 0.55) / 0.35 * 38));
+
+  return Math.min(100, Math.round(base + attribBonus + socraticBonus + legalBonus));
+}
+
+function scoreEpistemic(text, words) {
+  const hedges = new Set([
+    // Standard epistemic hedges
+    'might','could','perhaps','suggests','indicates','possibly','likely','arguably',
+    'appears','seems','presumably','probably','may','tentatively','approximately','roughly','estimated',
+    'unclear','uncertain','debatable','contested','plausibly','ostensibly','conceivably',
+    // Philosophical hedging vocabulary (pragma-dialectics research)
+    'purportedly','allegedly','supposedly','seemingly','apparently','reputedly',
+    // Degree hedges (soften claims without removing them)
+    'generally','typically','usually','often','frequently','partially','somewhat',
+    'relatively','largely','broadly','predominantly','ordinarily','conventionally',
+    // Scope limiters
+    'insofar','inasmuch','provisionally','conditionally','hypothetically',
+  ]);
+
+  const certs = new Set([
+    'certainly','undoubtedly','clearly','obviously','definitely','absolutely',
+    'always','never','unquestionably','invariably','indisputably','evidently',
+    'plainly','unambiguously','manifestly','patently','self-evidently',
+  ]);
+
+  const h = words.filter(w => hedges.has(w)).length;
+  const c = words.filter(w => certs.has(w)).length;
+
+  // Attribution-as-hedging: "according to X", "X argues" implicitly marks the claim
+  // as someone else's — the highest form of epistemic humility in scholarly writing.
+  const scholarlyCite = (text.match(/\baccording\s+to\b|\bin\s+\w+['s]*\s+(view|account|framework)\b/gi) || []).length;
+  const philosophicalHedge = (text.match(/\bin\s+(some|one|a|this)\s+sense\b|\bfor\s+(present|our|these)\s+purposes?\b|\bat\s+least\s+(in\s+part|partly|some)\b|\bto\s+some\s+extent\b|\bprima\s+facie\b|\bso\s+to\s+speak\b/gi) || []).length;
+
+  const total = h + c + scholarlyCite + philosophicalHedge;
+  if (total < 2) return 35;
+
+  const hedgeTotal = h + scholarlyCite + philosophicalHedge;
+  const ratio = hedgeTotal / total;
+
+  // Gaussian peak at 0.38 — same as before but now includes richer hedge vocabulary
+  const score = 100 * Math.exp(-Math.pow(ratio - 0.38, 2) / (2 * 0.22 * 0.22));
+  return Math.round(Math.max(22, Math.min(98, score)));
+}
+
+function scoreDensity(words, sentences) {
+  // Measure content-word density PER SENTENCE rather than global uniqueness.
+  // Global unique/sentences breaks on long texts because vocabulary plateaus
+  // while sentence count keeps climbing (Zipf's law). Per-sentence density
+  // is length-independent and measures what we actually care about.
+  if (sentences.length === 0) return 5;
+
+  const sentScores = sentences.map(s => {
+    const sw = tokenize(s).filter(w => !STOP.has(w) && w.length > 2);
+    return sw.length;
+  });
+  const avg = sentScores.reduce((a, b) => a + b, 0) / sentScores.length;
+
+  // Optimal: 5-12 content words per sentence
+  if (avg <= 0)  return 5;
+  if (avg <= 5)  return Math.round(avg / 5 * 45);
+  if (avg <= 12) return Math.round(45 + (avg - 5) / 7 * 47);
+  if (avg <= 20) return Math.round(92 - (avg - 12) / 8 * 20);
+  return Math.round(Math.max(45, 72 - (avg - 20) * 2));
+}
+
+function scoreCohesion(words, sentences) {
+  const refs = new Set(['this','these','that','those','such','former','latter','aforementioned',
+    'previously','subsequently','accordingly','therefore','thus','hence','whereby','thereby',
+    'therefrom','herein','therein','aforementioned','henceforth','inasmuch']);
+  const count = words.filter(w => refs.has(w)).length;
+  const slen = sentences.length || 1;
+  const ratio = count / slen;
+
+  if (ratio <= 0)   return 5;
+  if (ratio <= 0.5) return Math.round(ratio / 0.5 * 42);
+  if (ratio <= 1.5) return Math.round(42 + (ratio - 0.5) / 1.0 * 52);
+  return Math.round(Math.max(58, 94 - (ratio - 1.5) * 18));
+}
+
+function scoreBridge(words) {
+  const domains = {
+    empirical:     ['evidence','data','experiment','hypothesis','observation','measurement','result',
+                    'correlation','empirical','study','research','findings','methodology','variable','control'],
+    philosophical: ['consciousness','existence','truth','reality','knowledge','meaning','value','ethics',
+                    'metaphysics','ontology','epistemology','phenomenology','intuition','rational','subjective'],
+    technical:     ['system','algorithm','model','architecture','implementation','process','parameter',
+                    'output','input','function','interface','protocol','framework','module','pipeline'],
+    mathematical:  ['equation','proof','probability','distribution','ratio','variable','calculate','formula',
+                    'theorem','coefficient','matrix','vector','derivative','integral','logarithm'],
+    social:        ['people','society','culture','language','communication','relationship','behavior',
+                    'emotion','social','community','interaction','narrative','identity','collective'],
+    physical:      ['energy','force','field','particle','wave','structure','biological','physical',
+                    'material','quantum','atomic','molecular','thermal','kinetic','magnetic'],
+  };
+
+  const wset = new Set(words);
+  let hit = 0;
+  for (const kws of Object.values(domains)) {
+    if (kws.filter(k => wset.has(k)).length >= 2) hit++;
+  }
+  return [0, 14, 32, 55, 74, 88, 100][hit] || 0;
+}
+
+function scorePrecision(text, words) {
+  const wc = words.length || 1;
+
+  // Numeric precision (natural science style)
+  const nums = (text.match(/\b\d+\.?\d*\b/g) || []).length;
+  const pcts = (text.match(/\d+(?:\.\d+)?%/g) || []).length;
+
+  // Named theory / concept detection — Title Case sequences of 2+ words.
+  // Catches: "Global Workspace Theory", "Integrated Information Theory",
+  // "Higher-Order Thought", "Natural Selection", "Bayesian Brain" etc.
+  const namedConcepts = (text.match(/\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})+\b/g) || []).length;
+
+  // Philosophical precision markers — explicit conceptual distinctions
+  const distinctions = (text.match(/\b(distinction|difference)\s+between\b|\bas\s+opposed\s+to\b|\brather\s+than\b|\bin\s+contrast\s+to\b/gi) || []).length;
+
+  // Definition markers — signals the author is being precise about terms
+  const definitions = (text.match(/\bis\s+defined\s+as\b|\bis\s+understood\s+as\b|\bby\s+\w+\s+we\s+mean\b|\bthat\s+is\s+to\s+say\b|\bin\s+other\s+words\b/gi) || []).length;
+
+  // Vague qualifier penalty
+  const vague = new Set(['various','many','some','few','certain','several','numerous','significant',
+    'important','interesting','complex','thing','things','aspect','aspects','issue','issues',
+    'stuff','factor','factors','somehow','something','everything','nothing','whatever','whenever']);
+  const vagueN = words.filter(w => vague.has(w)).length;
+
+  const sp   = (nums + pcts * 2) / (wc / 100);
+  const phil = (namedConcepts * 3 + distinctions * 4 + definitions * 5) / (wc / 100);
+  const vp   = vagueN / (wc / 100);
+
+  return Math.round(Math.max(4, Math.min(100, 38 + sp * 4 + phil * 1.2 - vp * 5)));
+}
+
+// ── GRADE ────────────────────────────────────────────────────────────────────
+
+function getGrade(s) {
+  if (s >= 88) return { label: 'Crystallized',        color: '#7ecfff' };
+  if (s >= 75) return { label: 'Deep Reasoning',      color: '#a8f0c8' };
+  if (s >= 60) return { label: 'Structured Thought',  color: '#c8f0a8' };
+  if (s >= 45) return { label: 'Developing Argument', color: '#f0e8a8' };
+  if (s >= 30) return { label: 'Conversational',      color: '#f0c8a8' };
+  if (s >= 15) return { label: 'Surface Level',       color: '#f0a8a8' };
+  return             { label: 'Shallow / Minimal',    color: '#c08080' };
+}
+
+function getInterpretation(score, scores, sentences) {
+  const weak   = SIGNALS.reduce((a, b) => scores[a.key] < scores[b.key] ? a : b);
+  const strong = SIGNALS.reduce((a, b) => scores[a.key] > scores[b.key] ? a : b);
+
+  // Pattern detection — shape of the score matters more than the total
+  const patterns = [];
+
+  if (scores.bridge >= 80 && scores.chain < 40) {
+    patterns.push('The text spans many knowledge domains (Domain Reach: ' + scores.bridge + ') but the reasoning between ideas is mostly implicit — logical connectives are sparse. This is the fingerprint of a wide-ranging exploration or manifesto: broad reach, assertive voice.');
+  }
+  if (scores.epistemic < 30) {
+    patterns.push('Epistemic Hygiene is low (' + scores.epistemic + ') — the text makes claims with high certainty and few hedges. This is characteristic of manifestos, declarations, or persuasive writing. It is intentional, not a flaw, but it lowers the CrystalScope score.');
+  }
+  if (scores.epistemic > 70) {
+    patterns.push('Strong Epistemic Hygiene (' + scores.epistemic + ') — the text knows what it knows and marks uncertainty well. This is a genuine depth signal.');
+  }
+  if (scores.chain >= 70) {
+    patterns.push('Argument Architecture is strong (' + scores.chain + ') — reasoning steps are explicitly connected. The text argues rather than asserts.');
+  }
+  if (scores.precision < 25) {
+    patterns.push('Precision Index is low (' + scores.precision + ') — claims are general rather than specific. Adding numbers, named references, or falsifiable statements would raise this significantly.');
+  }
+  if (scores.bridge === 100) {
+    patterns.push('Domain Reach is maxed (100) — the text successfully bridges all six knowledge domains. This is rare and significant.');
+  }
+  if (scores.density < 30) {
+    patterns.push('Conceptual Density is low (' + scores.density + ') — sentences carry relatively few distinct content concepts on average. Short declarative sentences, bullet-point lists, or dialogue-style exchanges produce this pattern.');
+  }
+  if (scores.cohesion >= 75) {
+    patterns.push('Structural Integrity is high (' + scores.cohesion + ') — sentences reference prior context heavily, meaning the text cannot be easily reordered without losing meaning.');
+  }
+
+  // Fallback if no patterns fired
+  if (patterns.length === 0) {
+    if (score >= 75) patterns.push('Strong across all signals. The text argues, hedges appropriately, bridges domains, and makes defensible claims simultaneously.');
+    else if (score >= 55) patterns.push('Balanced signal profile. No single area dominates or collapses. Raising the weakest signal would push the overall score meaningfully.');
+    else patterns.push('Mixed signals. The score reflects a blend of strengths and absences rather than a single dominant pattern.');
+  }
+
+  return `
+    <h3>Analysis — ${getGrade(score).label} &nbsp;(${score}/100)</h3>
+    <ul>
+      <li><strong>Strongest signal:</strong> ${strong.label} (${scores[strong.key]}) — ${strong.method.split('.')[0]}.</li>
+      <li><strong>Weakest signal:</strong> ${weak.label} (${scores[weak.key]}) — ${weak.method.split('.')[0]}.</li>
+      <li><strong>Corpus:</strong> ${sentences.length} sentence${sentences.length !== 1 ? 's' : ''} analyzed.</li>
+      ${patterns.map(p => `<li>${p}</li>`).join('')}
+    </ul>`;
+}
+
+// ── RADAR CHART ──────────────────────────────────────────────────────────────
+
+function drawRadar(scores) {
+  const svg = document.getElementById('radar');
+  svg.innerHTML = '';
+  const cx = 135, cy = 135, r = 95;
+  const n = SIGNALS.length;
+  const step = (Math.PI * 2) / n;
+  const start = -Math.PI / 2;
+
+  const pt = (i, frac) => {
+    const a = start + i * step;
+    return [cx + Math.cos(a) * r * frac, cy + Math.sin(a) * r * frac];
+  };
+  const mkEl = (tag, attrs) => {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+    return el;
+  };
+
+  // Grid rings
+  [0.25, 0.5, 0.75, 1.0].forEach(f => {
+    const pts = SIGNALS.map((_, i) => pt(i, f).join(',')).join(' ');
+    svg.appendChild(mkEl('polygon', {
+      points: pts, fill: 'none',
+      stroke: f === 1.0 ? '#2a3040' : '#181e2a',
+      'stroke-width': f === 1.0 ? '1.5' : '1',
+    }));
+  });
+
+  // Axis lines
+  SIGNALS.forEach((_, i) => {
+    const [x, y] = pt(i, 1);
+    svg.appendChild(mkEl('line', { x1: cx, y1: cy, x2: x, y2: y, stroke: '#181e2a', 'stroke-width': '1' }));
+  });
+
+  // Data polygon
+  const dataPts = SIGNALS.map((s, i) => pt(i, (scores[s.key] || 0) / 100).join(',')).join(' ');
+  svg.appendChild(mkEl('polygon', {
+    points: dataPts,
+    fill: 'rgba(126,207,255,0.12)',
+    stroke: '#7ecfff',
+    'stroke-width': '2',
+    'stroke-linejoin': 'round',
+  }));
+
+  // Dots + labels
+  SIGNALS.forEach((sig, i) => {
+    const val = (scores[sig.key] || 0) / 100;
+    const [dx, dy] = pt(i, val);
+    svg.appendChild(mkEl('circle', { cx: dx, cy: dy, r: '4', fill: sig.color }));
+
+    const [lx, ly] = pt(i, 1.22);
+    const txt = mkEl('text', {
+      x: lx, y: ly + 3,
+      'text-anchor': 'middle',
+      'font-size': '9.5',
+      fill: sig.color,
+      'font-family': 'system-ui',
+      'font-weight': '600',
+    });
+    txt.textContent = sig.abbr;
+    svg.appendChild(txt);
+  });
+}
+
+// ── WRITING COACH ────────────────────────────────────────────────────────────
+
+function getScoreContext(score) {
+  if (score >= 85) return 'Comparable to: exceptional interdisciplinary scholarship — genuinely rare.';
+  if (score >= 72) return 'Comparable to: strong peer-reviewed research, rigorous philosophical treatises.';
+  if (score >= 58) return 'Comparable to: academic papers, philosophy texts, encyclopedia entries.';
+  if (score >= 44) return 'Comparable to: manifestos, popular non-fiction, thoughtful long-form editorials.';
+  if (score >= 30) return 'Comparable to: quality blog posts, personal essays, good journalism.';
+  if (score >= 15) return 'Comparable to: social media threads, casual discussion, light commentary.';
+  return 'Comparable to: very short or fragmentary text — too brief for reliable measurement.';
+}
+
+function detectGenre(scores, words) {
+  const { chain, epistemic, density, bridge, precision, cohesion } = scores;
+
+  // Narrative / creative detection must come FIRST — before density can misfire.
+  // Signals: near-zero domain reach, low argument chain, dialogue vocabulary present.
+  const dialogueWords = new Set(['said','asked','replied','told','cried','whispered',
+    'shouted','answered','called','exclaimed','murmured','muttered','roared','growled']);
+  const dialogueCount = words ? words.filter(w => dialogueWords.has(w)).length : 0;
+  if (bridge <= 14 && chain <= 30 && (dialogueCount >= 2 || density >= 40))
+    return 'Narrative / Creative Writing';
+
+  // High concept vocabulary, no argument structure, no cohesion:
+  // personal essay, stream-of-consciousness, bullet-point hybrid writing.
+  // No academic paper has chain ≤ 20 AND cohesion ≤ 25 simultaneously — those require connected prose.
+  if (chain <= 20 && cohesion <= 25 && bridge >= 40)
+    return 'Personal Essay / Hybrid Writing';
+
+  // Legal / judicial writing: high precision (statutory §§, case names), domain-narrow,
+  // plus a cluster of legal vocabulary that no other genre produces together.
+  const legalVocab = words ? words.filter(w => new Set([
+    'statute','statutory','preemption','preempts','preempted','jurisdiction','certiorari',
+    'plaintiff','defendant','petitioner','respondent','appellee','appellant',
+    'tort','liability','doctrine','affirmed','affirms','holding','precedent',
+    'subsection','injunction','remand','vacate','overrule','concurrence','dissent'
+  ]).has(w)).length : 0;
+  if (precision >= 40 && legalVocab >= 4) return 'Legal / Judicial Writing';
+
+  // Analytical genres — ordered from most specific to most general
+  if (bridge >= 80 && epistemic <= 30 && chain <= 35) return 'Manifesto / Declaration';
+  if (bridge >= 70 && chain >= 50 && epistemic >= 42 && precision >= 48) return 'Interdisciplinary Scholarship';
+  if (chain >= 55 && epistemic >= 48 && precision >= 50) return 'Academic / Research Writing';
+  if (epistemic >= 55 && chain >= 50) return 'Rigorous Analytical Writing';
+  if (precision >= 55 && bridge >= 40 && chain >= 40) return 'Technical / Scientific Writing';
+  // Density check now requires domain reach — avoids misfiring on dialogue-heavy text
+  if (density >= 62 && bridge >= 40) return 'Dense Technical or Academic Text';
+  if (chain <= 25 && density <= 38) return 'Conversational / Narrative Writing';
+  if (bridge >= 80) return 'Cross-Disciplinary Exploration';
+  return 'Mixed / General Writing';
+}
+
+function coachSignal(sig, val, scores, genre) {
+  const tier = val >= 65 ? 'good' : val >= 38 ? 'mid' : 'weak';
+  const tiers = { good: 'Strength', mid: 'Developing', weak: 'Needs attention' };
+  const isLegal = genre === 'Legal / Judicial Writing';
+
+  const legalAdvice = {
+    chain: 'Legal reasoning detected — argument architecture uses judicial conclusion markers (<em>holds, we conclude, in light of, on the grounds that</em>). Courts reason by holding and concluding rather than through "therefore/consequently" chains. This score reflects the density of those markers in the text.',
+    epistemic: 'Courts assert by institutional design — "it is held" and "we conclude" are the opposite of hedging. The floor score (22) is correct and expected for judicial writing. It is not a flaw.',
+    cohesion: 'Legal opinions use numbered sections (I, II, III) and subsections that are deliberately semi-independent — each addresses a separate argument or counterargument. Low Structural Integrity is a feature of judicial writing, not a weakness.',
+    bridge: val >= 60
+      ? 'Domain Reach is elevated — this document likely includes statistical data, empirical references, or a concurrence with broader policy content. Core judicial reasoning is domain-narrow by design; this elevated score reflects additional content rather than any flaw in the legal argument.'
+      : 'Judicial opinions stay inside law and precedent by design. Cross-domain synthesis is not a feature of legal reasoning — a low Domain Reach score is expected and appropriate for this genre. Precision is the relevant discriminating signal instead.',
+    density: null,   // density advice is fine as-is for legal text
+    precision: null, // precision advice is fine as-is for legal text
+  };
+
+  const advice = {
+    chain: {
+      good: 'Argument architecture is solid. Your text explicitly connects ideas.',
+      mid:  'Add more explicit bridges between claims. Try: <code>It follows that…</code> <code>This implies…</code> <code>Given X, we can conclude…</code>',
+      weak: `Your text asserts rather than argues — claims land without showing the reasoning path. To strengthen this:
+             <p>• Use inference markers: <code>therefore</code>, <code>consequently</code>, <code>it follows that</code></p>
+             <p>• Engage other views: <code>One might argue… however…</code> <code>According to X… but…</code></p>
+             <p>• Show concession-rebuttal: <code>While X is true, nevertheless Y</code></p>`,
+    },
+    epistemic: {
+      good: val > 70
+        ? 'Excellent epistemic calibration — the text knows what it knows and marks uncertainty well.'
+        : 'Good balance of confident claims and appropriate hedging.',
+      mid:  'Consider adding scope qualifiers: <code>generally</code>, <code>in most cases</code>, <code>tends to</code>. They soften overreach without weakening the argument.',
+      weak: scores.epistemic <= 28
+        ? 'The text is highly assertive — this is intentional for manifestos and declarations, and CrystalScope scores it lower as a result. If this is analytical writing, try: <code>arguably</code>, <code>appears to</code>, <code>in some sense</code>, <code>prima facie</code>'
+        : 'Try adding hedges: <code>arguably</code>, <code>likely</code>, <code>suggests that</code>, <code>typically</code>',
+    },
+    density: {
+      good: 'Good conceptual density per sentence.',
+      mid:  'Sentences could carry more conceptual weight. Aim for 6–12 distinct content words per sentence.',
+      weak: `Sentences are conceptually thin on average. Common causes:
+             <p>• Bullet-point lists (the tool reads all bullets as one sentence)</p>
+             <p>• Very short declarative sentences ('This is important. It matters.')</p>
+             <p>• Dialogue or Q&amp;A style</p>
+             <p>Try writing fuller expository paragraphs to raise this signal.</p>`,
+    },
+    cohesion: {
+      good: 'Strong structural integrity — sentences depend on each other. The text resists reordering.',
+      mid:  'Add more forward references to bind sentences together: <code>This means that…</code> <code>Given the above…</code> <code>This framework suggests…</code>',
+      weak: 'Sentences are relatively independent of each other. Add backward/forward references: <code>As established above…</code> <code>This implies…</code> <code>The preceding point suggests…</code>',
+    },
+    bridge: {
+      good: val === 100
+        ? 'Domain Reach is maxed — the text successfully bridges all six knowledge domains. This is rare and a genuine strength.'
+        : 'Good cross-domain synthesis. The text reaches across multiple knowledge areas.',
+      mid:  'The text covers several domains but could bridge further. Consider whether insights from adjacent fields (mathematical, physical, or social) could enrich the argument.',
+      weak: 'The text stays within a narrow knowledge domain. Cross-domain synthesis is one of the strongest signals of crystallized reasoning. Even one or two bridges to another domain can lift this significantly.',
+    },
+    precision: {
+      good: 'Claims are specific and grounded — good use of named concepts, distinctions, or data.',
+      mid:  'Add more precision: name the theories you are drawing on, make explicit distinctions (<code>the difference between X and Y is…</code>), or define key terms (<code>by consciousness I mean…</code>)',
+      weak: `Claims are general rather than specific. Try:
+             <p>• Name theories explicitly: "Global Workspace Theory", "Integrated Information Theory"</p>
+             <p>• Make distinctions: <code>the difference between X and Y</code>, <code>as opposed to</code></p>
+             <p>• Define terms: <code>by [term] I mean…</code>, <code>is defined here as…</code></p>
+             <p>• Add numbers or percentages where appropriate</p>`,
+    },
+  };
+
+  // For legal genre, override advice on structurally-suppressed signals; otherwise use tier advice
+  const legalOverride = isLegal && legalAdvice[sig.key];
+  const text = legalOverride ? legalAdvice[sig.key] : (advice[sig.key]?.[tier] || '');
+  const whyHTML = sig.why ? `<p class="sig-why">${sig.why}</p>` : '';
+  return `
+    <div class="coach-sig ${tier}">
+      <div class="sig-head">
+        <span>${sig.label}</span>
+        <span class="sig-val">${val} — ${tiers[tier]}</span>
+      </div>
+      ${whyHTML}
+      <p>${text}</p>
+    </div>`;
+}
+
+function generateCoach(score, scores, sentences, words) {
+  const genre = detectGenre(scores, words);
+  const context = getScoreContext(score);
+
+  // Narrative / creative writing — scores are not meaningful here
+  if (genre === 'Narrative / Creative Writing') {
+    document.getElementById('coach-body').innerHTML = `
+      <div class="coach-genre">Detected genre: Narrative / Creative Writing</div>
+      <div class="coach-bench">CrystalScope is built for analytical and argumentative text — essays, academic papers, manifestos, arguments. Narrative and creative writing serve completely different goals: storytelling, character, voice, emotion, imagery. Those goals have nothing to do with explicit argument structure, so the scores above are not meaningful as a quality assessment for this text. Try pasting an essay, a paper, or an argument instead.</div>`;
+    return;
+  }
+
+  const signalHTML = SIGNALS.map(sig => coachSignal(sig, scores[sig.key], scores, genre)).join('');
+
+  // Legal genre gets a tailored note replacing the generic intro and bench comparison
+  const isLegal = genre === 'Legal / Judicial Writing';
+  const introHTML = isLegal
+    ? `<p class="coach-intro"><strong>Legal / judicial writing detected.</strong> CrystalScope has been extended with legal reasoning markers:
+        <em>the Court holds/held, we conclude, in light of, on the grounds that, the question boils down to.</em>
+        Three signals read low by design in this genre — not as flaws:<br>
+        <strong>Epistemic Hygiene (floor 22)</strong> — Courts assert by institutional authority. "It is held" is the opposite of hedging.<br>
+        <strong>Domain Reach</strong> — Judicial opinions stay inside law and precedent; cross-domain synthesis is not the goal.<br>
+        <strong>Structural Integrity</strong> — Numbered sections (I, II, III) are semi-independent by design.<br>
+        The expected strong signal is <strong>Precision</strong> — statutory §§ citations, case names, specific subsections.</p>`
+    : `<p class="coach-intro">
+      <strong>Note:</strong> CrystalScope measures one dimension — how explicitly a text signals its reasoning structure. It is not a quality judgment.
+      A manifesto should score 40–55. An academic paper 50–70. A poem may score 10 and be a masterpiece.
+      The score answers: <em>"How explicitly does this text construct and show its reasoning?"</em>
+    </p>`;
+
+  const benchHTML = isLegal
+    ? 'Comparable to: judicial opinions, legal briefs, statutory analysis. Precision is the primary discriminating signal; Epistemic Hygiene and Domain Reach are structurally suppressed in this genre.'
+    : context;
+
+  document.getElementById('coach-body').innerHTML = `
+    ${introHTML}
+    <div class="coach-genre">Detected genre: ${genre}</div>
+    <div class="coach-bench">${benchHTML}</div>
+    <div class="coach-signals">${signalHTML}</div>`;
+}
+
+// ── MAIN ANALYZE ─────────────────────────────────────────────────────────────
+
+function analyze() {
+  const text = document.getElementById('input').value.trim();
+  if (!text || text.split(/\s+/).length < 20) {
+    alert('Please paste at least 20 words to analyze.');
+    return;
+  }
+
+  const words = tokenize(text);
+  const sentences = getSentences(text);
+
+  const scores = {
+    chain:     scoreChain(text, words, sentences),
+    epistemic: scoreEpistemic(text, words),
+    density:   scoreDensity(words, sentences),
+    cohesion:  scoreCohesion(words, sentences),
+    bridge:    scoreBridge(words),
+    precision: scorePrecision(text, words),
+  };
+
+  const composite = Math.round(
+    SIGNALS.reduce((sum, s) => sum + scores[s.key] * s.weight, 0)
+  );
+
+  // Score + grade + context
+  document.getElementById('scoreNum').textContent = composite;
+  const grade = getGrade(composite);
+  const gradeEl = document.getElementById('scoreGrade');
+  gradeEl.textContent = grade.label;
+  gradeEl.style.color = grade.color;
+  document.getElementById('scoreContext').textContent = getScoreContext(composite);
+
+  // Radar
+  drawRadar(scores);
+
+  // Signal bars
+  const barsEl = document.getElementById('signal-bars');
+  barsEl.innerHTML = '';
+  SIGNALS.forEach(sig => {
+    const val = scores[sig.key];
+    barsEl.innerHTML += `
+      <div class="signal-row" title="${sig.method}">
+        <div class="signal-name">${sig.label}</div>
+        <div class="signal-bar-wrap">
+          <div class="signal-bar" style="width:${val}%;background:${sig.color}25;border-right:2px solid ${sig.color}"></div>
+        </div>
+        <div class="signal-val" style="color:${sig.color}">${val}</div>
+      </div>`;
+  });
+
+  // Explanation
+  document.getElementById('explanation').innerHTML = getInterpretation(composite, scores, sentences);
+  generateCoach(composite, scores, sentences, words);
+
+  // Method cards
+  const mBody = document.getElementById('method-body');
+  mBody.innerHTML = '';
+  SIGNALS.forEach(sig => {
+    mBody.innerHTML += `
+      <div class="method-sig" style="border-color:${sig.color}">
+        <strong style="color:${sig.color}">${sig.label}</strong>
+        ${sig.method}
+      </div>`;
+  });
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── LIVE WORD COUNT ───────────────────────────────────────────────────────────
+
+document.getElementById('input').addEventListener('input', () => {
+  const wc = document.getElementById('input').value.trim().split(/\s+/).filter(Boolean).length;
+  document.getElementById('wordcount').textContent = wc > 0 ? `${wc} words` : '';
+});
+
+function resetAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('wordcount').textContent = '';
+  document.getElementById('results').style.display = 'none';
+}
+</script>
+</body>
+</html>

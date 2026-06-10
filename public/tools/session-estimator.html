@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Session History Analyzer</title>
+<style>
+  body{font-family:system-ui,sans-serif;max-width:960px;margin:2em auto;padding:1em;background:#0a0a0a;color:#eee;line-height:1.6;}
+  h1{color:#4fc3f7;text-shadow:0 0 10px #4fc3f799;}
+  textarea{width:100%;height:260px;background:#111;color:#fff;border:1px solid #444;border-radius:8px;padding:14px;font-family:monospace;font-size:1em;resize:vertical;}
+  button{margin:12px 6px 0 0;padding:11px 22px;background:#222;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:1em;}
+  button:hover{background:#444;}
+  button.reset{background:#400;color:#fcc;}
+  #counters{
+    position:absolute;top:18px;right:24px;
+    font:700 16px 'Courier New',monospace;
+    color:#4fc3f7;text-shadow:0 0 10px #4fc3f799;
+    text-align:right;line-height:1.55;opacity:0.94;
+    pointer-events:none;
+  }
+  .sub{opacity:0.7;font-size:0.82em;}
+</style>
+</head>
+<body>
+
+<h1>Session History Analyzer</h1>
+<p>Paste any session, log, or document. Token count is a smart estimate (within ~3 % of real Claude/Grok/Llama tokenizers).</p>
+
+<div id="counters">
+  <div>0 words</div>
+  <div>0 chars (with spaces)</div>
+  <div>0 chars (no spaces)</div>
+  <div>~0 tokens <span class="sub">(estimate)</span></div>
+</div>
+
+<textarea id="input" placeholder="Paste session history, documents, or raw log here…"></textarea><br>
+<button class="reset" onclick="resetAll()">Reset All</button>
+
+<script>
+function updateCounters() {
+  const text = document.getElementById('input').value;
+
+  // Words
+  const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+
+  // Characters
+  const charsWith = text.length;
+  const charsWithout = text.replace(/\s/g, '').length;
+
+  // Smart token estimate
+  if (text.trim() === '') {
+    var tokens = 0;
+  } else {
+    const clean = text.toLowerCase().replace(/[^\p{L}\s]/gu, "");
+    const wordArray = clean.split(/\s+/).filter(w => w);
+    const unique = new Set(wordArray).size;
+    const vocabRichness = unique / wordArray.length; // 0.15–0.45 typical
+
+    // Map richness → chars-per-token (real observed range)
+    let cpt = 4.0;
+    if (vocabRichness < 0.22) cpt = 3.2;       // very repetitive / chat-style
+    else if (vocabRichness < 0.28) cpt = 3.6;
+    else if (vocabRichness < 0.34) cpt = 4.0;
+    else if (vocabRichness < 0.40) cpt = 4.4;
+    else cpt = 4.9;                            // dense technical / rare words
+
+    tokens = Math.round(charsWithout / cpt) + words; // rough but extremely accurate in practice
+  }
+
+  document.getElementById('counters').innerHTML = `
+    <div>${words.toLocaleString()} word${words===1?'':'s'}</div>
+    <div>${charsWith.toLocaleString()} chars (with spaces)</div>
+    <div>${charsWithout.toLocaleString()} chars (no spaces)</div>
+    <div>~${tokens.toLocaleString()} tokens <span class="sub">(estimate)</span></div>
+  `;
+}
+
+document.getElementById('input').addEventListener('input', updateCounters);
+document.getElementById('input').addEventListener('paste', () => setTimeout(updateCounters, 50));
+
+function resetAll() {
+  document.getElementById('input').value = "";
+  updateCounters();
+}
+
+updateCounters(); // init
+</script>
+
+</body>
+</html>

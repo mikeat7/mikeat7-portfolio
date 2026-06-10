@@ -4,20 +4,24 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 type BackButtonProps = {
-  /** Where to go if there’s no browser history */
+  /** Force navigation to this route — bypasses browser history entirely */
+  to?: string;
+  /** Where to go if there is no browser history */
   fallback?: string;
   /** Extra classes if you need different styling in some pages */
   className?: string;
-  /** Optional custom label (defaults to “Back”) */
+  /** Optional custom label (defaults to Back) */
   label?: string;
 };
 
-const BackButton: React.FC<BackButtonProps> = ({ fallback = "/", className = "", label = "Back" }) => {
+const BackButton: React.FC<BackButtonProps> = ({ to, fallback = "/", className = "", label = "Back" }) => {
   const navigate = useNavigate();
 
   const handleBack = () => {
-    // If there is navigable history, go back; otherwise use the fallback route
-    if (typeof window !== "undefined" && window.history.length > 1) {
+    if (to) {
+      // Explicit destination — ignore history
+      navigate(to);
+    } else if (typeof window !== "undefined" && window.history.length > 1) {
       navigate(-1);
     } else {
       navigate(fallback);
@@ -42,4 +46,3 @@ const BackButton: React.FC<BackButtonProps> = ({ fallback = "/", className = "",
 };
 
 export default BackButton;
-

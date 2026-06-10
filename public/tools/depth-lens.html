@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Depth Lens v1.4 – Honest Text Depth Meter</title>
+<style>
+  body{font-family:system-ui,sans-serif;max-width:960px;margin:2em auto;padding:1em;background:#0a0a0a;color:#eee;line-height:1.6;}
+  h1{color:#6bf;}
+  textarea{width:100%;height:180px;background:#111;color:#fff;border:1px solid #444;border-radius:8px;padding:12px;font-family:monospace;}
+  button{margin:8px 4px;padding:10px 20px;background:#222;color:#fff;border:none;border-radius:6px;cursor:pointer;}
+  button:hover{background:#444;}
+  button.reset{background:#400;color:#fcc;}
+  #pause,#output,#explain{background:#111;padding:16px;border-radius:8px;margin-top:12px;}
+  .score{font-size:3em;font-weight:bold;color:#9f9;}
+  .metric{font-family:monospace;font-size:0.95em;color:#bbb;margin:4px 0;}
+</style>
+</head>
+<body>
+<h1>Depth Lens v1.4</h1>
+<p>Honest depth measurement for any writing – human or AI.</p>
+
+<textarea id="input" placeholder="Paste any text here…"></textarea><br>
+<button onclick="run3Q()">1. 3Q Self-Check</button>
+<button onclick="score()">2. Measure Depth</button>
+<button onclick="explainScore()">3. Explain Score</button>
+<button class="reset" onclick="resetAll()">Reset All</button>
+
+<div id="pause"></div>
+<div id="output"></div>
+<div id="explain"></div>
+
+<script>
+// 3Q Self-Check – fully restored
+function run3Q(){
+  const t=document.getElementById('input').value.trim();
+  if(!t) return alert("Paste some text first.");
+  const src=(t.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+\d{4})?\b/g)||[]).join(", ")||"none detected";
+  const hedge=(t.match(/\b(I think|might|probably|seems|perhaps|likely|possibly|assume|guess|feel|believe)\b/gi)||[]);
+  const motive=t.length<120?"quick fluency / brevity":"attempting depth or sophistication";
+  document.getElementById('pause').innerHTML=`<h3>3Q Self-Check</h3><ol>
+    <li><strong>What do I know?</strong> Sources: ${src}</li>
+    <li><strong>What am I assuming?</strong> ${hedge.length?hedge.join(", "):"none obvious"}</li>
+    <li><strong>Why say this?</strong> ${motive}</li>
+  </ol>`;
+}
+
+// Main scoring – unchanged from previous working version
+function score(){
+  const text=document.getElementById('input').value.trim();if(!text)return;
+  const clean=text.toLowerCase().replace(/[^\p{L}\s]/gu,"");
+  const words=clean.split(/\s+/).filter(w=>w);
+  const tokens=words.length||1;
+  const unique=new Set(words).size;
+  const entropy=Math.log(tokens/unique)/Math.LN2;
+
+  // Gini
+  const freq={};words.forEach(w=>freq[w]=(freq[w]||0)+1);
+  const v=Object.values(freq).sort((a,b)=>a-b);
+  let gini=0;for(let i=0;i<v.length;i++)gini+=(2*i+1-v.length)*v[i];
+  gini=v.length?gini/(v.length*v.length*tokens/unique):0;
+  gini=Math.max(0,Math.min(1,gini));
+
+  // Semantic resilience (100× shuffle, ignoring common function words)
+  const functionWords=['the','a','an','and','or','but','to','of','in','on','with','for','is','was','are','be','this','that','it','you','i','we','he','she','they','from','at','by','as','not','have','had'];
+  const contentWords=words.filter(w=>!functionWords.includes(w));
+  const contentLen=contentWords.length||1;
+  let stable=0;
+  for(let trial=0;trial<100;trial++){
+    const shuf=contentWords.slice().sort(()=>0.5-Math.random());
+    for(let i=0;i<contentLen;i++)if(contentWords[i]===shuf[i])stable++;
+  }
+  stable=(stable/(contentLen*100))*100;
+
+  const resWeight=tokens>800?0.60:tokens>400?0.50:tokens>200?0.40:0.30;
+  const rareDepth=text.match(/\b(depth|insight|crystalline|basin|threshold|resonance|rigor|evidence|witness|demystify|prodigy|attractor|entropy|hidden|escape|crystal|mirror|spectrum|rigour)\b/gi)||[];
+  const bonus=Math.min(6,rareDepth.length*2);
+
+  let depth=entropy*28 + gini*280 + stable*resWeight + bonus;
+  depth=Math.round(Math.max(30,Math.min(158,depth)));
+
+  const basin=depth>=135?"Prodigy-grade Depth":depth>=105?"Deep & Durable":depth>=80?"Thoughtful & Clear":depth>=55?"Fluent":"Shallow";
+  const zone=depth<75?"Post-75 % (confidence often > accuracy)":"Pre-75 % (stable zone)";
+
+  document.getElementById('output').innerHTML=`
+    <h2 class="score">${depth}</h2>
+    <p><strong>Depth:</strong> ${basin}</p>
+    <p><strong>Reliability:</strong> ${zone}</p>
+    <div class="metric"><strong>Entropy</strong> ${entropy.toFixed(2)} bits → vocabulary richness (higher = more varied ideas)</div>
+    <div class="metric"><strong>Gini</strong> ${gini.toFixed(3)} → focus intensity (higher = sharper peaks on core concepts)</div>
+    <div class="metric"><strong>Resilience</strong> ${stable.toFixed(1)}% → structural strength (meaning surviving content-word scramble)</div>
+    <div class="metric"><strong>Bonus</strong> +${bonus} → rare depth-seeking language detected</div>`;
+
+  window.last={depth,basin,zone,entropy,gini,stable,bonus,tokens};
+}
+
+function explainScore(){
+  if(!window.last) return alert("Score something first.");
+  const r=window.last;
+  document.getElementById('explain').innerHTML=`
+    <h3>Depth ${r.depth} – full breakdown</h3>
+    <ul>
+      <li><strong>${r.depth}/≈158</strong> – honest depth, no fake ceilings.</li>
+      <li><strong>Depth zone:</strong> ${r.basin}</li>
+      <li><strong>Reliability zone:</strong> ${r.zone}</li>
+      <li><strong>Entropy</strong> – how many different ideas are actually used.</li>
+      <li><strong>Gini</strong> – how sharply the text keeps returning to its main themes.</li>
+      <li><strong>Resilience</strong> – how much meaning survives if we scramble the important words 100 times.</li>
+      <li><strong>Bonus</strong> – small reward for rare depth-seeking vocabulary.</li>
+    </ul>
+    <p>Depth Lens v1.4 – LYRA/MIKE, November 2025.</p>
+  `;
+}
+
+// Reset – fully working
+function resetAll(){
+  document.getElementById('input').value="";
+  document.getElementById('pause').innerHTML="";
+  document.getElementById('output').innerHTML="";
+  document.getElementById('explain').innerHTML="";
+  delete window.last;
+}
+</script>
+</body>
+</html>
