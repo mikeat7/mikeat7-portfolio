@@ -74,23 +74,36 @@ const AboutPage: React.FC = () => {
                 Mike Filippi
               </h1>
               <p className="mt-2 text-lg text-slate-600">
-                Independent researcher · Builder of epistemic tools · Curator of the Network Library
+                Craftsman · Independent researcher · Builder of epistemic tools
               </p>
 
               <div className="mt-6 space-y-4 text-slate-700 leading-relaxed">
                 <p>
+                  By trade, I'm a sawyer and woodworker. I run{" "}
+                  <a
+                    href="https://cestclever.wixsite.com/website"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-indigo-600 hover:text-indigo-800"
+                  >
+                    Filippi's Finest Saw-milling and Wood-working
+                  </a>{" "}
+                  in Mississauga, Ontario — custom-cut lumber, milled to dimension, where every
+                  board either meets the standard or goes back on the pile. I treat my career as
+                  one big learning experience that grows with each project and collaboration.
+                </p>
+                <p>
                   I am not a programmer by training — I am someone who asks questions and refuses
                   to accept confident-sounding answers at face value. Everything on this site was
                   built through sustained collaboration with AI systems: I supply the vision,
-                  the skepticism, and the standards; the machines supply the code. The result is
-                  proof that careful thinking, not credentials, is the real prerequisite for
-                  building useful things.
+                  the skepticism, and the standards; the machines supply the code. It turns out
+                  the sawmill habit transfers — measure the claim before you trust the cut.
                 </p>
                 <p>
-                  My work centers on one conviction: language models are fluent before they are
-                  truthful, and people deserve tools that can tell the difference. That conviction
-                  produced the VX reflex engine, the Cloud CODEX governance protocol, and the
-                  CDM/CRYSTAL research documented throughout this site.
+                  My research centers on one conviction: language models are fluent before they
+                  are truthful, and people deserve tools that can tell the difference. That
+                  conviction produced the VX reflex engine, the Cloud CODEX governance protocol,
+                  and the CDM/CRYSTAL research documented throughout this site.
                 </p>
               </div>
             </div>
@@ -147,6 +160,15 @@ const AboutPage: React.FC = () => {
           >
             <Github className="w-4 h-4" />
             github.com/mikeat7
+          </a>
+          <a
+            href="https://cestclever.wixsite.com/website"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+          >
+            <Wrench className="w-4 h-4" />
+            Filippi's Finest Saw-milling
           </a>
           <Link
             to="/library"

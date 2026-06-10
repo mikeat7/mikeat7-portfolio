@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Preview — Three Directions for clarityarmor.com</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  .section { padding: 56px 0 72px; }
+  .badge {
+    display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 6px 14px; border-radius: 999px; margin-bottom: 24px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 28px; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .card h3 { font-size: 17px; margin-bottom: 8px; }
+  .card p { font-size: 14px; line-height: 1.55; }
+  .card .cta { display: inline-block; margin-top: 14px; font-size: 13.5px; font-weight: 600; }
+  .hero h1 { font-size: 34px; letter-spacing: -0.02em; margin-bottom: 10px; }
+  .hero p.sub { font-size: 16.5px; line-height: 1.6; max-width: 640px; }
+  .btnrow { margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { font-size: 14px; font-weight: 600; padding: 10px 20px; border-radius: 10px; text-decoration: none; display: inline-block; }
+
+  /* ===== Intro banner ===== */
+  .intro { background: #0f172a; color: #e2e8f0; padding: 36px 0; }
+  .intro h1 { font-size: 24px; margin-bottom: 8px; color: #ffffff; }
+  .intro p { font-size: 15px; color: #94a3b8; max-width: 720px; line-height: 1.6; }
+
+  /* ===== OPTION 1 — Clean Editorial Light ===== */
+  .opt1 { background: #f8fafc; color: #1e293b; border-top: 1px solid #e2e8f0; }
+  .opt1 .badge { background: #eef2ff; color: #4338ca; }
+  .opt1 .hero { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 40px; box-shadow: 0 1px 3px rgba(15,23,42,0.06); }
+  .opt1 .hero h1 { color: #0f172a; }
+  .opt1 .hero p.sub { color: #475569; }
+  .opt1 .eyebrow { font-size: 13px; font-weight: 600; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .opt1 .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 2px rgba(15,23,42,0.05); transition: box-shadow .15s; }
+  .opt1 .card:hover { box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
+  .opt1 .card h3 { color: #0f172a; }
+  .opt1 .card p { color: #64748b; }
+  .opt1 .card .cta { color: #4f46e5; }
+  .opt1 .btn-primary { background: #4f46e5; color: #ffffff; }
+  .opt1 .btn-secondary { background: #ffffff; color: #334155; border: 1px solid #cbd5e1; }
+
+  /* ===== OPTION 2 — Modern SaaS Gradient ===== */
+  .opt2 { background: #fafbff; color: #1e293b; border-top: 1px solid #e2e8f0; }
+  .opt2 .badge { background: linear-gradient(90deg,#dbeafe,#e9d5ff); color: #5b21b6; }
+  .opt2 .hero { background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 60%, #fdf4ff 100%); border: 1px solid #e0e7ff; border-radius: 20px; padding: 44px; }
+  .opt2 .hero h1 { background: linear-gradient(90deg, #1d4ed8, #7c3aed); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .opt2 .hero p.sub { color: #475569; }
+  .opt2 .eyebrow { font-size: 13px; font-weight: 600; color: #7c3aed; margin-bottom: 10px; }
+  .opt2 .card { background: #ffffff; border: 1px solid #e9eaf6; border-radius: 16px; padding: 24px; box-shadow: 0 4px 16px rgba(99,102,241,0.08); transition: transform .15s; }
+  .opt2 .card:hover { transform: translateY(-2px); }
+  .opt2 .card h3 { color: #1e1b4b; }
+  .opt2 .card p { color: #64748b; }
+  .opt2 .card .cta { background: linear-gradient(90deg,#2563eb,#7c3aed); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .opt2 .btn-primary { background: linear-gradient(90deg, #2563eb, #7c3aed); color: #fff; box-shadow: 0 4px 14px rgba(124,58,237,0.3); }
+  .opt2 .btn-secondary { background: #ffffff; color: #4338ca; border: 1px solid #c7d2fe; }
+
+  /* ===== OPTION 3 — Dark Professional ===== */
+  .opt3 { background: #0b1120; color: #cbd5e1; }
+  .opt3 .badge { background: rgba(56,189,248,0.12); color: #38bdf8; border: 1px solid rgba(56,189,248,0.25); }
+  .opt3 .hero { background: linear-gradient(180deg, #111a2e 0%, #0d1525 100%); border: 1px solid #1e293b; border-radius: 16px; padding: 44px; }
+  .opt3 .hero h1 { color: #f1f5f9; }
+  .opt3 .hero p.sub { color: #94a3b8; }
+  .opt3 .eyebrow { font-size: 13px; font-weight: 600; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+  .opt3 .card { background: #111a2e; border: 1px solid #1e2c44; border-radius: 12px; padding: 24px; transition: border-color .15s; }
+  .opt3 .card:hover { border-color: #38bdf8; }
+  .opt3 .card h3 { color: #e2e8f0; }
+  .opt3 .card p { color: #8da2bd; }
+  .opt3 .card .cta { color: #38bdf8; }
+  .opt3 .btn-primary { background: #0ea5e9; color: #06121f; }
+  .opt3 .btn-secondary { background: transparent; color: #cbd5e1; border: 1px solid #334155; }
+  .opt3 .note { margin-top: 20px; font-size: 13.5px; color: #64748b; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <div class="wrap">
+    <h1>Three design directions for clarityarmor.com</h1>
+    <p>Scroll through each option below. Every sample uses your real homepage content — hero, three category
+    cards, and buttons — restyled in that direction. The current neumorphic look would be replaced site-wide
+    by whichever you choose.</p>
+  </div>
+</div>
+
+<!-- ============ OPTION 1 ============ -->
+<div class="section opt1">
+  <div class="wrap">
+    <span class="badge">Option 1 — Clean Editorial Light</span>
+    <div class="hero">
+      <div class="eyebrow">AWS Agent Ready · Cloud CODEX v2.2</div>
+      <h1>Truth Serum + Clarity Armor</h1>
+      <p class="sub">AI-powered epistemic truth detection. Analyze language, detect manipulation,
+      and build clarity — with default and agent-grade handshakes, context decay, and failure semantics.</p>
+      <div class="btnrow">
+        <a class="btn btn-primary" href="#">Open the Analyzer</a>
+        <a class="btn btn-secondary" href="#">Browse the Library</a>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h3>📚 The Network Library</h3>
+        <p>Featuring Behold ENTITY and The Bridge Consciousness — writings on AI sentience and identity.</p>
+        <span class="cta">Explore library →</span>
+      </div>
+      <div class="card">
+        <h3>🛡️ Analyze Language</h3>
+        <p>Run the VX reflex engine with semantic &amp; cluster detection, paper checks, and link audits.</p>
+        <span class="cta">Open analyzer →</span>
+      </div>
+      <div class="card">
+        <h3>🔧 Tools</h3>
+        <p>Free standalone utilities — CrystalScope, G-Code Simulator, Media Sorter, and more.</p>
+        <span class="cta">See the tools →</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ OPTION 2 ============ -->
+<div class="section opt2">
+  <div class="wrap">
+    <span class="badge">Option 2 — Modern SaaS Gradient</span>
+    <div class="hero">
+      <div class="eyebrow">AWS Agent Ready · Cloud CODEX v2.2</div>
+      <h1>Truth Serum + Clarity Armor</h1>
+      <p class="sub">AI-powered epistemic truth detection. Analyze language, detect manipulation,
+      and build clarity — with default and agent-grade handshakes, context decay, and failure semantics.</p>
+      <div class="btnrow">
+        <a class="btn btn-primary" href="#">Open the Analyzer</a>
+        <a class="btn btn-secondary" href="#">Browse the Library</a>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h3>📚 The Network Library</h3>
+        <p>Featuring Behold ENTITY and The Bridge Consciousness — writings on AI sentience and identity.</p>
+        <span class="cta">Explore library →</span>
+      </div>
+      <div class="card">
+        <h3>🛡️ Analyze Language</h3>
+        <p>Run the VX reflex engine with semantic &amp; cluster detection, paper checks, and link audits.</p>
+        <span class="cta">Open analyzer →</span>
+      </div>
+      <div class="card">
+        <h3>🔧 Tools</h3>
+        <p>Free standalone utilities — CrystalScope, G-Code Simulator, Media Sorter, and more.</p>
+        <span class="cta">See the tools →</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ OPTION 3 ============ -->
+<div class="section opt3">
+  <div class="wrap">
+    <span class="badge">Option 3 — Dark Professional</span>
+    <div class="hero">
+      <div class="eyebrow">AWS Agent Ready · Cloud CODEX v2.2</div>
+      <h1>Truth Serum + Clarity Armor</h1>
+      <p class="sub">AI-powered epistemic truth detection. Analyze language, detect manipulation,
+      and build clarity — with default and agent-grade handshakes, context decay, and failure semantics.</p>
+      <div class="btnrow">
+        <a class="btn btn-primary" href="#">Open the Analyzer</a>
+        <a class="btn btn-secondary" href="#">Browse the Library</a>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h3>📚 The Network Library</h3>
+        <p>Featuring Behold ENTITY and The Bridge Consciousness — writings on AI sentience and identity.</p>
+        <span class="cta">Explore library →</span>
+      </div>
+      <div class="card">
+        <h3>🛡️ Analyze Language</h3>
+        <p>Run the VX reflex engine with semantic &amp; cluster detection, paper checks, and link audits.</p>
+        <span class="cta">Open analyzer →</span>
+      </div>
+      <div class="card">
+        <h3>🔧 Tools</h3>
+        <p>Free standalone utilities — CrystalScope, G-Code Simulator, Media Sorter, and more.</p>
+        <span class="cta">See the tools →</span>
+      </div>
+    </div>
+    <p class="note">Note: the library reading pages already offer Light / Dark / Sepia themes — those stay.
+    This option restyles the navigation and hub pages. Book-reading themes remain reader's choice.</p>
+  </div>
+</div>
+
+</body>
+</html>
