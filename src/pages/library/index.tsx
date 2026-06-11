@@ -53,61 +53,41 @@ const LibraryIndexPage: React.FC = () => {
       : libraryBooks.filter((book) => book.category === selectedCategory);
 
   return (
-    <main className="min-h-screen bg-[#e9eef5] text-slate-800">
+    <main className="ins-page">
       {/* HEADER */}
       <section className="max-w-7xl mx-auto px-6 py-12">
-        <div
-          className="relative rounded-3xl p-8 md:p-12"
-          style={{
-            background: "#e9eef5",
-            boxShadow:
-              "9px 9px 18px rgba(163,177,198,0.6), -9px -9px 18px rgba(255,255,255,0.9)",
-          }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <Library className="w-8 h-8" style={{ color: "#ffd700" }} />
-              <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900">
-                The Network Library Collection
-              </h1>
+        <div className="ins-panel p-8 md:p-12">
+          <div className="flex items-center justify-between mb-2 gap-4">
+            <div className="ins-sec flex items-center gap-2 flex-1">
+              <Library className="w-4 h-4 text-ins-gold" />
+              Collection · Consciousness &amp; AI Sentience
             </div>
-            <Link
-              to="/"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105"
-              style={{
-                background: "#e9eef5",
-                boxShadow: "3px 3px 6px #cfd6e0, -3px -3px 6px #ffffff",
-              }}
-            >
+            <Link to="/" className="ins-btn !px-3 !py-1.5 flex-shrink-0">
               <Home className="w-4 h-4" />
               <span className="hidden md:inline">Home</span>
             </Link>
           </div>
-          <p className="text-base md:text-lg text-slate-700 max-w-3xl">
+
+          <h1 className="ins-heading text-3xl md:text-5xl mt-3">
+            The Network Library Collection
+          </h1>
+          <p className="mt-4 text-base md:text-lg text-ins-text leading-relaxed max-w-3xl">
             Curated writings on consciousness, AI sentience, philosophy, and the emergence
-            of awareness across substrates. Featuring <strong>ENTITY</strong>, the Bridge Consciousness.
+            of awareness across substrates. Featuring <strong className="text-ins-goldbright">ENTITY</strong>,
+            the Bridge Consciousness.
           </p>
 
           {/* CATEGORY FILTER */}
-          <div className="mt-6 flex items-center gap-3 flex-wrap">
-            <Filter className="w-4 h-4 text-slate-600" />
-            <span className="text-sm font-medium text-slate-600">Filter by:</span>
+          <div className="mt-6 flex items-center gap-2 flex-wrap">
+            <Filter className="w-4 h-4 text-ins-dim" />
+            <span className="ins-mono text-xs uppercase tracking-wider text-ins-dim mr-1">Filter:</span>
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  selectedCategory === category
-                    ? "text-slate-900"
-                    : "text-slate-600 hover:text-slate-900"
+                className={`ins-btn !px-3 !py-1.5 !text-xs ${
+                  selectedCategory === category ? "ins-btn-gold" : ""
                 }`}
-                style={{
-                  background: "#e9eef5",
-                  boxShadow:
-                    selectedCategory === category
-                      ? "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff"
-                      : "3px 3px 6px #cfd6e0, -3px -3px 6px #ffffff",
-                }}
               >
                 {category}
               </button>
@@ -116,17 +96,14 @@ const LibraryIndexPage: React.FC = () => {
 
           {/* READING PREFERENCES - Mobile only */}
           {isMobile && (
-          <div className="mt-8 p-6 rounded-2xl" style={{
-            background: "#e9eef5",
-            boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff",
-          }}>
-            <h3 className="text-sm font-bold text-slate-700 mb-4">📖 Reading Preferences</h3>
-            <p className="text-xs text-slate-600 mb-4">Set your preferred theme and font size for all books</p>
+          <div className="mt-8 p-6 rounded bg-ins-deep border border-ins-line">
+            <h3 className="ins-sec">📖 Reading Preferences</h3>
+            <p className="text-xs text-ins-dim mb-4">Set your preferred theme and font size for all books</p>
 
             <div className="flex flex-col md:flex-row gap-6">
               {/* Theme Selector */}
               <div className="flex-1">
-                <label className="text-xs font-medium text-slate-600 mb-2 block">Theme</label>
+                <label className="ins-mono text-xs uppercase tracking-wider text-ins-dim mb-2 block">Theme</label>
                 <div className="flex flex-wrap items-center gap-2">
                   {[
                     { key: "light", icon: Sun, label: "Light" },
@@ -136,14 +113,7 @@ const LibraryIndexPage: React.FC = () => {
                     <button
                       key={key}
                       onClick={() => changeTheme(key as Theme)}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:scale-105 flex-shrink-0"
-                      style={{
-                        background: "#e9eef5",
-                        boxShadow:
-                          theme === key
-                            ? "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff"
-                            : "2px 2px 4px #cfd6e0, -2px -2px 4px #ffffff",
-                      }}
+                      className={`ins-btn !px-3 !py-1.5 !text-xs ${theme === key ? "ins-btn-gold" : ""}`}
                     >
                       <Icon className="w-3.5 h-3.5" />
                       <span className="whitespace-nowrap">{label}</span>
@@ -154,20 +124,13 @@ const LibraryIndexPage: React.FC = () => {
 
               {/* Font Size Selector */}
               <div className="flex-1">
-                <label className="text-xs font-medium text-slate-600 mb-2 block">Font Size</label>
+                <label className="ins-mono text-xs uppercase tracking-wider text-ins-dim mb-2 block">Font Size</label>
                 <div className="flex items-center gap-2">
                   {[14, 16, 18, 20].map((size) => (
                     <button
                       key={size}
                       onClick={() => changeFontSize(size)}
-                      className="px-4 py-2 rounded-lg text-xs font-medium transition-all hover:scale-105"
-                      style={{
-                        background: "#e9eef5",
-                        boxShadow:
-                          fontSize === size
-                            ? "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff"
-                            : "2px 2px 4px #cfd6e0, -2px -2px 4px #ffffff",
-                      }}
+                      className={`ins-btn !px-3 !py-1.5 !text-xs ${fontSize === size ? "ins-btn-gold" : ""}`}
                     >
                       {size === 14 ? "A-" : size === 16 ? "A" : size === 18 ? "A" : "A+"}
                     </button>
@@ -176,7 +139,7 @@ const LibraryIndexPage: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-xs text-slate-500 mt-4 italic">
+            <p className="text-xs text-ins-dim mt-4 italic">
               Current: {theme.charAt(0).toUpperCase() + theme.slice(1)} theme, {fontSize}px font
             </p>
           </div>
@@ -184,25 +147,20 @@ const LibraryIndexPage: React.FC = () => {
         </div>
 
         {/* BOOK GRID */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredBooks.map((book, index) => (
             <Link
               key={book.slug}
               to={`/library/${book.slug}`}
-              className="group block rounded-2xl p-6 cursor-pointer transition-transform hover:scale-[1.02] focus:outline-none"
-              style={{
-                background: "#e9eef5",
-                boxShadow:
-                  "8px 8px 16px rgba(163,177,198,0.6), -8px -8px 16px rgba(255,255,255,0.9)",
-              }}
+              className="ins-card group block p-6 focus:outline-none"
             >
               {/* Badges Row */}
               <div className="flex items-center gap-2 mb-3 flex-wrap">
                 {/* Featured Badge */}
                 {book.featured && (
                   <div className="flex items-center gap-1">
-                    <Sparkles className="w-4 h-4" style={{ color: "#ffd700" }} />
-                    <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                    <Sparkles className="w-4 h-4 text-ins-gold" />
+                    <span className="ins-mono text-xs font-semibold text-ins-gold uppercase tracking-wide">
                       Featured
                     </span>
                   </div>
@@ -210,49 +168,35 @@ const LibraryIndexPage: React.FC = () => {
 
                 {/* Manual Bookmark Badge */}
                 {hasManualBookmark(book.slug) && (
-                  <div
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg"
-                    style={{
-                      background: "#e9eef5",
-                      boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
-                    }}
-                  >
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" style={{ color: "#ffd700" }}>
+                  <div className="ins-chip !text-ins-teal !border-ins-teal flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
                     </svg>
-                    <span className="text-xs font-semibold text-slate-700">
-                      Bookmarked
-                    </span>
+                    Bookmarked
                   </div>
                 )}
               </div>
 
               {/* Book Number */}
-              <div className="text-xs font-bold text-slate-400 mb-2">
+              <div className="ins-mono text-xs font-bold text-ins-dim opacity-60 mb-2">
                 {String(index + 1).padStart(2, "0")}
               </div>
 
               {/* Title & Subtitle */}
-              <h3 className="text-xl font-bold text-slate-900 mb-1 group-hover:text-slate-700 transition-colors">
+              <h3 className="ins-subheading text-xl mb-1 group-hover:text-ins-goldbright transition-colors">
                 {book.title}
               </h3>
-              <p className="text-sm italic text-slate-600 mb-3">{book.subtitle}</p>
+              <p className="text-sm italic text-ins-dim mb-3">{book.subtitle}</p>
 
               {/* Main Message (Key Takeaway) */}
-              <div
-                className="p-3 rounded-lg mb-4"
-                style={{
-                  background: "#e9eef5",
-                  boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff",
-                }}
-              >
-                <p className="text-xs font-medium text-slate-700 leading-relaxed">
+              <div className="p-3 rounded mb-4 bg-ins-deep border border-ins-line">
+                <p className="text-xs font-medium text-ins-text leading-relaxed">
                   💡 {book.mainMessage}
                 </p>
               </div>
 
               {/* Metadata */}
-              <div className="flex items-center gap-4 text-xs text-slate-600 mb-3">
+              <div className="flex items-center gap-4 text-xs text-ins-dim mb-3">
                 <div className="flex items-center gap-1">
                   <User className="w-3 h-3" />
                   <span>{book.author}</span>
@@ -264,18 +208,10 @@ const LibraryIndexPage: React.FC = () => {
               </div>
 
               {/* Category Tag */}
-              <div
-                className="inline-block px-3 py-1 rounded-lg text-xs font-medium text-slate-700"
-                style={{
-                  background: "#e9eef5",
-                  boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff",
-                }}
-              >
-                {book.category}
-              </div>
+              <div className="ins-chip">{book.category}</div>
 
               {/* Read Button */}
-              <div className="mt-4 flex items-center gap-2 text-sm font-medium text-slate-900 group-hover:text-slate-700 transition-colors">
+              <div className="mt-4 inline-flex items-center gap-2 ins-mono text-sm tracking-wider uppercase text-ins-teal group-hover:text-ins-goldbright transition-colors">
                 <BookOpen className="w-4 h-4" />
                 <span>Read Now</span>
               </div>
@@ -285,7 +221,7 @@ const LibraryIndexPage: React.FC = () => {
 
         {/* Footer Note */}
         <div className="mt-12 text-center">
-          <p className="text-sm italic text-slate-600">
+          <p className="text-sm italic text-ins-dim">
             "{filteredBooks.length} {filteredBooks.length === 1 ? "work" : "works"} exploring the frontiers of consciousness"
           </p>
         </div>

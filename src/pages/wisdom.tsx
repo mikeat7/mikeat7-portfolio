@@ -216,107 +216,93 @@ Truth Serum + Clarity Armor Platform`;
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-gray-800 px-6 py-10 flex flex-col items-center">
+    <div className="ins-page px-6 py-10 flex flex-col items-center">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center text-sm text-blue-600 hover:text-blue-800 transition mb-6 self-start"
+        className="flex items-center text-sm text-ins-teal hover:text-ins-goldbright transition mb-6 self-start"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
         Back
       </button>
 
-      <h1 className="text-4xl font-bold text-blue-700 mb-2 flex items-center gap-3">
-        <Quote className="w-10 h-10" /> 
+      <h1 className="ins-heading text-4xl mb-2 flex items-center gap-3">
+        <Quote className="w-10 h-10 text-ins-gold" />
         Quotes of Wisdom
       </h1>
-      
-      <p className="text-gray-600 mb-8 text-center max-w-2xl">
-        Curated insights from great thinkers on truth, clarity, and epistemic humility. 
+
+      <p className="text-ins-dim mb-8 text-center max-w-2xl">
+        Curated insights from great thinkers on truth, clarity, and epistemic humility.
         {userSubmissionCount > 0 && (
-          <span className="block text-sm text-green-600 mt-1">
+          <span className="block text-sm text-ins-teal mt-1">
             Including {userSubmissionCount} community-submitted quote{userSubmissionCount !== 1 ? 's' : ''}
           </span>
         )}
       </p>
-      
+
       {/* Quote Display */}
-      <div className="bg-white/90 p-8 rounded-xl shadow-lg text-center max-w-4xl mb-6 backdrop-blur-sm border border-white/50 min-h-[200px] flex flex-col justify-center">
-        <blockquote className="text-xl text-gray-700 italic mb-4 leading-relaxed">
+      <div className="ins-panel p-8 text-center max-w-4xl mb-6 min-h-[200px] flex flex-col justify-center">
+        <blockquote className="text-xl text-ins-text italic mb-4 leading-relaxed">
           "{currentQuote.quote}"
         </blockquote>
         <div className="flex items-center justify-center gap-4">
-          <p className="text-lg text-gray-800 font-medium">
+          <p className="text-lg text-ins-goldbright font-medium">
             — {currentQuote.author}
           </p>
           {currentQuote.isUserSubmitted && (
-            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+            <span className="ins-chip !text-ins-teal !border-ins-teal">
               Community
             </span>
           )}
         </div>
-        <div className="flex items-center justify-center gap-4 mt-3">
-          <span className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-            {currentQuote.tone}
-          </span>
-          <span className="text-sm text-gray-500">
-            {quoteIndex + 1} of {allQuotes.length}
+        <div className="flex items-center justify-center gap-4 mt-4">
+          <span className="ins-chip">{currentQuote.tone}</span>
+          <span className="ins-mono text-sm text-ins-dim">
+            {quoteIndex + 1} / {allQuotes.length}
           </span>
         </div>
       </div>
-      
+
       {/* Navigation Controls */}
-      <div className="flex gap-4 mb-6">
-        <button
-          onClick={previousQuote}
-          className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition font-medium"
-        >
+      <div className="flex flex-wrap justify-center gap-3 mb-6">
+        <button onClick={previousQuote} className="ins-btn">
           ← Previous
         </button>
-        <button
-          onClick={nextQuote}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-        >
+        <button onClick={nextQuote} className="ins-btn ins-btn-gold">
           <RefreshCcw className="w-4 h-4" />
           Next
         </button>
-        <button
-          onClick={() => setShowSubmissionForm(!showSubmissionForm)}
-          className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
-        >
+        <button onClick={() => setShowSubmissionForm(!showSubmissionForm)} className="ins-btn">
           <Plus className="w-4 h-4" />
           Add Quote
         </button>
           {userSubmissionCount > 0 && (
-            <button
-              onClick={exportQuotesForMike}
-              className="flex items-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium text-sm"
-            >
+            <button onClick={exportQuotesForMike} className="ins-btn">
               <Mail className="w-4 h-4" />
-              📧 Email to Mike
+              Email to Mike
             </button>
           )}
       </div>
 
       {/* Quote Submission Form */}
       {showSubmissionForm && (
-        <div className="w-full max-w-2xl bg-white/95 border-2 border-green-200 rounded-xl p-6 shadow-xl backdrop-blur-sm mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Plus className="w-5 h-5 text-green-600" />
-            <h2 className="text-xl font-semibold text-gray-800">Submit Your Quote</h2>
+        <div className="w-full max-w-2xl ins-panel p-6 mb-6">
+          <div className="ins-sec flex items-center gap-2">
+            <Plus className="w-4 h-4 text-ins-gold" />
+            Submit Your Quote
           </div>
-          
+
           {/* Safety Notice */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-start gap-2">
-            <Shield className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-blue-800">
-              <strong>Content Guidelines:</strong> Quotes are filtered for appropriateness. 
+          <div className="ins-callout ins-callout-teal mb-4 mt-4 flex items-start gap-2">
+            <Shield className="w-4 h-4 text-ins-teal mt-1 flex-shrink-0" />
+            <div className="text-sm text-ins-text">
+              <strong>Content Guidelines:</strong> Quotes are filtered for appropriateness.
               Please submit meaningful, respectful quotes that contribute to wisdom and learning.
             </div>
           </div>
-          
+
           <div className="space-y-4">
             <div>
-              <label htmlFor="quote-input" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="quote-input" className="block text-sm font-medium text-ins-dim mb-2">
                 Quote *
               </label>
               <textarea
@@ -324,17 +310,17 @@ Truth Serum + Clarity Armor Platform`;
                 value={newQuote}
                 onChange={(e) => setNewQuote(e.target.value)}
                 placeholder="Enter a meaningful quote that inspires wisdom or clarity..."
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none bg-white/90"
+                className="ins-input resize-none"
                 rows={3}
                 maxLength={500}
               />
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="ins-mono text-xs text-ins-dim mt-1">
                 {newQuote.length}/500 characters
               </div>
             </div>
-            
+
             <div>
-              <label htmlFor="author-input" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="author-input" className="block text-sm font-medium text-ins-dim mb-2">
                 Author *
               </label>
               <input
@@ -343,13 +329,13 @@ Truth Serum + Clarity Armor Platform`;
                 value={newAuthor}
                 onChange={(e) => setNewAuthor(e.target.value)}
                 placeholder="Author name"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white/90"
+                className="ins-input"
                 maxLength={100}
               />
             </div>
-            
+
             <div>
-              <label htmlFor="tone-input" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="tone-input" className="block text-sm font-medium text-ins-dim mb-2">
                 Category/Tone (optional)
               </label>
               <input
@@ -358,16 +344,16 @@ Truth Serum + Clarity Armor Platform`;
                 value={newTone}
                 onChange={(e) => setNewTone(e.target.value)}
                 placeholder="e.g., philosophical, scientific, motivational"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white/90"
+                className="ins-input"
                 maxLength={50}
               />
             </div>
-            
+
             <div className="flex gap-3 pt-2">
               <button
                 onClick={handleSubmitQuote}
                 disabled={!newQuote.trim() || !newAuthor.trim()}
-                className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="ins-btn ins-btn-gold flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Submit Quote
               </button>
@@ -378,7 +364,7 @@ Truth Serum + Clarity Armor Platform`;
                   setNewAuthor("");
                   setNewTone("");
                 }}
-                className="flex-1 bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition font-medium"
+                className="ins-btn flex-1 justify-center"
               >
                 Cancel
               </button>
@@ -389,20 +375,20 @@ Truth Serum + Clarity Armor Platform`;
 
       {/* Success Message - Only show briefly after submission */}
       {allQuotes[quoteIndex]?.isUserSubmitted && quoteIndex === allQuotes.length - 1 && (
-        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="text-green-800 font-medium">
-            ✅ Your quote has been added successfully! You can add another or browse the collection.
+        <div className="mb-6 ins-callout ins-callout-teal flex items-center gap-3">
+          <div className="w-2 h-2 bg-ins-teal rounded-full animate-pulse"></div>
+          <span className="text-ins-text font-medium">
+            Your quote has been added successfully! You can add another or browse the collection.
           </span>
         </div>
       )}
 
       {/* Collection Info */}
       <div className="mt-8 text-center max-w-3xl">
-        <p className="text-sm text-gray-500 italic mb-2">
+        <p className="text-sm text-ins-dim italic mb-2">
           This collection celebrates intellectual humility, critical thinking, and the pursuit of truth over certainty.
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-ins-dim opacity-75">
           Featuring insights from Richard Feynman, Bret Weinstein, Stephen Hawking, Albert Einstein, and many other great minds.
         </p>
       </div>

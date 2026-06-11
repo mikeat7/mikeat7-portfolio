@@ -314,6 +314,26 @@ html.dark {
   border-left-color: var(--ins-teal);
 }
 
+/* Form inputs on dark panels */
+.ins-input {
+  width: 100%;
+  background: var(--ins-panel-deep);
+  border: 1px solid var(--ins-line-soft);
+  border-radius: 4px;
+  color: var(--ins-text);
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.ins-input:focus {
+  border-color: var(--ins-teal);
+}
+.ins-input::placeholder {
+  color: var(--ins-dim);
+  opacity: 0.65;
+}
+
 /* Tag chip (tool tags, categories) */
 .ins-chip {
   display: inline-flex;
