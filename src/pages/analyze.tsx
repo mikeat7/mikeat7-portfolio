@@ -7,6 +7,7 @@ import { callAgentSummarize } from "@/lib/llmClient";
 import { agentChat, agentFetchUrl, type ChatMessage } from "@/lib/agentClient";
 import { buildHandshake, type Mode, type Stakes, type CitePolicy } from "@/lib/codex-runtime";
 import { useConversationSession } from "@/hooks/useConversationSession";
+import { adaptiveLearning } from "@/lib/adaptive/AdaptiveLearningEngine";
 import codex from "@/data/front-end-codex.v0.9.json";
 import CoFirePanel from "@/components/CoFirePanel";
 import BackButton from "@/components/BackButton";
@@ -67,6 +68,8 @@ const AnalyzePage: React.FC = () => {
   const [reportText, setReportText] = useState<string>("");
   const [processedInput, setProcessedInput] = useState<string>(""); // remember fetched/clipped text
   const [isFetching, setIsFetching] = useState(false); // guard against double-fire
+  // Per-detection feedback state for adaptive learning (resets each run)
+  const [feedbackGiven, setFeedbackGiven] = useState<Record<number, "up" | "down">>({});
 
   // runAnalyze accepts override text and avoids re-reading state
   async function runAnalyze(inputOverride?: string) {
@@ -81,8 +84,16 @@ const AnalyzePage: React.FC = () => {
         return;
       }
       setProcessedInput(textForModel); // used by "Generate Report"
+      setFeedbackGiven({});
       const frames = await runReflexAnalysis(textForModel);
-      setReflexFrames(frames);
+      // Apply the user's learned calibration (no-op until feedback has been given)
+      const calibrated = frames.map((f) => {
+        const adj = adaptiveLearning.getPatternAdjustment(f.reflexId);
+        return adj
+          ? { ...f, confidence: Math.max(0.05, Math.min(0.95, (f.confidence ?? 0) + adj)) }
+          : f;
+      });
+      setReflexFrames(calibrated);
       if (!frames || frames.length === 0) {
         setNotice(
           "No detections found. Try stronger certainty claims, unnamed authorities, or sweeping generalizations."
@@ -131,6 +142,25 @@ const AnalyzePage: React.FC = () => {
 
     // Otherwise, analyze the typed text
     await runAnalyze(raw);
+  }
+
+  // Train the adaptive engine from a thumbs up/down on one detection.
+  // "Accurate" records reinforcement (no score change); "False positive" nudges
+  // that reflex's confidence down (max ±0.3 total, stored in this browser only).
+  function handleDetectionFeedback(index: number, isAccurate: boolean) {
+    const frame = reflexFrames[index];
+    if (!frame || feedbackGiven[index]) return;
+    const fb = isAccurate
+      ? "correct - accurate detection"
+      : "false positive - incorrect detection";
+    const newConf = adaptiveLearning.adjustConfidence(
+      frame.reflexId,
+      frame.confidence ?? 0,
+      fb,
+      processedInput || input
+    );
+    setReflexFrames(reflexFrames.map((f, i) => (i === index ? { ...f, confidence: newConf } : f)));
+    setFeedbackGiven((prev) => ({ ...prev, [index]: isAccurate ? "up" : "down" }));
   }
 
   async function handleGenerateReport() {
@@ -247,6 +277,37 @@ const AnalyzePage: React.FC = () => {
                           <p className="ins-mono text-xs text-ins-teal mt-2">
                             Confidence: {Math.round(((frame.confidence ?? 0) as number) * 100)}% • Reflex ID: {frame.reflexId}
                           </p>
+
+                          {/* Adaptive learning feedback (not on meta frames) */}
+                          {frame.reflexId !== "cluster-alert" && frame.reflexId !== "policy-block" && (
+                            <div className="mt-3 flex items-center gap-2">
+                              {feedbackGiven[index] ? (
+                                <span className="ins-mono text-xs text-ins-dim">
+                                  {feedbackGiven[index] === "up"
+                                    ? "✓ Marked accurate — calibration saved"
+                                    : "✓ Marked false positive — this reflex will fire more cautiously for you"}
+                                </span>
+                              ) : (
+                                <>
+                                  <span className="ins-mono text-xs text-ins-dim mr-1">Was this right?</span>
+                                  <button
+                                    onClick={() => handleDetectionFeedback(index, true)}
+                                    className="ins-btn !px-2 !py-1 !text-xs"
+                                    title="Confirm this detection was accurate"
+                                  >
+                                    👍 Accurate
+                                  </button>
+                                  <button
+                                    onClick={() => handleDetectionFeedback(index, false)}
+                                    className="ins-btn !px-2 !py-1 !text-xs"
+                                    title="Mark as a false positive — lowers this reflex's confidence for you over time"
+                                  >
+                                    👎 False positive
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
