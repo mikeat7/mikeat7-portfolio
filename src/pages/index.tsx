@@ -225,7 +225,8 @@ const IndexPage: React.FC = () => {
               <Bot className="w-4 h-4 text-ins-gold" /> VX Reflex Engine
             </h4>
             <p className="text-sm mt-2 text-ins-dim leading-relaxed">
-              Semantic pattern detection with co-fire cluster alerts across 14+ reflexes.
+              Semantic pattern detection with co-fire cluster alerts across 14+ reflexes —
+              and confidence calibration you can train with feedback.
             </p>
           </div>
           <div className="ins-panel p-5">
