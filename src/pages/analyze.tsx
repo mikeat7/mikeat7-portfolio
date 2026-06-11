@@ -5,6 +5,7 @@ import { useVXContext } from "@/context/VXProvider";
 import runReflexAnalysis from "@/lib/analysis/runReflexAnalysis";
 import { callAgentSummarize } from "@/lib/llmClient";
 import { agentChat, agentFetchUrl, type ChatMessage } from "@/lib/agentClient";
+import { ollamaChat, isOllamaAvailable } from "@/lib/ollamaClient";
 import { buildHandshake, type Mode, type Stakes, type CitePolicy } from "@/lib/codex-runtime";
 import { useConversationSession } from "@/hooks/useConversationSession";
 import { adaptiveLearning } from "@/lib/adaptive/AdaptiveLearningEngine";
@@ -393,6 +394,12 @@ const ChatPanel: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Local Gemma (Ollama) detection — null while probing
+  const [localAgent, setLocalAgent] = useState<boolean | null>(null);
+  useEffect(() => {
+    isOllamaAvailable().then(setLocalAgent);
+  }, []);
+
   // NEW: active article context for follow-ups
   const [activeDoc, setActiveDoc] = useState<null | { url: string; textBlock: string; charCount: number }>(null);
   function clearDocContext() {
@@ -513,6 +520,22 @@ const ChatPanel: React.FC = () => {
     <div className="mt-6 grid gap-4">
       {/* Controls live here (not in Analyze) */}
       <div className="rounded p-4 bg-ins-deep border border-ins-line">
+        {/* Backend indicator */}
+        <div className="mb-3 flex items-center gap-2">
+          <span
+            className={`w-2 h-2 rounded-full ${
+              localAgent === null ? "bg-ins-dim" : localAgent ? "bg-ins-teal animate-pulse" : "bg-ins-gold"
+            }`}
+          ></span>
+          <span className="ins-mono text-xs tracking-wider uppercase text-ins-dim">
+            Agent:{" "}
+            {localAgent === null
+              ? "detecting…"
+              : localAgent
+              ? "Local Gemma (this machine, private)"
+              : "Cloud (AWS Bedrock)"}
+          </span>
+        </div>
         <div className="flex items-center gap-2 text-xs flex-wrap">
           <span className="text-ins-dim">
             Presets
@@ -777,17 +800,49 @@ User: ${content}`;
                 reflex_profile: reflexProfile,
               });
 
-              const resp = await withRetry(() =>
-                agentChat(textToSend, priorHistory, {
-                  mode: hs.mode,
-                  stakes: hs.stakes,
-                  min_confidence: hs.min_confidence,
-                  cite_policy: hs.cite_policy,
-                  omission_scan: hs.omission_scan,
-                  reflex_profile: hs.reflex_profile,
-                  codex_version: hs.codex_version,
-                })
-              );
+              // Prefer the local Gemma when Ollama is reachable (Mike's laptop);
+              // fall back to the cloud Bedrock agent for everyone else, or if
+              // the local model errors mid-request.
+              let resp: { message: string; tools: any[] };
+              let backend: "gemma-local" | "bedrock" = "bedrock";
+              if (localAgent) {
+                try {
+                  resp = await ollamaChat(textToSend, priorHistory, {
+                    mode: hs.mode,
+                    stakes: hs.stakes,
+                    min_confidence: hs.min_confidence,
+                    cite_policy: hs.cite_policy,
+                    omission_scan: hs.omission_scan,
+                    reflex_profile: hs.reflex_profile,
+                  });
+                  backend = "gemma-local";
+                } catch (localErr) {
+                  console.warn("[analyze] Local Gemma failed, falling back to cloud:", localErr);
+                  resp = await withRetry(() =>
+                    agentChat(textToSend, priorHistory, {
+                      mode: hs.mode,
+                      stakes: hs.stakes,
+                      min_confidence: hs.min_confidence,
+                      cite_policy: hs.cite_policy,
+                      omission_scan: hs.omission_scan,
+                      reflex_profile: hs.reflex_profile,
+                      codex_version: hs.codex_version,
+                    })
+                  );
+                }
+              } else {
+                resp = await withRetry(() =>
+                  agentChat(textToSend, priorHistory, {
+                    mode: hs.mode,
+                    stakes: hs.stakes,
+                    min_confidence: hs.min_confidence,
+                    cite_policy: hs.cite_policy,
+                    omission_scan: hs.omission_scan,
+                    reflex_profile: hs.reflex_profile,
+                    codex_version: hs.codex_version,
+                  })
+                );
+              }
 
               const assistantText = String(resp?.message ?? "").trim() || "(no reply)";
               const assistantFrames = await runReflexAnalysis(assistantText);
@@ -795,7 +850,7 @@ User: ${content}`;
               // Save assistant message to Supabase
               await addSupabaseMessage("assistant", assistantText, {
                 vx_frames: assistantFrames,
-                metadata: { tools: resp?.tools ?? [] },
+                metadata: { tools: resp?.tools ?? [], backend },
               }, currentSessionId);
 
             } catch (e: any) {
