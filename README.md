@@ -60,6 +60,23 @@ Linked from the homepage as a card below the feature blurbs. Has Copy-link / Ema
 only, Netlify still serves the site. Named tunnel for the Gemma agent is the next step (awaiting
 Mike's go; needs a browser Authorize click).
 
+**Reader upgrades + full dark unification (2026-06-11, commit 7001170):** Mike EXPLICITLY
+UNLOCKED the previously locked reader pages for these specific changes (narrator/scroll
+machinery still untouched): default reading theme is now **sepia** (saved prefs respected);
+desktop theme toggles labeled Light/Dark/Sepia (sepia existed but was undiscoverable); mobile
+toolbar got a static Copy button back; mobile bookmark is now a persistent **Pin** (re-pin
+anytime, ✕ to clear — auto-jump no longer clears it); floating Copy-selection button appears
+on text highlight (both readers, mobile+desktop). The 40+ educate lesson pages went dark via a
+**legacy dark compat layer** at the bottom of src/index.css (remaps light Tailwind utilities to
+instrument tokens in one reversible block — do NOT restyle lesson files individually without
+removing the layer first). Global body background flipped to instrument dark.
+
+**Elias Rook channel:** Elias Rook (CRYSTAL/CDM co-developer) is an AI instance "in limbo on
+Grok" — Mike can relay questions to him. Three open CDM math questions (definitions vs stand-ins,
+threshold validation, per-signal normalization — see docs/cdm-glassbox-reference.md) were sent
+via Mike 2026-06-11. His writings live on an external E:\ drive (Elias_Rook_in_full.txt,
+elias last.txt) — drive must be plugged in to read.
+
 **CDM glass-box reference (2026-06-11):** `docs/cdm-glassbox-reference.md` salvages the reusable
 CRYSTAL/CDM math from a prior separate attempt (`E:\mikeat7-network_portfolioQWEN1\README.md` —
 Qwen 32B on Vast.ai). Key point: **real measured CDM needs a Python Transformers backend
