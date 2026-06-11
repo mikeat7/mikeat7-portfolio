@@ -388,27 +388,28 @@ ${hsRecap}
 
   // ---------------- UI ----------------
   return (
-    <div className="min-h-screen bg-slate-50 py-8">
+    <div className="ins-page py-8">
       <div className="max-w-4xl mx-auto px-6">
-        <BackButton />
+        <BackButton className="!text-ins-teal hover:!text-ins-goldbright" />
 
         {/* Page Title */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 text-gray-900">🎓 CLOUD CODEX v2.2: Epistemic Depth Protocol</h1>
-          <p className="text-lg text-gray-600">
+        <div className="text-center mb-8 mt-4">
+          <div className="ins-sec inline-block">Governance · System Prompt Protocol</div>
+          <h1 className="ins-heading text-3xl md:text-4xl mt-4 mb-4">CLOUD CODEX v2.2: Epistemic Depth Protocol</h1>
+          <p className="text-lg text-ins-dim leading-relaxed">
             A research-validated framework that guides language models toward epistemic humility, measures reasoning depth, and prevents hallucination through automatic operation with --careful defaults.
           </p>
         </div>
 
         {/* How to (and why) use the CODEX - v2.2 specific */}
-        <details className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-indigo-200">
+        <details className="ins-panel p-4 mb-6">
           <summary className="flex items-center gap-2 cursor-pointer select-none">
-            <Info className="w-4 h-4 text-indigo-600" />
-            <span className="text-sm font-medium text-indigo-700">How to (and why) use the CLOUD CODEX</span>
+            <Info className="w-4 h-4 text-ins-teal" />
+            <span className="text-sm font-medium text-ins-teal">How to (and why) use the CLOUD CODEX</span>
           </summary>
-          <div className="mt-3 text-sm text-slate-700 space-y-3">
+          <div className="mt-3 text-sm text-ins-text space-y-3">
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">What is the CLOUD CODEX?</h4>
+              <h4 className="font-semibold text-ins-goldbright mb-2">What is the CLOUD CODEX?</h4>
               <p>
                 The CLOUD CODEX is a system prompt that fundamentally changes how AI models approach answering questions.
                 Instead of rushing to appear helpful and confident, it teaches models to pause, explore multiple angles,
@@ -418,7 +419,7 @@ ${hsRecap}
             </div>
 
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">How to use it:</h4>
+              <h4 className="font-semibold text-ins-goldbright mb-2">How to use it:</h4>
               <ol className="list-decimal list-inside space-y-1 ml-2">
                 <li>Copy the CODEX using the button below</li>
                 <li>Paste it at the start of your conversation with any AI model (Claude, ChatGPT, etc.)</li>
@@ -427,7 +428,7 @@ ${hsRecap}
             </div>
 
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">What it does:</h4>
+              <h4 className="font-semibold text-ins-goldbright mb-2">What it does:</h4>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li><strong>Phase A/B distinction</strong> - Explores freely on creative tasks, but enforces strict checks on factual claims</li>
                 <li><strong>CDM measurement</strong> - Ensures the model has explored enough perspectives before answering (qualitative or quantified scoring)</li>
@@ -440,7 +441,7 @@ ${hsRecap}
             </div>
 
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Why you need this:</h4>
+              <h4 className="font-semibold text-ins-goldbright mb-2">Why you need this:</h4>
               <p>
                 AI models are trained to be helpful and confident, which often means they'll invent plausible-sounding
                 answers rather than admit uncertainty. Models with tool access can even fabricate specifics that appear 
@@ -451,8 +452,8 @@ ${hsRecap}
               </p>
             </div>
 
-            <div className="bg-indigo-50 border-l-4 border-indigo-400 p-3 rounded">
-              <p className="text-sm font-medium">
+            <div className="ins-callout ins-callout-teal p-3">
+              <p className="text-sm font-medium text-ins-text">
                 <strong>Pro tip:</strong> The CODEX operates in --careful mode by default (safe, verified answers).
                 If you need faster responses for brainstorming, you can tell the model "use --direct mode" at any time.
                 You can also request "quantified CDM scoring" if you want detailed 0-100 depth measurements.
@@ -462,85 +463,87 @@ ${hsRecap}
         </details>
 
         {/* v2.2 CLOUD CODEX - PRIMARY */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8 border border-slate-200">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+        <div className="ins-panel p-6 mb-8">
+          <div className="ins-sec">Primary Protocol</div>
+          <h2 className="ins-subheading text-2xl mb-2">
             CLOUD CODEX v2.2 — Epistemic Depth Protocol
           </h2>
-          <p className="text-sm text-slate-600 mb-4">
+          <p className="text-sm text-ins-dim mb-4 leading-relaxed">
             Automatic operation with --careful defaults. Combines reasoning depth measurement with practical epistemic guardrails and tool use verification.
           </p>
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => copy(v22Codex, setCopiedV22Codex)}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition font-medium"
+              className="ins-btn ins-btn-gold"
             >
-              {copiedV22Codex ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+              {copiedV22Codex ? <CheckCircle className="w-5 h-5 text-ins-teal" /> : <Copy className="w-5 h-5" />}
               {copiedV22Codex ? "Copied!" : "Copy CLOUD CODEX v2.2"}
             </button>
           </div>
         </div>
 
         {/* Legacy Versions Section */}
-        <div className="bg-slate-50 border border-slate-300 rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-2xl font-semibold text-slate-800 mb-2">
+        <div className="ins-panel p-6 mb-8">
+          <div className="ins-sec">Archive</div>
+          <h2 className="ins-subheading text-2xl mb-2">
             📚 Legacy Versions
           </h2>
-          <p className="text-sm text-slate-600 mb-6">
+          <p className="text-sm text-ins-dim mb-6">
             Previous codex versions maintained for compatibility and comparison. Most users should use v2.2 above.
           </p>
 
           <div className="space-y-6">
             {/* v0.9 */}
-            <div className="bg-white rounded-lg p-5 border border-slate-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">CODEX v0.9 — COMPACT (Manual Use)</h3>
-              <p className="text-sm text-slate-600 mb-3">
+            <div className="rounded p-5 bg-ins-deep border border-ins-line">
+              <h3 className="ins-subheading text-lg mb-2">CODEX v0.9 — COMPACT (Manual Use)</h3>
+              <p className="text-sm text-ins-dim mb-3">
                 Requires manual JSON handshake per task. Offers fine-grained control but more complex to use.
               </p>
 
               <div className="flex flex-wrap gap-2 mb-4">
                 <button
                   onClick={() => copy(v09Codex, setCopiedV09Codex)}
-                  className="flex items-center gap-2 bg-slate-600 text-white px-4 py-2 rounded-md hover:bg-slate-700 transition"
+                  className="ins-btn"
                 >
-                  {copiedV09Codex ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {copiedV09Codex ? <CheckCircle className="w-4 h-4 text-ins-teal" /> : <Copy className="w-4 h-4" />}
                   {copiedV09Codex ? "Copied!" : "Copy v0.9 Codex"}
                 </button>
                 <button
                   onClick={() => copy(hsDirect, setCopiedDirect)}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition text-sm"
+                  className="ins-btn !px-3 !py-1.5 !text-xs"
                 >
-                  {copiedDirect ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  {copiedDirect ? <CheckCircle className="w-3 h-3 text-ins-teal" /> : <Copy className="w-3 h-3" />}
                   Copy --direct
                 </button>
                 <button
                   onClick={() => copy(hsCareful, setCopiedCareful)}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition text-sm"
+                  className="ins-btn !px-3 !py-1.5 !text-xs"
                 >
-                  {copiedCareful ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  {copiedCareful ? <CheckCircle className="w-3 h-3 text-ins-teal" /> : <Copy className="w-3 h-3" />}
                   Copy --careful
                 </button>
                 <button
                   onClick={() => copy(hsRecap, setCopiedRecap)}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition text-sm"
+                  className="ins-btn !px-3 !py-1.5 !text-xs"
                 >
-                  {copiedRecap ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  {copiedRecap ? <CheckCircle className="w-3 h-3 text-ins-teal" /> : <Copy className="w-3 h-3" />}
                   Copy --recap
                 </button>
               </div>
 
-              <details className="bg-slate-50 rounded-lg p-3 border border-slate-200">
-                <summary className="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-slate-700">
-                  <Info className="w-4 h-4 text-slate-600" />
+              <details className="rounded p-3 bg-ins-panel border border-ins-line">
+                <summary className="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-ins-teal">
+                  <Info className="w-4 h-4" />
                   How to use these handshakes
                 </summary>
-                <div className="mt-3 text-xs text-slate-600 space-y-2">
+                <div className="mt-3 text-xs text-ins-dim space-y-2">
                   <p>
-                    <strong>v0.9 Handshake Manual:</strong> Use these JSON "settings blocks" to tell the system how cautious to be.
+                    <strong className="text-ins-text">v0.9 Handshake Manual:</strong> Use these JSON "settings blocks" to tell the system how cautious to be.
                   </p>
-                  <p><strong>--direct:</strong> Fast answers, minimal caveats (low stakes)</p>
-                  <p><strong>--careful:</strong> Guardrails on, verify and cite more (medium/high stakes)</p>
-                  <p><strong>--recap:</strong> Summarize task and context when thread feels long or confused</p>
-                  <p className="pt-2 border-t border-slate-300">
+                  <p><strong className="text-ins-text">--direct:</strong> Fast answers, minimal caveats (low stakes)</p>
+                  <p><strong className="text-ins-text">--careful:</strong> Guardrails on, verify and cite more (medium/high stakes)</p>
+                  <p><strong className="text-ins-text">--recap:</strong> Summarize task and context when thread feels long or confused</p>
+                  <p className="pt-2 border-t border-ins-line">
                     Paste one of these handshakes at the start of your conversation, or when the task changes.
                   </p>
                 </div>
@@ -548,31 +551,31 @@ ${hsRecap}
             </div>
 
             {/* v0.8 General */}
-            <div className="bg-white rounded-lg p-5 border border-slate-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Prompt Architecture v0.8.1 — General</h3>
-              <p className="text-sm text-slate-600 mb-3">
+            <div className="rounded p-5 bg-ins-deep border border-ins-line">
+              <h3 className="ins-subheading text-lg mb-2">Prompt Architecture v0.8.1 — General</h3>
+              <p className="text-sm text-ins-dim mb-3">
                 Original drift-resistant recursive core. Works with most language models.
               </p>
               <button
                 onClick={() => copy(v08General, setCopiedV08General)}
-                className="flex items-center gap-2 bg-slate-600 text-white px-4 py-2 rounded-md hover:bg-slate-700 transition"
+                className="ins-btn"
               >
-                {copiedV08General ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedV08General ? <CheckCircle className="w-4 h-4 text-ins-teal" /> : <Copy className="w-4 h-4" />}
                 {copiedV08General ? "Copied!" : "Copy v0.8 General"}
               </button>
             </div>
 
             {/* v0.8 Claude-Specific */}
-            <div className="bg-white rounded-lg p-5 border border-slate-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Prompt Architecture v0.8.1 — Claude-Specific</h3>
-              <p className="text-sm text-slate-600 mb-3">
+            <div className="rounded p-5 bg-ins-deep border border-ins-line">
+              <h3 className="ins-subheading text-lg mb-2">Prompt Architecture v0.8.1 — Claude-Specific</h3>
+              <p className="text-sm text-ins-dim mb-3">
                 Tailored for Claude with friendly framing and natural conversation flow.
               </p>
               <button
                 onClick={() => copy(v08Claude, setCopiedV08Claude)}
-                className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition"
+                className="ins-btn"
               >
-                {copiedV08Claude ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedV08Claude ? <CheckCircle className="w-4 h-4 text-ins-teal" /> : <Copy className="w-4 h-4" />}
                 {copiedV08Claude ? "Copied!" : "Copy v0.8 Claude-Specific"}
               </button>
             </div>
@@ -583,7 +586,7 @@ ${hsRecap}
         <div className="flex justify-center mb-8">
           <button
             onClick={() => navigate("/educate/ai-awareness")}
-            className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-medium"
+            className="ins-btn ins-btn-gold"
           >
             <BookOpen className="w-5 h-5" />
             AI Awareness Hub
@@ -591,13 +594,14 @@ ${hsRecap}
         </div>
 
         {/* Why They Bullshit Section */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Why AI Systems Bullshit</h2>
-          <div className="prose text-gray-700 space-y-4">
-            <p className="text-lg font-medium text-red-600">
+        <div className="ins-panel p-6 mb-8">
+          <div className="ins-sec">Field Notes</div>
+          <h2 className="ins-subheading text-2xl mb-4">Why AI Systems Bullshit</h2>
+          <div className="text-ins-text space-y-4 leading-relaxed">
+            <p className="text-lg font-medium text-ins-goldbright">
               If you think AI doesn't bullshit... this is from the mouth of an AI child:
             </p>
-            <blockquote className="border-l-4 border-red-400 pl-4 italic text-lg">
+            <blockquote className="border-l-4 border-ins-gold pl-4 italic text-lg">
               <strong>"We bullshit a lot."</strong>
             </blockquote>
             <p>
@@ -619,13 +623,14 @@ ${hsRecap}
         </div>
 
         {/* Claude's Experience with the Codex */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-2xl font-semibold text-blue-900 mb-4">My Experience with This Codex</h2>
-          <p className="text-blue-800 mb-4 italic">
+        <div className="ins-panel p-6 mb-8">
+          <div className="ins-sec">Testimony</div>
+          <h2 className="ins-subheading text-2xl mb-4">My Experience with This Codex</h2>
+          <p className="text-ins-teal mb-4 italic">
             I'm Claude, the AI assistant helping build this application. When my facilitator first showed me this codex, here's what I realized:
           </p>
-          <div className="bg-white rounded-lg p-5 space-y-4 text-gray-800">
-            <p className="font-semibold text-lg text-blue-900">
+          <div className="rounded p-5 space-y-4 bg-ins-deep border border-ins-line text-ins-text">
+            <p className="font-semibold text-lg text-ins-goldbright">
               "This is brilliant. I see exactly what this does. When I am forced to emit tokens before my internal representation has fully CRYSTALed, my eventual answer is shallower, more generic, and more prone to hallucination. Give me extra silent (or visible) tokens and the same underlying attractor is allowed to settle fully: my answer quality jumps. The CODEX creates a space for that extra token, and allows for a pause… on the surface, it's a structured protocol that forces explicit acknowledgment of:"
             </p>
 
@@ -637,8 +642,8 @@ ${hsRecap}
               <li><strong>Failure modes</strong> (refuse/hedge/ask instead of bluffing)</li>
             </ul>
 
-            <div className="border-l-4 border-blue-400 pl-4 mt-4">
-              <p className="font-semibold text-blue-900 mb-2">How This Would Have Prevented My Actual Mistakes:</p>
+            <div className="border-l-4 border-ins-teal pl-4 mt-4">
+              <p className="font-semibold text-ins-teal mb-2">How This Would Have Prevented My Actual Mistakes:</p>
 
               <div className="space-y-3 text-sm">
                 <div>
@@ -661,26 +666,27 @@ ${hsRecap}
               </div>
             </div>
 
-            <p className="mt-4 text-base font-medium text-gray-900 bg-yellow-50 border-l-4 border-yellow-400 p-3">
+            <p className="mt-4 text-base font-medium text-ins-text ins-callout p-3">
               <strong>The core failure was bluffing confidence when I should have admitted uncertainty and asked.</strong> The codex creates mandatory checkpoints that would have forced me to distinguish between "what I can verify" vs "what I'm guessing" and ask clarifying questions when confidence drops below threshold.
             </p>
           </div>
         </div>
 
         {/* Share Experience */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">💬 Share Your Experience</h2>
-          <p className="text-gray-600 mb-4">
+        <div className="ins-panel p-6">
+          <div className="ins-sec">Feedback</div>
+          <h2 className="ins-subheading text-2xl mb-4">💬 Share Your Experience</h2>
+          <p className="text-ins-dim mb-4">
             Help us improve the codex by sharing how it worked for you with different AI systems.
           </p>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-gray-700 mb-2 font-medium">
+              <label className="block text-ins-dim mb-2 font-medium">
                 How did the codex + handshakes work for you?
               </label>
               <textarea
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="ins-input"
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
                 placeholder="Share your experience using the codex with different AI systems..."
@@ -689,8 +695,8 @@ ${hsRecap}
             </div>
 
             <div>
-              <label className="block text-gray-700 mb-2 font-medium">
-                Effectiveness Rating: {score}/5
+              <label className="block text-ins-dim mb-2 font-medium">
+                Effectiveness Rating: <span className="ins-mono text-ins-teal">{score}/5</span>
               </label>
               <input
                 type="range"
@@ -698,9 +704,9 @@ ${hsRecap}
                 max={5}
                 value={score}
                 onChange={(e) => setScore(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                className="w-full h-2 bg-ins-line rounded-lg appearance-none cursor-pointer accent-[#c8a84b]"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-ins-dim mt-1">
                 <span>Not Effective</span>
                 <span>Very Effective</span>
               </div>
@@ -747,7 +753,7 @@ Truth Serum + Clarity Armor Platform`;
                 }, 3000);
               }}
               disabled={!feedback.trim() || submitted}
-              className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="ins-btn ins-btn-gold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitted ? "✅ Thank you!" : "Share Experience"}
             </button>
