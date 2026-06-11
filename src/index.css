@@ -23,8 +23,10 @@
 
 html, body, #root {
   height: 100%;
-  background: var(--neo-bg);
-  color: var(--neo-fg);
+  /* Site-wide instrument base (June 2026) — converted pages set .ins-page,
+     reader pages paint their own light/dark/sepia surface over this */
+  background: var(--ins-bg);
+  color: var(--ins-text);
   max-width: 100vw;
   overflow-x: hidden;
   box-sizing: border-box;
@@ -375,3 +377,57 @@ html.dark {
     transform: scaleY(1.2);
   }
 }
+
+/* ============================================================
+   LEGACY DARK COMPAT LAYER (2026-06)
+   Remaps the light-theme Tailwind utilities used by the ~40
+   not-yet-converted educate lesson pages (and any stragglers)
+   onto the instrument palette. One reversible block instead of
+   surgery on 40 files. Notes:
+   - bg-gradient-to-r is NOT touched (gradient-text titles need it)
+   - saturated button colors (bg-blue-600 etc.) are kept
+   - reader pages are unaffected (they use inline theme styles)
+   ============================================================ */
+
+/* Page backgrounds: flatten light gradients + pale fills to the dark bg */
+.bg-gradient-to-br { background-image: none !important; background-color: var(--ins-bg) !important; }
+.bg-white { background-color: var(--ins-panel) !important; }
+.bg-gray-50, .bg-slate-50 { background-color: var(--ins-panel) !important; }
+.bg-gray-100, .bg-slate-100 { background-color: var(--ins-deep) !important; }
+
+/* Tinted info/feedback panels -> translucent dark tints */
+.bg-blue-50, .bg-indigo-50, .bg-cyan-50 { background-color: rgba(75, 200, 192, 0.10) !important; }
+.bg-green-50, .bg-emerald-50, .bg-lime-50, .bg-teal-50 { background-color: rgba(90, 170, 90, 0.12) !important; }
+.bg-red-50, .bg-rose-50, .bg-pink-50 { background-color: rgba(220, 90, 90, 0.12) !important; }
+.bg-yellow-50, .bg-amber-50, .bg-orange-50 { background-color: rgba(200, 168, 75, 0.12) !important; }
+.bg-purple-50, .bg-violet-50 { background-color: rgba(170, 130, 220, 0.12) !important; }
+
+/* Text: dark grays -> light instrument text */
+.text-gray-900, .text-gray-800, .text-slate-900, .text-slate-800,
+.text-black { color: var(--ins-text) !important; }
+.text-gray-700, .text-gray-600, .text-slate-700, .text-slate-600 { color: var(--ins-dim) !important; }
+.text-gray-500, .text-gray-400, .text-slate-500 { color: var(--ins-dim) !important; opacity: 0.85; }
+
+/* Colored emphasis text -> readable dark-theme equivalents */
+.text-blue-800, .text-blue-700, .text-blue-900, .text-indigo-800, .text-indigo-900,
+.text-cyan-800 { color: var(--ins-teal) !important; }
+.text-green-800, .text-green-700, .text-green-900, .text-emerald-800, .text-teal-800 { color: #8fd49a !important; }
+.text-red-800, .text-red-700, .text-red-900, .text-rose-800 { color: #e89090 !important; }
+.text-yellow-800, .text-amber-800, .text-orange-800, .text-amber-900 { color: var(--ins-goldbright) !important; }
+.text-purple-800, .text-purple-700, .text-purple-900, .text-violet-800 { color: #c9a6e8 !important; }
+
+/* Gradient-clipped titles keep their gradient (text stays transparent) */
+.bg-clip-text.text-transparent { color: transparent !important; }
+
+/* Borders: light grays -> hairline; tinted borders -> translucent tints */
+.border-gray-200, .border-gray-300, .border-slate-200, .border-slate-300,
+.border-gray-100 { border-color: var(--ins-line) !important; }
+.border-blue-200, .border-indigo-200 { border-color: rgba(75, 200, 192, 0.35) !important; }
+.border-green-200, .border-emerald-200 { border-color: rgba(90, 170, 90, 0.4) !important; }
+.border-red-200, .border-rose-200 { border-color: rgba(220, 90, 90, 0.4) !important; }
+.border-yellow-200, .border-amber-200, .border-orange-200 { border-color: rgba(200, 168, 75, 0.4) !important; }
+.border-purple-200 { border-color: rgba(170, 130, 220, 0.4) !important; }
+
+/* Hovers that assumed a light page */
+.hover\:bg-gray-50:hover, .hover\:bg-gray-100:hover,
+.hover\:bg-slate-50:hover, .hover\:bg-blue-50:hover { background-color: var(--ins-deep) !important; }

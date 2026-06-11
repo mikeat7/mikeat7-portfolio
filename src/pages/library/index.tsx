@@ -34,7 +34,7 @@ const LibraryIndexPage: React.FC = () => {
     return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
   });
 
-  const [theme, setTheme] = useState<Theme>(() => loadPreference<Theme>("readerTheme", "light"));
+  const [theme, setTheme] = useState<Theme>(() => loadPreference<Theme>("readerTheme", "sepia"));
   const [fontSize, setFontSize] = useState(() => loadPreference<number>("readerFontSize", 16));
 
   const changeTheme = (newTheme: Theme) => {

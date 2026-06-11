@@ -43,9 +43,13 @@ const CDMBookPage: React.FC = () => {
   // State with localStorage defaults
   const [content, setContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
-  const [theme, setTheme] = useState<Theme>(() => loadPreference<Theme>("readerTheme", "light"));
+  const [theme, setTheme] = useState<Theme>(() => loadPreference<Theme>("readerTheme", "sepia"));
   const [fontSize, setFontSize] = useState(() => loadPreference<number>("readerFontSize", 16));
   const [copied, setCopied] = useState(false);
+  // Selection-copy: floating button to copy highlighted text (mobile + desktop)
+  const [selectionText, setSelectionText] = useState("");
+  const [selCopied, setSelCopied] = useState(false);
+  const selectionHideTimer = useRef<NodeJS.Timeout | null>(null);
   const [showSourceMenu, setShowSourceMenu] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [showBookmarkNotice, setShowBookmarkNotice] = useState(false);
@@ -236,6 +240,37 @@ const CDMBookPage: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Track text selection for the floating Copy-selection button.
+  // Hiding is delayed so a tap on the button lands before mobile browsers
+  // clear the selection.
+  useEffect(() => {
+    const onSelectionChange = () => {
+      const txt = window.getSelection()?.toString() ?? "";
+      if (txt.trim().length > 0) {
+        if (selectionHideTimer.current) clearTimeout(selectionHideTimer.current);
+        setSelectionText(txt);
+      } else {
+        selectionHideTimer.current = setTimeout(() => setSelectionText(""), 400);
+      }
+    };
+    document.addEventListener("selectionchange", onSelectionChange);
+    return () => {
+      document.removeEventListener("selectionchange", onSelectionChange);
+      if (selectionHideTimer.current) clearTimeout(selectionHideTimer.current);
+    };
+  }, []);
+
+  const copySelection = () => {
+    if (!selectionText) return;
+    navigator.clipboard.writeText(selectionText);
+    setSelCopied(true);
+    setTimeout(() => {
+      setSelCopied(false);
+      window.getSelection()?.removeAllRanges();
+      setSelectionText("");
+    }, 1200);
+  };
+
   return (
     <main
       className="min-h-screen transition-colors duration-300"
@@ -253,28 +288,47 @@ const CDMBookPage: React.FC = () => {
           }}
         >
           <div className="max-w-4xl mx-auto px-4 py-2">
-            <div className="flex items-center gap-2">
-              <Link
-                to="/"
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: currentTheme.bg,
+                    boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
+                  }}
+                >
+                  <Home className="w-3 h-3" />
+                </Link>
+                <Link
+                  to="/cdm"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: currentTheme.bg,
+                    boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
+                  }}
+                >
+                  <ArrowLeft className="w-3 h-3" />
+                  <span>CDM</span>
+                </Link>
+              </div>
+
+              {/* Mobile Copy Button (static, added 2026-06) */}
+              <button
+                onClick={copyToClipboard}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95"
                 style={{
                   background: currentTheme.bg,
                   boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
                 }}
               >
-                <Home className="w-3 h-3" />
-              </Link>
-              <Link
-                to="/cdm"
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                style={{
-                  background: currentTheme.bg,
-                  boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
-                }}
-              >
-                <ArrowLeft className="w-3 h-3" />
-                <span>CDM</span>
-              </Link>
+                {copied ? (
+                  <Check className="w-3 h-3" style={{ color: "#22c55e" }} />
+                ) : (
+                  <Copy className="w-3 h-3" />
+                )}
+                <span>{copied ? "✓" : "Copy"}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -319,17 +373,18 @@ const CDMBookPage: React.FC = () => {
 
               {/* Controls */}
               <div className="flex items-center gap-3 flex-wrap">
-              {/* Theme Switcher */}
+              {/* Theme Switcher — labeled so all three options are discoverable */}
               <div className="flex items-center gap-2">
                 {[
-                  { key: "light", icon: Sun },
-                  { key: "dark", icon: Moon },
-                  { key: "sepia", icon: FileText },
-                ].map(({ key, icon: Icon }) => (
+                  { key: "light", icon: Sun, label: "Light" },
+                  { key: "dark", icon: Moon, label: "Dark" },
+                  { key: "sepia", icon: FileText, label: "Sepia" },
+                ].map(({ key, icon: Icon, label }) => (
                   <button
                     key={key}
                     onClick={() => changeTheme(key as Theme)}
-                    className="p-2 rounded-lg transition-all"
+                    className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all"
+                    title={`${label} reading theme`}
                     style={{
                       background: currentTheme.bg,
                       boxShadow:
@@ -339,6 +394,7 @@ const CDMBookPage: React.FC = () => {
                     }}
                   >
                     <Icon className="w-4 h-4" />
+                    <span className="hidden lg:inline">{label}</span>
                   </button>
                 ))}
               </div>
@@ -504,6 +560,37 @@ const CDMBookPage: React.FC = () => {
             <span>Continuing from where you left off</span>
           </p>
         </div>
+      )}
+
+      {/* Floating Copy-Selection button — appears when text is highlighted */}
+      {selectionText && (
+        <button
+          onClick={copySelection}
+          onMouseDown={(e) => e.preventDefault()}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            copySelection();
+          }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-95"
+          style={{
+            background: "#1c211c",
+            color: "#e0c068",
+            border: "1px solid #c8a84b",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.45)",
+          }}
+        >
+          {selCopied ? (
+            <>
+              <Check className="w-4 h-4" style={{ color: "#4bc8c0" }} />
+              <span>Copied!</span>
+            </>
+          ) : (
+            <>
+              <Copy className="w-4 h-4" />
+              <span>Copy selection</span>
+            </>
+          )}
+        </button>
       )}
 
       {/* Click outside to close menus */}

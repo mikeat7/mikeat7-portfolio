@@ -50,9 +50,13 @@ const LibraryBookPage: React.FC = () => {
   const [isNarratorOn, setIsNarratorOn] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [narratorSpeed, setNarratorSpeed] = useState(() => loadPreference<number>("narratorSpeed", 1.0));
-  const [theme, setTheme] = useState<Theme>(() => loadPreference<Theme>("readerTheme", "light"));
+  const [theme, setTheme] = useState<Theme>(() => loadPreference<Theme>("readerTheme", "sepia"));
   const [fontSize, setFontSize] = useState(() => loadPreference<number>("readerFontSize", 16));
   const [copied, setCopied] = useState(false);
+  // Selection-copy: floating button to copy highlighted text (mobile + desktop)
+  const [selectionText, setSelectionText] = useState("");
+  const [selCopied, setSelCopied] = useState(false);
+  const selectionHideTimer = useRef<NodeJS.Timeout | null>(null);
   const [showSourceMenu, setShowSourceMenu] = useState(false);
   const [showVoiceMenu, setShowVoiceMenu] = useState(false);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
@@ -261,13 +265,10 @@ const LibraryBookPage: React.FC = () => {
                 setBookmarkNoticeMessage(`📌 Jumped to your bookmark!`);
                 setShowBookmarkNotice(true);
 
-                // Clear bookmark after use (one-shot)
-                setTimeout(() => {
-                  localStorage.removeItem(key);
-                  setManualBookmark(null);
-                  setShowJumpButton(false);
-                  setShowBookmarkNotice(false);
-                }, 3000);
+                // Bookmark PERSISTS (changed 2026-06 per Mike) — it stays until
+                // the reader clears or re-pins it, so closing the app and
+                // coming back always returns to the same spot.
+                setTimeout(() => setShowBookmarkNotice(false), 3000);
               }, 1000);
             } else {
               setDebugInfo(`⚠️ Can't find text - tap JUMP ⬇️`);
@@ -498,6 +499,7 @@ const LibraryBookPage: React.FC = () => {
 
       localStorage.setItem(key, JSON.stringify(bookmarkData));
       setManualBookmark(1);
+      setShowJumpButton(true);
 
       setDebugInfo(`✓ Saved: "${bookmarkData.text.substring(0, 40)}..."`);
       setBookmarkNoticeMessage(`📌 Bookmark saved!`);
@@ -570,13 +572,7 @@ const LibraryBookPage: React.FC = () => {
 
         setTimeout(() => {
           setDebugInfo(`✅ Jumped successfully!`);
-
-          // Clear bookmark after successful jump
-          setTimeout(() => {
-            localStorage.removeItem(key);
-            setManualBookmark(null);
-            setShowJumpButton(false);
-          }, 2000);
+          // Bookmark persists — jump as many times as you like.
         }, 1000);
       } else {
         setDebugInfo(`❌ Can't find: "${bookmarkData.text.substring(0, 20)}..."`);
@@ -948,6 +944,37 @@ const LibraryBookPage: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Track text selection so the floating "Copy selection" button can appear.
+  // Hiding is delayed slightly so a tap on the button lands before the
+  // browser clears the selection (mobile clears selection on any tap).
+  useEffect(() => {
+    const onSelectionChange = () => {
+      const txt = window.getSelection()?.toString() ?? "";
+      if (txt.trim().length > 0) {
+        if (selectionHideTimer.current) clearTimeout(selectionHideTimer.current);
+        setSelectionText(txt);
+      } else {
+        selectionHideTimer.current = setTimeout(() => setSelectionText(""), 400);
+      }
+    };
+    document.addEventListener("selectionchange", onSelectionChange);
+    return () => {
+      document.removeEventListener("selectionchange", onSelectionChange);
+      if (selectionHideTimer.current) clearTimeout(selectionHideTimer.current);
+    };
+  }, []);
+
+  const copySelection = () => {
+    if (!selectionText) return;
+    navigator.clipboard.writeText(selectionText);
+    setSelCopied(true);
+    setTimeout(() => {
+      setSelCopied(false);
+      window.getSelection()?.removeAllRanges();
+      setSelectionText("");
+    }, 1200);
+  };
+
   // Handle click to set narrator position (like Word's Read Aloud)
   const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Don't interfere if user is actively dragging to select text
@@ -1130,36 +1157,56 @@ const LibraryBookPage: React.FC = () => {
                 </Link>
               </div>
 
-              {/* Mobile Bookmark Button */}
-              {manualBookmark === null ? (
+              <div className="flex items-center gap-2">
+                {/* Mobile Copy Button (static, restored 2026-06) */}
                 <button
-                  onClick={handleMobileBookmark}
+                  onClick={copyToClipboard}
                   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95"
                   style={{
                     background: currentTheme.bg,
                     boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
                   }}
                 >
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" style={{ color: "#ffd700" }}>
-                    <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
-                  </svg>
-                  <span>Add</span>
+                  {copied ? (
+                    <Check className="w-3 h-3" style={{ color: "#22c55e" }} />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
                 </button>
-              ) : (
+
+                {/* Pin button — always available; re-pins to the spot you're reading now */}
                 <button
-                  onClick={handleClearBookmark}
+                  onClick={handleMobileBookmark}
                   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95"
                   style={{
                     background: currentTheme.bg,
-                    boxShadow: `inset 2px 2px 4px ${currentTheme.shadow}, inset -2px -2px 4px rgba(255,255,255,0.5)`,
+                    boxShadow:
+                      manualBookmark !== null
+                        ? `inset 2px 2px 4px ${currentTheme.shadow}, inset -2px -2px 4px rgba(255,255,255,0.5)`
+                        : `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
                   }}
                 >
                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" style={{ color: "#ffd700" }}>
                     <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
                   </svg>
-                  <span>Clear</span>
+                  <span>Pin</span>
                 </button>
-              )}
+
+                {/* Clear bookmark — only when one exists */}
+                {manualBookmark !== null && (
+                  <button
+                    onClick={handleClearBookmark}
+                    className="flex items-center px-2 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95"
+                    style={{
+                      background: currentTheme.bg,
+                      boxShadow: `2px 2px 4px ${currentTheme.shadow}, -2px -2px 4px rgba(255,255,255,0.5)`,
+                    }}
+                    aria-label="Clear bookmark"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Manual Jump Button */}
@@ -1443,17 +1490,18 @@ const LibraryBookPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Theme Switcher */}
+              {/* Theme Switcher — labeled so all three options are discoverable */}
               <div className="flex items-center gap-2">
                 {[
-                  { key: "light", icon: Sun },
-                  { key: "dark", icon: Moon },
-                  { key: "sepia", icon: FileText },
-                ].map(({ key, icon: Icon }) => (
+                  { key: "light", icon: Sun, label: "Light" },
+                  { key: "dark", icon: Moon, label: "Dark" },
+                  { key: "sepia", icon: FileText, label: "Sepia" },
+                ].map(({ key, icon: Icon, label }) => (
                   <button
                     key={key}
                     onClick={() => changeTheme(key as Theme)}
-                    className="p-2 rounded-lg transition-all"
+                    className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all"
+                    title={`${label} reading theme`}
                     style={{
                       background: currentTheme.bg,
                       boxShadow:
@@ -1463,6 +1511,7 @@ const LibraryBookPage: React.FC = () => {
                     }}
                   >
                     <Icon className="w-4 h-4" />
+                    <span className="hidden lg:inline">{label}</span>
                   </button>
                 ))}
               </div>
@@ -1626,6 +1675,37 @@ const LibraryBookPage: React.FC = () => {
             <span>{bookmarkNoticeMessage}</span>
           </p>
         </div>
+      )}
+
+      {/* Floating Copy-Selection button — appears when text is highlighted */}
+      {selectionText && (
+        <button
+          onClick={copySelection}
+          onMouseDown={(e) => e.preventDefault()}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            copySelection();
+          }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-95"
+          style={{
+            background: "#1c211c",
+            color: "#e0c068",
+            border: "1px solid #c8a84b",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.45)",
+          }}
+        >
+          {selCopied ? (
+            <>
+              <Check className="w-4 h-4" style={{ color: "#4bc8c0" }} />
+              <span>Copied!</span>
+            </>
+          ) : (
+            <>
+              <Copy className="w-4 h-4" />
+              <span>Copy selection</span>
+            </>
+          )}
+        </button>
       )}
 
       {/* Click outside to close menus */}
