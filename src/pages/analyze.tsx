@@ -168,9 +168,9 @@ const AnalyzePage: React.FC = () => {
               <h1 className="ins-heading text-3xl mt-3">Analyze a Statement</h1>
               <p className="mt-2 text-ins-dim leading-relaxed">
                 Paste text under <strong className="text-ins-text">Analyze</strong> to reveal logical fallacies such as assumptions, emotional
-                manipulation, and troubling semantic patterns. Our <strong className="text-ins-text">AI agent</strong> also, independently,
-                dissects <strong className="text-ins-text">Scientific Papers</strong> for invalid methods and faulty conclusions — or paste a URL —
-                for <strong className="text-ins-text">Article Audits</strong>.
+                manipulation, and troubling semantic patterns — including false precision and data-less
+                claims in scientific writing. Or paste a URL under <strong className="text-ins-text">Chat</strong> for
+                an <strong className="text-ins-text">Article Audit</strong> by our AI agent under strict citation policy.
               </p>
             </div>
 

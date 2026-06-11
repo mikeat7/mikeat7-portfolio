@@ -9,9 +9,9 @@
 
 ## 🤖 For AI Assistants - Context Handoff
 
-> **Last Updated:** 2026-02-06
-> **Last Major Work:** Fixed netlify.toml redirect ordering for keep-alive + all agent routes
-> **Active Development Area:** Infrastructure reliability
+> **Last Updated:** 2026-06-11
+> **Last Major Work:** Precision Instrument redesign + Tools/About pages + local Gemma agent (Ollama)
+> **Active Development Area:** Site redesign rollout + replacing Bedrock with laptop-hosted Gemma
 
 ### What This Project Is
 
@@ -20,6 +20,45 @@ A multi-faceted platform combining:
 2. **Network Library** - Curated writings on consciousness, AI sentience, philosophy
 3. **CDM v2 Library** - CRYSTAL Method documentation for transformer reasoning analysis
 4. **Education Hub** - Critical thinking and epistemic humility training
+
+### Recent Changes (June 2026) — READ THIS FIRST
+
+**Development moved to a new laptop** (DESKTOP-C01G4D4, i7-8750H, 16GB, GTX 1060 6GB — chosen so its GPU can host a local LLM):
+- Node via nvm-for-Windows; symlink is `C:\nvm4w\nodejs` (NOT Program Files). If `node` is not found, prefix: `$env:Path = "C:\nvm4w\nodejs;$env:Path"`. Use Node 20.19.0.
+- Git identity set repo-locally: Mike <ekimat7@rogers.com>
+- TrailCameraApp (Media Sorter) lives at `D:\TrailCameraApp` on this machine
+
+**Backups (made 2026-06-10, before any redesign push):**
+- GitHub branch `backup/pre-redesign-2026-06-10` on mikeat7/mikeat7-portfolio = exact pre-redesign live site
+- Local bundle: `D:\backups\mikeat7-portfolio-pre-redesign-2026-06-10.bundle`
+- **Rule: deploy to main ONLY after Mike reviews on localhost.** Push backups before risky pushes.
+
+**Precision Instrument redesign (2026-06, branch `redesign/professional-ui`):**
+- Neumorphic light theme replaced by a dark "instrument" design derived from Mike's own
+  Magnet Array Designer tool (gold/teal accents, Cinzel headings, Share Tech Mono data)
+  softened with the Media Sorter app's forest green-black background after contrast feedback.
+- See the "Design System" section below for tokens. Use `ins-*` CSS classes (src/index.css)
+  and `ins` Tailwind colors (tailwind.config.js). Preview page: `/design-preview.html`.
+- **Done:** homepage, /tools, /about, /wisdom, /library (index), /cdm (index), /educate (hub), /train, /analyze, /paper
+- **Deliberately untouched:** book readers `library/[slug].tsx` and `cdm/[slug].tsx` (LOCKED desktop features, own themes)
+- **Second pass pending:** 40+ educate lesson pages, /bot-detection, /omissions, /testing, /TruthSerum
+
+**New pages (2026-06):**
+- `/tools` — 5 standalone HTML tools in public/tools/ + Media Sorter desktop app card (github.com/mikeat7/Media_Sorter)
+- `/about` — About the Author; bio combines sawmill trade (Filippi's Finest, Mississauga ON) with the research. Photo placeholder at public/images/mike.jpg (not yet added).
+
+**Honesty rule (from Mike, 2026-06-11):** verify capability claims against code before writing site copy.
+Removed from homepage: "adaptive thresholds" (AdaptiveLearningEngine exists but is ONLY wired into
+/testing, not the analyze flow) and "Scientific Paper Checks — methods & references triage;
+conflict-of-interest cues" (never existed in code; only vx-fp01/vx-da01 catch paper-ish patterns).
+
+**Local Gemma agent (in progress):**
+- Goal: replace/augment AWS Bedrock with Gemma running on this laptop; VX stack + CODEX wrappers stay; visitors keep Bedrock as fallback; Mike reaches the laptop via tunnel (not yet set up).
+- Installed: Ollama 0.30.6 (`%LOCALAPPDATA%\Programs\Ollama\ollama.exe`), model gemma3:4b, API at localhost:11434.
+- NVIDIA driver updated 462.31 → 582.53 to enable GPU; runs 51/49 CPU/GPU at ~19 tok/s.
+- Next steps: Cloudflare Tunnel; a Netlify function or client routing that prefers the laptop endpoint with Bedrock fallback; CODEX system prompt injection for Gemma.
+
+**Wix migration (future):** recreate cestclever.wixsite.com/website (Filippi's Finest — Home/Services/Work/About/Contact) on clarityarmor.com with a gallery of Mike's builds, then close Wix. Photos must be retrieved from Wix first (Mike hit upload limits there).
 
 ### Recent Changes (January-February 2026)
 
@@ -639,25 +678,37 @@ const {
 
 ## 🎨 Design System
 
-### Neumorphic Theme
+### Precision Instrument Theme (June 2026 — replaces neumorphic)
 
-**Base Color:** `#e9eef5` (light blue-gray)
+Derived from Mike's Magnet Array Designer tool (structure, gold/teal, fonts) and Media Sorter
+app (soft forest background, readable body text). Locked in by Mike 2026-06-10.
 
-**Shadow System:**
-```css
-/* Raised (interactive) */
-box-shadow: 8px 8px 16px rgba(163,177,198,0.6),
-            -8px -8px 16px rgba(255,255,255,0.9);
+**Tokens** (CSS vars in `src/index.css`, Tailwind colors `ins.*` in `tailwind.config.js`):
 
-/* Inset (pressed/active) */
-box-shadow: inset 4px 4px 8px rgba(163,177,198,0.6),
-            inset -4px -4px 8px rgba(255,255,255,0.9);
-```
+| Token | Value | Use |
+|---|---|---|
+| `--ins-bg` / `bg-ins-bg` | `#141814` | page background (warm green-black) |
+| `--ins-panel` / `bg-ins-panel` | `#1c211c` | panels, cards |
+| `--ins-panel-deep` / `bg-ins-deep` | `#111511` | nested boxes, inputs |
+| `--ins-line` / `border-ins-line` | `#2e3e2e` | hairline borders |
+| `--ins-gold` / `text-ins-gold` | `#c8a84b` | headings, structure |
+| `--ins-gold-bright` / `text-ins-goldbright` | `#e0c068` | emphasis, hover |
+| `--ins-teal` / `text-ins-teal` | `#4bc8c0` | live data values ONLY |
+| `--ins-text` / `text-ins-text` | `#e0e8e0` | body text |
+| `--ins-dim` / `text-ins-dim` | `#9cb29c` | secondary text |
 
-**Accent Colors:**
-- Gold: `#ffd700` (featured badges, icons)
-- Blue gradients: `from-blue-500 to-indigo-600`
-- Slate: `slate-600` to `slate-900` (text)
+**Typography rules (contrast was Mike's #1 concern — keep these):**
+- Headings: Cinzel (`.ins-heading` gold / `.ins-subheading` light)
+- Data, labels, buttons: Share Tech Mono (`.ins-mono`) — NEVER for paragraphs
+- Body prose: Inter (default sans) at 15px+ — never tiny mono on dark
+- Smallest text allowed: 11px uppercase section labels (`.ins-sec`)
+
+**Component classes** (src/index.css): `.ins-page`, `.ins-panel`, `.ins-card` (hover = gold border),
+`.ins-sec` (uppercase gold section label), `.ins-btn` / `.ins-btn-gold`, `.ins-stat` + label/value,
+`.ins-callout` / `.ins-callout-teal`, `.ins-chip`, `.ins-input`.
+
+**Legacy:** old neumorphic `.neo-*` classes remain in src/index.css for not-yet-converted pages
+(educate lessons, testing, etc.). Remove them once the second pass is done.
 
 ### Responsive Grid
 
@@ -1120,7 +1171,7 @@ MIT License - See LICENSE file for details
 
 ---
 
-**Last Updated:** 2026-02-06
-**Version:** 2.4.1 (keep-alive + redirect fix)
-**Codex Version:** 0.9.0
-**Architecture Version:** 1.4 (dual-agent routing + Supabase persistence + cross-session memory + URL fetch + security layer)
+**Last Updated:** 2026-06-11
+**Version:** 3.0.0-beta (Precision Instrument redesign + Tools/About + local Gemma agent groundwork)
+**Codex Version:** 2.2 (v0.9 legacy maintained)
+**Architecture Version:** 1.5 (dual-agent routing + Supabase persistence + cross-session memory + URL fetch + security layer; Ollama/Gemma local agent in progress)

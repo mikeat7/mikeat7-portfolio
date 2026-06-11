@@ -115,8 +115,7 @@ const IndexPage: React.FC = () => {
               <h3 className="ins-subheading text-xl">Analyze Language</h3>
             </div>
             <p className="mt-2 text-sm text-ins-dim leading-relaxed">
-              Run the VX reflex engine with semantic &amp; cluster detection. Also handles{" "}
-              <strong className="text-ins-text">Scientific Paper Checks in beta</strong> and{" "}
+              Run the VX reflex engine with semantic &amp; cluster detection — or paste a URL for{" "}
               <strong className="text-ins-text">Link &amp; Article Audits</strong>.
             </p>
             <div className="mt-4 inline-flex items-center ins-mono text-sm tracking-wider text-ins-teal uppercase">
@@ -231,10 +230,11 @@ const IndexPage: React.FC = () => {
           </div>
           <div className="ins-panel p-5">
             <h4 className="font-semibold flex items-center gap-2 text-ins-text">
-              <Beaker className="w-4 h-4 text-ins-gold" /> Scientific Paper Checks
+              <Beaker className="w-4 h-4 text-ins-gold" /> Persistent Sessions
             </h4>
             <p className="text-sm mt-2 text-ins-dim leading-relaxed">
-              Methods &amp; references triage; conflict-of-interest cues. In beta.
+              Agent conversations survive page refreshes and return visits — backed by Supabase
+              with cross-session memory.
             </p>
           </div>
           <div className="ins-panel p-5">
