@@ -226,7 +226,7 @@ const IndexPage: React.FC = () => {
               <Bot className="w-4 h-4 text-ins-gold" /> VX Reflex Engine
             </h4>
             <p className="text-sm mt-2 text-ins-dim leading-relaxed">
-              Semantic patterns, co-fire clusters, adaptive thresholds.
+              Semantic pattern detection with co-fire cluster alerts across 14+ reflexes.
             </p>
           </div>
           <div className="ins-panel p-5">
@@ -239,10 +239,11 @@ const IndexPage: React.FC = () => {
           </div>
           <div className="ins-panel p-5">
             <h4 className="font-semibold flex items-center gap-2 text-ins-text">
-              <Cpu className="w-4 h-4 text-ins-gold" /> Agent-grade Handshake
+              <Cpu className="w-4 h-4 text-ins-gold" /> Cloud CODEX v2.2 Governance
             </h4>
             <p className="text-sm mt-2 text-ins-dim leading-relaxed">
-              mode, stakes, min_conf, cite_policy, omission_scan, profile.
+              Handshake protocol governing stakes, confidence floors, and citation policy —
+              upgraded from the legacy v0.9 handshake.
             </p>
           </div>
         </div>
