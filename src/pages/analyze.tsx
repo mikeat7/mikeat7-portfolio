@@ -34,7 +34,7 @@ const Help = ({ text }: { text: string }) => (
   <span
     title={text}
     aria-label={text}
-    className="ml-1 inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/70 text-[10px] leading-none text-slate-600 px-1.5 py-[1px] cursor-help align-middle"
+    className="ml-1 inline-flex items-center justify-center rounded-full border border-ins-soft bg-ins-deep text-[10px] leading-none text-ins-dim px-1.5 py-[1px] cursor-help align-middle"
     style={{ transform: "translateY(-1px)" }}
   >
     ?
@@ -156,45 +156,34 @@ const AnalyzePage: React.FC = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#e9eef5] py-10">
+    <div className="ins-page relative py-10">
       <div className="relative max-w-6xl mx-auto px-4">
-        <BackButton fallback="/" />
+        <BackButton fallback="/" className="!text-ins-teal hover:!text-ins-goldbright" />
 
         {/* Header + Tabs */}
-        <div
-          className="rounded-3xl p-8 md:p-10"
-          style={{
-            background: "#e9eef5",
-            boxShadow: "9px 9px 18px rgba(163,177,198,0.6), -9px -9px 18px rgba(255,255,255,0.9)",
-          }}
-        >
+        <div className="ins-panel p-8 md:p-10 mt-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">Analyze a Statement</h1>
-              <p className="mt-2 text-slate-700">
-                Paste text under <strong>Analyze</strong> to reveal logical fallacies such as assumptions, emotional
-                manipulation, and troubling semantic patterns. Our <strong>AI agent</strong> also, independently,
-                dissects <strong>Scientific Papers</strong> for invalid methods and faulty conclusions — or paste a URL —
-                for <strong>Article Audits</strong>.
+              <div className="ins-sec">Detection · VX Reflex Engine</div>
+              <h1 className="ins-heading text-3xl mt-3">Analyze a Statement</h1>
+              <p className="mt-2 text-ins-dim leading-relaxed">
+                Paste text under <strong className="text-ins-text">Analyze</strong> to reveal logical fallacies such as assumptions, emotional
+                manipulation, and troubling semantic patterns. Our <strong className="text-ins-text">AI agent</strong> also, independently,
+                dissects <strong className="text-ins-text">Scientific Papers</strong> for invalid methods and faulty conclusions — or paste a URL —
+                for <strong className="text-ins-text">Article Audits</strong>.
               </p>
             </div>
 
-            <div
-              className="flex items-center gap-1 p-1 rounded-2xl"
-              style={{ background: "#e9eef5", boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff" }}
-            >
+            <div className="flex items-center gap-1 p-1 rounded bg-ins-deep border border-ins-line">
               {(["analyze", "chat"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 rounded-xl text-sm ${
-                    activeTab === tab ? "bg-slate-900 text-white" : "text-slate-700"
+                  className={`px-4 py-2 rounded ins-mono text-sm tracking-wide transition-colors ${
+                    activeTab === tab
+                      ? "bg-ins-panel text-ins-goldbright border border-ins-gold"
+                      : "text-ins-dim hover:text-ins-text"
                   }`}
-                  style={
-                    activeTab !== tab
-                      ? { boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }
-                      : {}
-                  }
                 >
                   {tab === "analyze" ? "Analyze" : "Chat with Our Agent"}
                 </button>
@@ -210,7 +199,7 @@ const AnalyzePage: React.FC = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   disabled={isAnalyzing || isFetching}
-                  className="w-full border border-slate-300 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="ins-input !p-4"
                   rows={6}
                   placeholder="Paste a paragraph, a link to an article, or a snippet from a methods section…"
                 />
@@ -219,7 +208,7 @@ const AnalyzePage: React.FC = () => {
                   <button
                     onClick={handleAnalyze}
                     disabled={!input.trim() || isAnalyzing || isFetching}
-                    className="px-6 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
+                    className="ins-btn ins-btn-gold disabled:opacity-50"
                     title="Run local analysis with stringent fallacy/reflex detection."
                   >
                     {isAnalyzing || isFetching ? "Working…" : "Run Analysis"}
@@ -227,12 +216,9 @@ const AnalyzePage: React.FC = () => {
                 </div>
 
                 {/* Status + notice */}
-                <div className="text-xs text-slate-600">{analysisCount > 0 && <>Runs: {analysisCount}</>}</div>
+                <div className="ins-mono text-xs text-ins-dim">{analysisCount > 0 && <>Runs: {analysisCount}</>}</div>
                 {notice && (
-                  <div
-                    className="mt-2 text-xs text-slate-700 px-3 py-2 rounded-lg"
-                    style={{ background: "#e9eef5", boxShadow: "inset 4px 4px 8px #cfd6e0, inset -4px -4px 8px #ffffff" }}
-                  >
+                  <div className="mt-2 text-xs text-ins-text px-3 py-2 rounded bg-ins-deep border border-ins-line">
                     {notice}
                   </div>
                 )}
@@ -242,28 +228,23 @@ const AnalyzePage: React.FC = () => {
               {reflexFrames.length > 0 && (
                 <>
                   <div className="mt-8 space-y-4">
-                    <h2 className="text-xl font-semibold">Results</h2>
-                    <p className="text-sm text-slate-600">Found {reflexFrames.length} detections</p>
+                    <h2 className="ins-subheading text-xl">Results</h2>
+                    <p className="ins-mono text-sm text-ins-teal">Found {reflexFrames.length} detections</p>
 
                     <div className="grid gap-4">
                       {reflexFrames.map((frame, index) => (
                         <div
                           key={`${frame.reflexId}-${index}`}
-                          className="p-4 rounded-2xl bg-[#e9eef5]"
-                          style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
+                          className="p-4 rounded bg-ins-deep border border-ins-line"
                         >
                           <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-lg">{frame.reflexLabel ?? frame.reflexId}</h3>
-                            <span
-                              className="text-[10px] uppercase tracking-wide px-2 py-[2px] rounded-md"
-                              style={{ background: "#e9eef5", boxShadow: "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff" }}
-                              title="Frames from local analysis engine"
-                            >
+                            <h3 className="font-semibold text-lg text-ins-text">{frame.reflexLabel ?? frame.reflexId}</h3>
+                            <span className="ins-chip" title="Frames from local analysis engine">
                               local
                             </span>
                           </div>
-                          <p className="text-sm text-slate-700 mt-1">{frame.rationale ?? (frame as any).reason}</p>
-                          <p className="text-xs text-slate-500 mt-2">
+                          <p className="text-sm text-ins-dim mt-1 leading-relaxed">{frame.rationale ?? (frame as any).reason}</p>
+                          <p className="ins-mono text-xs text-ins-teal mt-2">
                             Confidence: {Math.round(((frame.confidence ?? 0) as number) * 100)}% • Reflex ID: {frame.reflexId}
                           </p>
                         </div>
@@ -277,7 +258,7 @@ const AnalyzePage: React.FC = () => {
                   <div className="mt-6 flex items-center gap-3">
                     <button
                       onClick={handleGenerateReport}
-                      className="px-5 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition"
+                      className="ins-btn ins-btn-gold"
                       title="Ask the agent to compose a narrative summary from detected frames."
                     >
                       Generate Report
@@ -295,11 +276,8 @@ const AnalyzePage: React.FC = () => {
               )}
 
               {analysisCount > 0 && reflexFrames.length === 0 && !isAnalyzing && !isFetching && (
-                <div
-                  className="mt-8 p-4 rounded-2xl bg-[#e9eef5]"
-                  style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
-                >
-                  <p className="text-slate-700 text-center">
+                <div className="mt-8 p-4 rounded bg-ins-deep border border-ins-line">
+                  <p className="text-ins-dim text-center">
                     No reflexes detected. Try text with strong certainty, unnamed authorities, or sweeping claims—then
                     see how the engine responds.
                   </p>
@@ -473,46 +451,31 @@ const ChatPanel: React.FC = () => {
   return (
     <div className="mt-6 grid gap-4">
       {/* Controls live here (not in Analyze) */}
-      <div
-        className="rounded-2xl p-4"
-        style={{ background: "#e9eef5", boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
-      >
+      <div className="rounded p-4 bg-ins-deep border border-ins-line">
         <div className="flex items-center gap-2 text-xs flex-wrap">
-          <span className="text-slate-700">
+          <span className="text-ins-dim">
             Presets
             <Help text="Quick = low stakes, permissive; Careful = balanced defaults; Audit = strict, high-stakes guardrails." />
             :
           </span>
-          <button
-            onClick={() => applyPreset("quick")}
-            className="px-2 py-1 rounded-md"
-            style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
-          >
+          <button onClick={() => applyPreset("quick")} className="ins-btn !px-2 !py-1 !text-xs">
             Quick
           </button>
-          <button
-            onClick={() => applyPreset("careful")}
-            className="px-2 py-1 rounded-md"
-            style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
-          >
+          <button onClick={() => applyPreset("careful")} className="ins-btn !px-2 !py-1 !text-xs">
             Careful
           </button>
-          <button
-            onClick={() => applyPreset("audit")}
-            className="px-2 py-1 rounded-md"
-            style={{ background: "#e9eef5", boxShadow: "inset 2px 2px 4px #cfd6e0, inset -2px -2px 4px #ffffff" }}
-          >
+          <button onClick={() => applyPreset("audit")} className="ins-btn !px-2 !py-1 !text-xs">
             Audit
           </button>
         </div>
 
-        <div className="mt-3 flex items-center gap-3 flex-wrap text-sm text-slate-600">
+        <div className="mt-3 flex items-center gap-3 flex-wrap text-sm text-ins-dim">
           <label>
             Mode{" "}
             <select
               value={mode}
               onChange={(e) => setMode(e.target.value as Mode)}
-              className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
+              className="ml-1 rounded border border-ins-soft px-2 py-[2px] bg-ins-deep text-ins-text"
               disabled={busy}
             >
               <option value="--direct">--direct</option>
@@ -526,7 +489,7 @@ const ChatPanel: React.FC = () => {
             <select
               value={stakes}
               onChange={(e) => setStakes(e.target.value as Stakes)}
-              className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
+              className="ml-1 rounded border border-ins-soft px-2 py-[2px] bg-ins-deep text-ins-text"
               disabled={busy}
             >
               <option value="low">low</option>
@@ -554,7 +517,7 @@ const ChatPanel: React.FC = () => {
             <select
               value={citePolicy}
               onChange={(e) => setCitePolicy(e.target.value as CitePolicy)}
-              className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
+              className="ml-1 rounded border border-ins-soft px-2 py-[2px] bg-ins-deep text-ins-text"
               disabled={busy}
             >
               <option value="auto">auto</option>
@@ -568,7 +531,7 @@ const ChatPanel: React.FC = () => {
             <select
               value={omissionUI}
               onChange={(e) => setOmissionUI(e.target.value as "auto" | "true" | "false")}
-              className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
+              className="ml-1 rounded border border-ins-soft px-2 py-[2px] bg-ins-deep text-ins-text"
               disabled={busy}
             >
               <option value="auto">auto</option>
@@ -582,7 +545,7 @@ const ChatPanel: React.FC = () => {
             <select
               value={reflexProfile}
               onChange={(e) => setReflexProfile(e.target.value as "default" | "strict" | "lenient")}
-              className="ml-1 rounded-md border border-slate-300 px-2 py-[2px] bg-white"
+              className="ml-1 rounded border border-ins-soft px-2 py-[2px] bg-ins-deep text-ins-text"
               disabled={busy}
             >
               <option value="default">default</option>
@@ -600,7 +563,7 @@ const ChatPanel: React.FC = () => {
             const url = prompt("Enter a URL to fetch via /agent/fetch-url:");
             if (url) await fetchUrlToHistory(url);
           }}
-          className="px-3 py-2 rounded-xl border hover:bg-gray-50"
+          className="ins-btn"
           title="Invoke /agent/fetch-url and append the cleaned text as a tool message."
           disabled={busy}
         >
@@ -610,7 +573,7 @@ const ChatPanel: React.FC = () => {
         {/* NEW: Reset chat */}
         <button
           onClick={resetChat}
-          className="px-3 py-2 rounded-xl border hover:bg-gray-50"
+          className="ins-btn"
           title="Clear the chat thread and local storage."
           disabled={busy || history.length === 0}
         >
@@ -619,24 +582,26 @@ const ChatPanel: React.FC = () => {
       </div>
 
       {/* Conversation (above divider so its shadow can't act like a divider) */}
-      <div
-        className="border rounded-2xl bg-[#e9eef5] p-3"
-        style={{ boxShadow: "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff" }}
-      >
+      <div className="rounded p-3 bg-ins-deep border border-ins-line">
         <div ref={threadRef} className="max-h-[50vh] overflow-auto space-y-3">
           {history.map((m, i) => (
             <div
               key={i}
-              className="p-3 rounded-lg"
-              style={{ background: m.role === "user" ? "#f4f6fb" : m.role === "assistant" ? "#eef2f8" : "#fff7ed" }}
+              className={`p-3 rounded border ${
+                m.role === "user"
+                  ? "bg-ins-panel border-ins-soft"
+                  : m.role === "assistant"
+                  ? "bg-ins-panel border-ins-line"
+                  : "bg-[#2a2316] border-[#4a3e26]"
+              }`}
             >
-              <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">{m.role}</div>
-              <pre className="whitespace-pre-wrap text-sm text-slate-800">{m.text}</pre>
+              <div className={`ins-mono text-xs uppercase tracking-wide mb-1 ${m.role === "user" ? "text-ins-teal" : "text-ins-gold"}`}>{m.role}</div>
+              <pre className="whitespace-pre-wrap text-sm text-ins-text font-sans">{m.text}</pre>
 
               {m.role === "assistant" && m.tools && m.tools.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {m.tools.map((t: any, idx: number) => (
-                    <span key={idx} className="text-[10px] px-2 py-1 rounded-md border bg-white/70">
+                    <span key={idx} className="ins-chip">
                       {t.name}
                       {t.args?.url ? `: ${t.args.url}` : ""}
                       {typeof t.duration_ms === "number" ? ` · ${t.duration_ms}ms` : ""}
@@ -646,7 +611,7 @@ const ChatPanel: React.FC = () => {
               )}
 
               {m.frames && m.frames.length > 0 && (
-                <div className="mt-2 text-xs text-slate-600">Frames: {m.frames.length}</div>
+                <div className="mt-2 ins-mono text-xs text-ins-dim">Frames: {m.frames.length}</div>
               )}
             </div>
           ))}
@@ -654,7 +619,7 @@ const ChatPanel: React.FC = () => {
       </div>
 
       {/* Simple straight line */}
-      <hr className="my-3 border-black" />
+      <hr className="my-3 border-ins-line" />
 
       {/* Send button ABOVE the textarea, left-aligned */}
       <div className="flex gap-2 items-center">
@@ -790,26 +755,26 @@ User: ${content}`;
             }
           }}
           disabled={busy || !text.trim()}
-          className="px-4 py-2 rounded-xl bg-slate-900 text-white hover:opacity-90 transition disabled:opacity-50"
+          className="ins-btn ins-btn-gold disabled:opacity-50"
         >
           {busy ? "Sending…" : "Send"}
         </button>
         {sessionId && (
-          <span className="text-xs text-slate-500">
+          <span className="ins-mono text-xs text-ins-dim">
             Session: {sessionId.slice(0, 8)}...
           </span>
         )}
       </div>
 
       {/* Optional second straight line */}
-      <hr className="my-3 border-black" />
+      <hr className="my-3 border-ins-line" />
 
       {/* Textarea ONLY */}
       <div className="mt-2">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="w-full border rounded-xl p-3 text-sm resize-none max-h-40 overflow-auto whitespace-pre-wrap break-words break-all md:break-words"
+          className="ins-input resize-none max-h-40 overflow-auto whitespace-pre-wrap break-words break-all md:break-words"
           placeholder="Paste a URL or ask a question. (Typing a URL here will auto-fetch and include the page.)"
           rows={3}
           disabled={busy}
@@ -817,15 +782,15 @@ User: ${content}`;
       </div>
 
       {activeDoc && (
-        <div className="text-xs text-slate-600 mt-2">
+        <div className="text-xs text-ins-dim mt-2">
           Article context active: {activeDoc.url} ({activeDoc.charCount.toLocaleString()} chars){" "}
-          <button onClick={clearDocContext} className="underline">
+          <button onClick={clearDocContext} className="underline text-ins-teal">
             Reset
           </button>
         </div>
       )}
 
-      {error && <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">{error}</div>}
+      {error && <div className="rounded border p-3 text-sm" style={{ borderColor: "#e08030", background: "rgba(224,128,48,0.1)", color: "#e0a060" }}>{error}</div>}
     </div>
   );
 };

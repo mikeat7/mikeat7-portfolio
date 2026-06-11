@@ -20,9 +20,9 @@ export default function PaperAnalysisPage() {
   const paperReflexesLegacy: ReflexFrame[] = paperReflexesVX.map(toReflexFrame);
 
   return (
-    <div className="p-6">
-      <BackButton />
-      <h1 className="text-2xl font-bold mb-4">Scientific Paper Analysis</h1>
+    <div className="ins-page p-6">
+      <BackButton className="!text-ins-teal hover:!text-ins-goldbright" />
+      <h1 className="ins-heading text-2xl mb-4 mt-4">Scientific Paper Analysis</h1>
 
       {/* CoFirePanel expects VXFrame[] */}
       <CoFirePanel reflexes={paperReflexesVX} />
@@ -32,7 +32,7 @@ export default function PaperAnalysisPage() {
           <ReflexInfoDrawer key={reflex.id} reflex={reflex} isOpen={false} onClose={() => {}} />
         ))
       ) : (
-        <div className="mt-6 rounded border bg-gray-50 p-4 text-sm text-gray-600">
+        <div className="mt-6 rounded p-4 text-sm bg-ins-panel border border-ins-line text-ins-dim">
           No paper-related reflexes found yet. Try text with numeric claims, confidence intervals,
           or methodological assertions to test false precision and data-less claim detectors.
         </div>
