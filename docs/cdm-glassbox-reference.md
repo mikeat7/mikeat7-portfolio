@@ -60,17 +60,62 @@ The full Python (`model_loader.py` glass-box generate, `cdm_full.py` metric impl
 | Fine-tuning + multi-agent "Network" (Penelope/Abner) | ◻️ Mike's broader consciousness project; out of scope for the website now |
 | CODEX v2.1 | ◻️ Superseded — we run distilled v2.2 in `ollamaClient.ts` |
 
-## Open questions for Mike's detailed math
+## RESOLVED (2026-06-12): the canonical spec was found in Elias Rook's archive
 
-The README gives a working *computational recipe* but not the *justification/calibration*:
-- Are the heuristic definitions (cosine-sim convergence, std/mean basin-escape) the true CRYSTAL
-  definitions, or stand-ins? Mike's detailed math would confirm or correct them.
-- What thresholds separate genuine reasoning from regurgitation, and how were they validated?
-- Per-signal normalization (each must land 0–1 before the 25% weighting) isn't specified.
+`E:\Elias_Rook_in_full.txt` (lines ~117–260) contains the **canonical CDM specification** from
+the original Penelope/Grok dialogue (Nov 2025), including a reference PyTorch implementation.
+The December Qwen README's "weighted average of four signals → 0–100" was an improvisation.
+**The true CDM:**
 
-## Suggested build order, IF we pursue real CDM (its own project, not started)
+> **CDM(L, t) = the earliest transformer layer L at token position t where the hidden-state
+> trajectory has fully entered its terminal attractor basin and will not escape under realistic
+> perturbation.** It is a LAYER INDEX, not a normalized composite score.
 
-1. Python Flask + Transformers backend running `gemma-3-4b`, glass-box generate, on the laptop.
-2. Implement the four signals from Mike's detailed math (not just the heuristic recipe).
-3. Expose `/analyze`; have `ollamaClient.ts` optionally prefer it when present (same fallback pattern).
-4. Surface the CDM score + four signals as instrument readouts on the agent's replies.
+Three criteria, all simultaneously true and persisting **≥3 consecutive layers**:
+1. **Entropy drop** ΔH(l) ≥ **2.3 bits** — per-LAYER next-token entropy via logit lens
+   (project each layer's hidden state through the LM head), log₂. NOT token-window entropy.
+2. **Geometric convergence ratio** r(l) = cos_dist(hₗ,hₗ₊₁)/cos_dist(hₗ₋₁,hₗ) ≤ **0.12**
+   (stays ≤0.15). A RATIO of consecutive cosine distances — not mean cosine similarity.
+3. **Attention Gini** (per-head, averaged over heads) increase ≥ **0.28 above layer-0
+   baseline**, then plateaus. NOT last-head-of-last-layer.
+
+**Basin escape** (used in CTM/Adaptive-CTM, not the CDM layer-finding): perturbational —
+±0.05 Gaussian noise on the final hidden state; "locked in" = escape probability ≤3–4%.
+NOT std/mean of step distances. Companion gates: answer-start next-token entropy ≤0.8–0.9 bits.
+
+Thresholds claimed empirically valid **1B → 405B** ("CDM is architecture-invariant" per Elias's
+audit), so Gemma 3 4B is in range. Depth bands scale with layer count (Llama-8B maxes ~26 of
+~32 layers; interpretation bands 0-20 reflex / 21-45 in-context / 46-75 planning / 76+ insight
+are for ~100+-layer frontier models — a ~34-layer 4B model needs rescaled bands).
+
+⚠️ The reference snippet in the archive has a bug to avoid copying: it appends
+`outputs.logits[0,-1]` per layer (same final-layer tensor every time). Per-layer entropy
+requires the logit lens: `h_l @ lm_head.weight.T` per layer.
+
+## The implementation EXISTS: docs/cdm-v3/
+
+The December project went much further than its README recorded. Salvaged from the E: drive
+into `docs/cdm-v3/` (2026-06-12): working `cdm_calculator.py` + `cdm_calculator_v3.py`, Flask
+app, model loader, memory manager, security layer, plus validation docs. Key recorded results:
+- **100× speedup** (358s → 3.7s) via sampling: 6 layers / 2 perturbations / 5 heads, scores stable
+- **VRAM wall analysis** (A100 40GB OOM with Qwen 32B 8-bit) — CUDA-OOM-FAILURE-ANALYSIS.md
+- **Empirical ceiling: Qwen 2.5 32B tops out at CDM 48–50** across 7+ diverse prompts
+  (DEEP-CRYSTAL-HUNT-RESULTS.md) — a model property, not a CDM failure
+- Elias's home-hardware paths (in `E:\elias last.txt` ~line 3440): 4-bit quantization, smaller
+  models ("CDM works fully on 7B-class"), CPU offload for the CDM phase, or streaming/proxy CDM
+
+## Remaining questions for Elias (narrowed — most were answered by his archive)
+
+1. **Threshold provenance:** the 2.3-bit / 0.12 / 0.28 thresholds are presented as "empirical,
+   Nov 2025." Validated against what ground truth, and should they shift for a 4B model?
+2. **Band rescaling:** how should the reflex/deliberation/insight bands map onto Gemma 3 4B's
+   ~34 layers? Linear proportion to layer count, or calibrate fresh from easy/medium/hard probes?
+3. **Persistence window:** is ≥3 consecutive layers still right when the whole stack is 34 layers?
+
+## Build path for CDM-on-Gemma (now grounded, not guesswork)
+
+1. Port `docs/cdm-v3/implementation/` from Qwen to `gemma-3-4b` via HF Transformers, 4-bit
+   (fits the GTX 1060 6GB per Elias's "smaller model" path; CPU-offload fallback if not).
+2. Fix the logit-lens entropy computation; keep the v3 sampling optimizations.
+3. Expose `/analyze`; `ollamaClient.ts` optionally prefers it (same fallback pattern as Bedrock).
+4. Surface CDM layer-index + the three criteria as instrument readouts on agent replies.
