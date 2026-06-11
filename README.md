@@ -32,12 +32,24 @@ cold-starting successor — treat staleness as a bug.
 - `src/lib/ollamaClient.ts` runs Gemma locally with a distilled CODEX v2.2 system prompt; the
   Chat tab auto-detects Ollama and prefers local Gemma, falling back to Bedrock. Backend shown
   as a status light; recorded in message metadata.
-- Tunnel proven end-to-end with a `cloudflared` quick tunnel (needs `--http-host-header
-  "localhost:11434"` or Ollama 403s). Permanent setup IN PROGRESS: clarityarmor.com moved from
-  GoDaddy DNS to Cloudflare (nameservers camilo/sureena.ns.cloudflare.com; DNS-only grey-cloud
-  so Netlify still serves the site). Next: wait for zone Active → named tunnel →
-  `agent.clarityarmor.com` → cloudflared as Windows service → Cloudflare Access (email PIN) in
-  front → point ollamaClient at the permanent URL.
+- **Tunnel LIVE (2026-06-11):** named tunnel `gemma-agent` (id b3d1b430-...) serves
+  `agent.clarityarmor.com` → localhost:11434. Config at both `~/.cloudflared/config.yml` and
+  `C:\Windows\System32\config\systemprofile\.cloudflared\` (service runs as LocalSystem). Host
+  header rewritten to `localhost:11434` so Ollama doesn't 403. Installed as Windows service
+  **Cloudflared** (Automatic start; binPath has explicit `--config ... tunnel run gemma-agent` —
+  a bare `service install` left no args and the service exited instantly; fixed via `New-Service`).
+  Re-installer script: `D:\backups\install-gemma-tunnel-service.ps1` (run elevated).
+- **Locked with Cloudflare Access:** self-hosted app "Gemma Agent", policy "Only Mike" allows just
+  ekimat7@rogers.com via One-time PIN. Team domain `red-band-25d2.cloudflareaccess.com`. Verified:
+  unauthenticated curl → 302 to Access login (proves tunnel up AND lock working).
+- **Two caveats:** (1) Ollama runs at *user login* (ollama app.exe), but the cloudflared service
+  runs at *boot* as LocalSystem — so after a reboot with nobody logged in, the tunnel is up but
+  Gemma is down (502) until Mike logs in. For headless always-on, make Ollama a service/boot task
+  too (future). (2) Website→tunnel wiring is deploy-time: `ollamaClient.ts` still points at
+  localhost; for phone use the deployed site must call `https://agent.clarityarmor.com` carrying
+  the Access cookie (Mike auths once at that URL in the phone browser), Ollama needs
+  `OLLAMA_ORIGINS` to include https://clarityarmor.com, and the site CSP `connect-src` must allow
+  the agent subdomain. Not done yet.
 
 **Platform Manual (2026-06-11):** `public/manual.html` — plain-language guide to the whole
 platform (VX, Codex, training, agents, Gemma/Ollama, tunnels, CDM, growing-entity question).
