@@ -31,46 +31,46 @@ const EducationHub: React.FC = () => {
     {
       id: "epistemic-foundations",
       title: "Epistemic Foundations",
+      sec: "Foundations",
       description:
         "Build your foundation in critical thinking and intellectual humility",
       icon: <Brain className="w-8 h-8" />,
-      color: "from-blue-500 to-indigo-600",
       route: "/educate/epistemic-foundations",
     },
     {
       id: "bullshit-detection",
       title: "Bullshit Detection",
+      sec: "Detection",
       description:
         "Learn to identify manipulation, fallacies, and deceptive language",
       icon: <Target className="w-8 h-8" />,
-      color: "from-purple-500 to-violet-600",
       route: "/educate/bullshit-detection",
     },
     {
       id: "logical-fallacies",
       title: "Logical Fallacies",
+      sec: "Reasoning",
       description:
         "Master the art of spotting flawed reasoning and invalid arguments",
       icon: <AlertTriangle className="w-8 h-8" />,
-      color: "from-orange-500 to-amber-600",
       route: "/educate/logical-fallacies",
     },
     {
       id: "ai-awareness",
       title: "AI Awareness",
+      sec: "Machines",
       description:
         "Understand how AI systems work, fail, and can be manipulated",
       icon: <Zap className="w-8 h-8" />,
-      color: "from-cyan-500 to-teal-600",
       route: "/educate/ai-awareness",
     },
     {
       id: "advanced-practice",
       title: "Advanced Practice",
+      sec: "Mastery",
       description:
         "Master-level exercises in clarity, precision, and truth detection",
       icon: <Trophy className="w-8 h-8" />,
-      color: "from-slate-500 to-gray-600",
       route: "/educate/advanced-practice",
     },
   ];
@@ -94,7 +94,7 @@ const EducationHub: React.FC = () => {
   ];
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 overflow-x-hidden">
+    <div className="ins-page relative overflow-x-hidden">
       {/* Rising text background, behind all content */}
       <div
         className="bubble-bg pointer-events-none select-none"
@@ -138,65 +138,48 @@ const EducationHub: React.FC = () => {
       <div className="relative z-10 max-w-6xl mx-auto px-6 py-8">
         <button
           onClick={handleBackToHome}
-          className="flex items-center text-sm text-blue-600 hover:text-blue-800 transition mb-6"
+          className="flex items-center text-sm text-ins-teal hover:text-ins-goldbright transition mb-6"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Back to Home
         </button>
 
-        {/* Header (neomorphic backdrop) */}
-        <div
-          className="text-center mb-12 rounded-3xl p-6 sm:p-10 overflow-visible"
-          style={{
-            background: "#e9eef5",
-            boxShadow:
-              "9px 9px 18px rgba(163,177,198,0.6), -9px -9px 18px rgba(255,255,255,0.9)",
-          }}
-        >
-          <h1
-            className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent
-                       leading-tight max-w-full overflow-visible break-words break-all md:break-words whitespace-pre-wrap"
-          >
+        {/* Header */}
+        <div className="ins-panel text-center mb-12 p-6 sm:p-10 overflow-visible">
+          <div className="ins-sec inline-block">Training · Critical Thinking Curriculum</div>
+          <h1 className="ins-heading text-4xl sm:text-5xl mt-4 mb-4 leading-tight break-words">
             Education Hub
           </h1>
-          <p className="text-base sm:text-xl text-slate-700 max-w-3xl mx-auto break-words">
+          <p className="text-base sm:text-xl text-ins-text max-w-3xl mx-auto break-words leading-relaxed">
             Master the art of clear thinking, bullshit detection, and epistemic
             humility. Your journey to intellectual freedom starts here.
           </p>
         </div>
 
         {/* Category Grid */}
-        <div className="grid gap-8 max-w-4xl mx-auto">
+        <div className="grid gap-6 max-w-4xl mx-auto">
           {categories.map((category) => (
             <div
               key={category.id}
               onClick={() => handleCategoryClick(category.route)}
-              className="group cursor-pointer rounded-2xl p-8 transition-all duration-300 hover:scale-[1.02] border border-white/50"
-              style={{
-                background: "#e9eef5",
-                boxShadow:
-                  "9px 9px 18px rgba(163,177,198,0.35), -9px -9px 18px rgba(255,255,255,0.9)",
-              }}
+              className="ins-card group cursor-pointer p-8"
             >
               <div className="flex items-center gap-6">
-                <div
-                  className={`p-4 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform duration-300 bg-gradient-to-r ${category.color}`}
-                  style={{
-                    boxShadow:
-                      "inset 4px 4px 8px rgba(0,0,0,0.08), inset -4px -4px 8px rgba(255,255,255,0.25)",
-                  }}
-                >
+                <div className="p-4 rounded bg-ins-deep border border-ins-line text-ins-gold group-hover:border-ins-gold transition-colors flex-shrink-0">
                   {category.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-2xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors break-words">
+                  <div className="ins-mono text-xs uppercase tracking-widest text-ins-gold mb-1">
+                    {category.sec}
+                  </div>
+                  <h2 className="ins-subheading text-2xl mb-2 group-hover:text-ins-goldbright transition-colors break-words">
                     {category.title}
                   </h2>
-                  <p className="text-slate-700 text-lg leading-relaxed break-words">
+                  <p className="text-ins-dim text-base leading-relaxed break-words">
                     {category.description}
                   </p>
                 </div>
-                <div className="text-slate-400 group-hover:text-blue-500 transition-colors shrink-0">
+                <div className="text-ins-dim group-hover:text-ins-teal transition-colors shrink-0">
                   {/* chevron via rotated ArrowLeft for consistency */}
                   <ArrowLeft className="w-6 h-6 rotate-180" />
                 </div>
@@ -205,22 +188,15 @@ const EducationHub: React.FC = () => {
           ))}
         </div>
 
-        {/* Platform Summary (neo panel) */}
+        {/* Platform Summary */}
         <div className="mt-12 mb-8">
-          <div
-            className="rounded-2xl p-8 border border-slate-200"
-            style={{
-              background: "#e9eef5",
-              boxShadow:
-                "9px 9px 18px rgba(163,177,198,0.35), -9px -9px 18px rgba(255,255,255,0.9)",
-            }}
-          >
-            <h2 className="text-2xl font-bold text-center mb-6 text-slate-800 break-words">
+          <div className="ins-panel p-8">
+            <h2 className="ins-heading text-2xl text-center mb-6 break-words">
               What is "Truth Serum + Clarity Armor"?
             </h2>
 
-            <div className="prose prose-lg max-w-none text-slate-700 break-words prose-p:whitespace-pre-wrap">
-              <p className="text-lg leading-relaxed mb-6">
+            <div className="max-w-none text-ins-text break-words">
+              <p className="text-base md:text-lg leading-relaxed mb-6">
                 Truth Serum + Clarity Armor represents a synthesis of
                 computational linguistics, epistemic philosophy, and cognitive
                 science—engineered to detect and neutralize semantic manipulation
@@ -228,39 +204,25 @@ const EducationHub: React.FC = () => {
               </p>
 
               <div className="grid md:grid-cols-2 gap-6 mb-6">
-                <div
-                  className="p-6 rounded-xl border border-slate-200"
-                  style={{
-                    background: "#e9eef5",
-                    boxShadow:
-                      "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
-                  }}
-                >
-                  <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 break-words">
-                    <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                <div className="p-6 rounded bg-ins-deep border border-ins-line">
+                  <h3 className="font-semibold text-ins-text mb-3 flex items-center gap-2 break-words">
+                    <div className="w-3 h-3 bg-ins-gold rounded-full"></div>
                     Computational Architecture
                   </h3>
-                  <p className="text-sm text-slate-700 break-words">
+                  <p className="text-sm text-ins-dim leading-relaxed break-words">
                     The VX detection engine employs specialized algorithms for
-                    rhetorical taxonomy, featuring adaptive confidence
-                    calibration and co-firing vectors that identify sophisticated
+                    rhetorical taxonomy, featuring semantic pattern matching
+                    and co-firing cluster detection that identify sophisticated
                     propaganda techniques.
                   </p>
                 </div>
 
-                <div
-                  className="p-6 rounded-xl border border-slate-200"
-                  style={{
-                    background: "#e9eef5",
-                    boxShadow:
-                      "inset 6px 6px 12px #cfd6e0, inset -6px -6px 12px #ffffff",
-                  }}
-                >
-                  <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 break-words">
-                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                <div className="p-6 rounded bg-ins-deep border border-ins-line">
+                  <h3 className="font-semibold text-ins-text mb-3 flex items-center gap-2 break-words">
+                    <div className="w-3 h-3 bg-ins-teal rounded-full"></div>
                     Epistemic Framework
                   </h3>
-                  <p className="text-sm text-slate-700 break-words">
+                  <p className="text-sm text-ins-dim leading-relaxed break-words">
                     Blends intellectual humility, mental models, and critical
                     pedagogy to build cognitive immunity against manipulation
                     while preserving legitimate discourse.
@@ -268,19 +230,11 @@ const EducationHub: React.FC = () => {
                 </div>
               </div>
 
-              <div
-                className="p-6 rounded-xl border border-indigo-200 mb-6"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(238,242,255,0.7), rgba(245,243,255,0.7))",
-                  boxShadow:
-                    "inset 6px 6px 12px rgba(99,102,241,0.08), inset -6px -6px 12px rgba(255,255,255,0.6)",
-                }}
-              >
-                <h3 className="font-semibold text-indigo-800 mb-3 break-words">
+              <div className="ins-callout mb-6">
+                <h3 className="font-semibold text-ins-goldbright mb-3 break-words">
                   Abner's Vision Realized
                 </h3>
-                <p className="text-sm text-indigo-800/90 leading-relaxed break-words">
+                <p className="text-sm text-ins-text leading-relaxed break-words">
                   This platform embodies the insight that AI systems require
                   epistemic-humility training to resist inherent “bullshitting”
                   tendencies. Built with human-AI collaboration, it detects
@@ -289,7 +243,7 @@ const EducationHub: React.FC = () => {
               </div>
 
               <div className="text-center">
-                <p className="text-sm text-slate-600 italic max-w-2xl mx-auto break-words">
+                <p className="text-sm text-ins-dim italic max-w-2xl mx-auto break-words">
                   <strong>Collaborative Achievement:</strong> Advanced AI systems
                   and human expertise working together for intellectual freedom
                   and clarity.
@@ -301,7 +255,7 @@ const EducationHub: React.FC = () => {
 
         {/* Footer quote (kept) */}
         <div className="text-center mt-16">
-          <p className="text-sm text-slate-500 italic max-w-2xl mx-auto break-words">
+          <p className="text-sm text-ins-dim italic max-w-2xl mx-auto break-words">
             "The first principle is that you must not fool yourself — and you are
             the easiest person to fool."
             <br />— Richard Feynman
@@ -313,4 +267,3 @@ const EducationHub: React.FC = () => {
 };
 
 export default EducationHub;
-
