@@ -23,6 +23,26 @@ A multi-faceted platform combining:
 
 ### Recent Changes (June 2026) — READ THIS FIRST
 
+**HANDOFF MAINTENANCE RULE (Mike, 2026-06-11):** Keep this section + the AI memory files
+current *without being asked*. Update on **every 4th conversational turn**, and immediately on
+any major addition or change to the website. This block is the single source of truth for a
+cold-starting successor — treat staleness as a bug.
+
+**Local Gemma agent + Cloudflare tunnel (2026-06-11):**
+- `src/lib/ollamaClient.ts` runs Gemma locally with a distilled CODEX v2.2 system prompt; the
+  Chat tab auto-detects Ollama and prefers local Gemma, falling back to Bedrock. Backend shown
+  as a status light; recorded in message metadata.
+- Tunnel proven end-to-end with a `cloudflared` quick tunnel (needs `--http-host-header
+  "localhost:11434"` or Ollama 403s). Permanent setup IN PROGRESS: clarityarmor.com moved from
+  GoDaddy DNS to Cloudflare (nameservers camilo/sureena.ns.cloudflare.com; DNS-only grey-cloud
+  so Netlify still serves the site). Next: wait for zone Active → named tunnel →
+  `agent.clarityarmor.com` → cloudflared as Windows service → Cloudflare Access (email PIN) in
+  front → point ollamaClient at the permanent URL.
+
+**Platform Manual (2026-06-11):** `public/manual.html` — plain-language guide to the whole
+platform (VX, Codex, training, agents, Gemma/Ollama, tunnels, CDM, growing-entity question).
+Linked from the homepage as a card below the feature blurbs. Keep it current with features.
+
 **Development moved to a new laptop** (DESKTOP-C01G4D4, i7-8750H, 16GB, GTX 1060 6GB — chosen so its GPU can host a local LLM):
 - Node via nvm-for-Windows; symlink is `C:\nvm4w\nodejs` (NOT Program Files). If `node` is not found, prefix: `$env:Path = "C:\nvm4w\nodejs;$env:Path"`. Use Node 20.19.0.
 - Git identity set repo-locally: Mike <ekimat7@rogers.com>
