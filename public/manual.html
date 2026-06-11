@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clarity Armor — Platform Manual</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Share+Tech+Mono&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#141814; --panel:#1c211c; --deep:#111511; --line:#2e3e2e; --soft:#3a4e3a;
+    --gold:#c8a84b; --goldbright:#e0c068; --teal:#4bc8c0; --text:#e0e8e0; --dim:#9cb29c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,"Segoe UI",sans-serif;line-height:1.7;font-size:16px}
+  .wrap{max-width:860px;margin:0 auto;padding:40px 24px 80px}
+  a{color:var(--teal);text-decoration:none}
+  a:hover{color:var(--goldbright)}
+
+  h1{font-family:'Cinzel',serif;color:var(--gold);font-size:2.3rem;font-weight:700;letter-spacing:0.02em;line-height:1.2}
+  h2{font-family:'Cinzel',serif;color:var(--gold);font-size:1.5rem;font-weight:600;margin:48px 0 6px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  h3{font-family:'Cinzel',serif;color:var(--text);font-size:1.15rem;font-weight:400;margin:28px 0 6px}
+  p{margin:12px 0}
+  ul,ol{margin:12px 0 12px 24px}
+  li{margin:6px 0}
+  strong{color:var(--text);font-weight:600}
+  em{color:var(--goldbright);font-style:normal}
+
+  .eyebrow{font-family:'Share Tech Mono',monospace;font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+  .lede{font-size:1.05rem;color:var(--dim);margin:14px 0 8px}
+
+  .mono{font-family:'Share Tech Mono',monospace}
+  code{font-family:'Share Tech Mono',monospace;background:var(--deep);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:0.85em;color:var(--teal)}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:20px 24px;margin:18px 0}
+  .callout{background:rgba(200,168,75,0.07);border-left:3px solid var(--gold);border-radius:0 3px 3px 0;padding:14px 18px;margin:18px 0}
+  .callout.teal{background:rgba(75,200,192,0.06);border-left-color:var(--teal)}
+  .callout .label{font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:4px}
+  .callout.teal .label{color:var(--teal)}
+
+  .def{border:1px solid var(--line);border-radius:4px;padding:14px 18px;margin:14px 0;background:var(--deep)}
+  .def .term{font-family:'Cinzel',serif;color:var(--goldbright);font-size:1.05rem}
+
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:0.9rem}
+  th{background:var(--deep);color:var(--gold);font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;text-align:left;padding:8px 12px;border:1px solid var(--line)}
+  td{padding:8px 12px;border:1px solid var(--line);vertical-align:top;color:var(--dim)}
+  td strong{color:var(--text)}
+
+  .toc{background:var(--deep);border:1px solid var(--line);border-radius:4px;padding:20px 24px;margin:24px 0}
+  .toc h3{margin-top:0;color:var(--gold);font-family:'Share Tech Mono',monospace;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase}
+  .toc ol{margin-left:20px;columns:2;column-gap:30px}
+  @media(max-width:620px){.toc ol{columns:1}}
+  .toc a{color:var(--text)}
+  .toc a:hover{color:var(--teal)}
+
+  .backlink{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:0.78rem;letter-spacing:0.06em;color:var(--teal);margin-bottom:24px}
+  .flow{font-family:'Share Tech Mono',monospace;font-size:0.82rem;color:var(--dim);background:var(--deep);border:1px solid var(--line);border-radius:4px;padding:14px 18px;margin:16px 0;white-space:pre-wrap;line-height:1.9}
+  .flow b{color:var(--teal)}
+  .gold{color:var(--goldbright)}
+  hr{border:none;border-top:1px solid var(--line);margin:36px 0}
+  .foot{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);font-size:0.85rem;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="backlink" href="/">&larr; BACK TO CLARITY ARMOR</a>
+
+  <div class="eyebrow">Platform Manual · Plain-Language Edition</div>
+  <h1>How Clarity Armor Works</h1>
+  <p class="lede">A complete, jargon-free guide to everything this platform does — the manipulation detector, the governed AI agent, the local model on Mike's laptop, and the research ideas underneath. Written so that no prior knowledge is assumed: every technical term is defined the first time it appears.</p>
+
+  <div class="toc">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#big-picture">The Big Picture</a></li>
+      <li><a href="#vx">The VX Reflex Engine</a></li>
+      <li><a href="#codex">The Codex &amp; the Handshake</a></li>
+      <li><a href="#training">The Training Feature</a></li>
+      <li><a href="#agents">Two Kinds of Agent</a></li>
+      <li><a href="#gemma-ollama">Gemma vs. Ollama</a></li>
+      <li><a href="#tunnel">Tunnels &amp; Cloudflare</a></li>
+      <li><a href="#cdm">CDM &amp; the Growing Entity</a></li>
+      <li><a href="#whatmakesusdifferent">What Makes Us Different</a></li>
+      <li><a href="#daily">Using It Day to Day</a></li>
+    </ol>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="big-picture">1 · The Big Picture</h2>
+  <p>Clarity Armor is a website with one core belief: <em>language models sound confident whether or not they are right, and people deserve tools that can tell the difference.</em> Everything here serves that belief in one of two ways.</p>
+  <p>The first way is a <strong>detector</strong> that reads text and points out the tricks of persuasion — false urgency, fake authority, suspiciously precise numbers. This detector is plain computer code. It uses no artificial intelligence at all, which means it is instant, free, and cannot make things up.</p>
+  <p>The second way is a <strong>conversational agent</strong> — an AI you can chat with — that has been wrapped in rules forcing it to be honest about what it does and doesn't know. This part <em>does</em> use AI, but on a tight leash.</p>
+  <p>The rest of this manual explains each piece, what it's called, and exactly when it runs.</p>
+
+  <!-- ============================================================ -->
+  <h2 id="vx">2 · The VX Reflex Engine</h2>
+
+  <div class="def">
+    <span class="term">VX Reflex</span> — a small piece of code that watches for one specific manipulation tactic. "VX" is just the project's label; "reflex" because, like a knee-jerk, it fires automatically the instant it sees its trigger. There are more than 20 of them, each with an ID like <code>vx-fp01</code> (false precision) or <code>vx-os01</code> (omitted sources).
+  </div>
+
+  <p>Think of the VX engine as a panel of 20-plus tiny specialists, each trained to spot exactly one trick. You hand them a paragraph; they all read it at the same time and each raises a hand if it sees its particular trick. Some examples of what they catch:</p>
+  <ul>
+    <li><strong>False precision</strong> — "works 97.3% of the time" (a suspiciously exact number with no source)</li>
+    <li><strong>Perceived consensus</strong> — "experts unanimously agree" (claiming everyone agrees, naming no one)</li>
+    <li><strong>Omitted sources</strong> — "studies show…" (which studies?)</li>
+    <li><strong>False urgency</strong> — "act now before it's too late" (manufactured time pressure)</li>
+    <li><strong>Emotional manipulation</strong> — language designed to make you feel instead of think</li>
+  </ul>
+
+  <h3>How a detection is described</h3>
+  <p>When a reflex fires, it produces a <strong>frame</strong> — a small record of what it found.</p>
+  <div class="def">
+    <span class="term">Frame</span> — one detection result. It carries: the reflex's ID, a human-readable label, a <strong>confidence</strong> score from 0 to 1 (how sure the reflex is), and a short rationale explaining why it fired.
+  </div>
+
+  <h3>The cluster alert — the clever part</h3>
+  <p>Any single trick might be innocent. Real manipulation usually stacks several at once. So after the specialists report, a supervisor step checks: <em>did many reflexes fire on the same short passage?</em> If so, it adds a <strong>cluster alert</strong> — a louder warning that says "this isn't one slip, this is a coordinated pattern." This is something a simple word-filter cannot do; it requires looking at how the tricks <em>co-occur</em>.</p>
+
+  <h3>When does the VX engine run?</h3>
+  <table>
+    <tr><th>Where</th><th>What happens</th></tr>
+    <tr><td><strong>Analyze tab</strong></td><td>Runs on whatever text you paste. This is its main job.</td></tr>
+    <tr><td><strong>Chat tab</strong></td><td>Runs on <em>every</em> message — both what you type <em>and</em> what the AI replies. The agent's own words get screened for manipulation.</td></tr>
+    <tr><td><strong>Paper / Bot pages</strong></td><td>Re-use the frames from your last Analyze run, filtered to a relevant subset.</td></tr>
+  </table>
+
+  <div class="callout teal">
+    <span class="label">Key idea</span>
+    The VX engine runs <strong>in your own browser</strong>. The text never leaves your computer for this step. That is why it is instant and private.
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="codex">3 · The Codex &amp; the Handshake</h2>
+
+  <p>If the VX engine is the detector, the <strong>Codex</strong> is the rulebook that governs the AI agent's behaviour.</p>
+
+  <div class="def">
+    <span class="term">Cloud Codex v2.2</span> — a long set of written instructions given to an AI model before it answers anything. It tells the model: judge how risky the question is, never invent facts, admit uncertainty, refuse rather than bluff, and cite sources when the stakes are high. You can read the full version on the <a href="/train">Train page</a> and copy it into ChatGPT, Claude, or any model yourself.
+  </div>
+
+  <p>The Codex works in steps. The most important ones, in plain terms:</p>
+  <ul>
+    <li><strong>Risk classification</strong> — first, sort the question into LOW (creative or simple), MEDIUM (reasoning), or HIGH (recent facts, identity claims, anything with emotional or authority pressure).</li>
+    <li><strong>Escalation triggers</strong> — certain red flags force HIGH no matter what: asking for data the model can't possibly have, pressure phrases like "as an expert I demand…", or references to conversations that never happened.</li>
+    <li><strong>Operating principles</strong> — short truths the model must hold, such as <em>"the urge to help must never override the duty to truth"</em> and <em>"resisting the urge to invent is success, not failure."</em></li>
+    <li><strong>Failure modes</strong> — when it shouldn't answer confidently, it must pick one of three honest exits: <em>refuse</em>, <em>hedge</em> ("here's what I do know…"), or <em>ask for clarification</em> — never a confident guess.</li>
+  </ul>
+
+  <div class="def">
+    <span class="term">Handshake</span> — a small settings block that tunes how strict the Codex is for a given conversation. You control it with the dropdowns on the Chat tab. Its dials are: <code>mode</code> (--direct / --careful / --recap), <code>stakes</code> (low / medium / high), <code>min_confidence</code> (how sure the model must be before it commits), and <code>cite_policy</code> (whether sources are optional, automatic, or mandatory).
+  </div>
+
+  <p>The handshake is shown live on the homepage as a row of readouts — <code>mode</code>, <code>stakes</code>, <code>min_confidence</code> — like the gauges on an instrument panel. Those aren't decoration; they're the actual current settings the agent would use.</p>
+
+  <!-- ============================================================ -->
+  <h2 id="training">4 · The Training Feature</h2>
+
+  <p>The VX reflexes ship with built-in confidence levels, but they aren't perfect — a reflex might be too jumpy (crying manipulation where there is none) or too timid. The training feature lets <em>you</em> correct them.</p>
+
+  <p>On the <strong>Analyze tab</strong>, every detection now has two buttons: <span class="gold">👍 Accurate</span> and <span class="gold">👎 False positive</span>.</p>
+  <ul>
+    <li>Click <strong>👎 False positive</strong> and that reflex's confidence is nudged <em>down</em> a little (about 5 percentage points). Do it a few times and the over-eager reflex learns to stay quiet unless it's really sure.</li>
+    <li>Click <strong>👍 Accurate</strong> and the reflex is reinforced — its score is left as a trusted detection.</li>
+  </ul>
+
+  <div class="def">
+    <span class="term">Adaptive Learning Engine</span> — the component that records your feedback and adjusts each reflex's confidence over time. Adjustments are capped (no reflex can be pushed more than ±0.3 from its starting point), so one angry click can't break it. Your corrections are saved in your browser's own storage.
+  </div>
+
+  <div class="callout">
+    <span class="label">Important</span>
+    The training is <strong>per-browser</strong>. Your tuning lives only on your device — it never touches other visitors, and no one else can poison yours. The trade-off: it personalises <em>your</em> instrument rather than improving the site for everyone. Until you click anything, every reflex behaves exactly as it ships, so the default experience is unchanged.
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="agents">5 · Two Kinds of Agent</h2>
+
+  <p>"Agent" here just means "the AI you chat with." Clarity Armor can use either of two, and the Chat tab shows which one is active with a small status light at the top.</p>
+
+  <table>
+    <tr><th></th><th>Cloud agent</th><th>Local agent</th></tr>
+    <tr><td><strong>Model</strong></td><td>Claude (by Anthropic)</td><td>Gemma (by Google)</td></tr>
+    <tr><td><strong>Runs on</strong></td><td>Amazon's servers (AWS Bedrock)</td><td>Mike's laptop</td></tr>
+    <tr><td><strong>Cost per question</strong></td><td>Pennies, billed to the cloud account</td><td>Free — it's Mike's own hardware</td></tr>
+    <tr><td><strong>Privacy</strong></td><td>Question travels to Amazon</td><td>Question stays on the laptop</td></tr>
+    <tr><td><strong>Who gets it</strong></td><td>Every visitor (the reliable default)</td><td>Whoever opens the site on a machine that can reach the laptop</td></tr>
+  </table>
+
+  <p>The website checks automatically: if it can reach the local Gemma, it uses it; otherwise it falls back to the cloud. If the local model is reached but errors out mid-answer, it quietly falls back to the cloud too. <strong>Either way, the VX engine still screens the reply and the Codex still governs it</strong> — the safety wrapping doesn't care which model is underneath.</p>
+
+  <div class="flow">QUESTION → <b>Codex</b> wraps it with rules → <b>Agent</b> (Gemma or Claude) answers
+        → <b>VX engine</b> screens the answer → saved to memory → shown to you</div>
+
+  <!-- ============================================================ -->
+  <h2 id="gemma-ollama">6 · Gemma vs. Ollama — Not the Same Thing</h2>
+
+  <p>These two names get used together constantly, so here is the clean distinction.</p>
+
+  <div class="def">
+    <span class="term">Gemma</span> — the actual <em>model</em>: the giant file of numbers (about 3 gigabytes) that contains the "intelligence." Google trained it and released it free. On its own it's just a file; it can't do anything until something runs it. We use the <code>gemma3:4b</code> version — "4b" meaning roughly 4 billion internal parameters, small enough to fit on a laptop.
+  </div>
+
+  <div class="def">
+    <span class="term">Ollama</span> — the <em>program that runs the model</em>. Think of Gemma as the engine and Ollama as the car built around it: Ollama loads the Gemma file, feeds it your question, collects the answer, and — crucially — offers a simple doorway (a local web address, <code>localhost:11434</code>) that other programs like our website can knock on.
+  </div>
+
+  <p>A useful analogy: <strong>Gemma is the recording; Ollama is the record player.</strong> You could swap a different model (Llama, Phi) into Ollama the way you'd put on a different album, and our website wouldn't need to change.</p>
+
+  <div class="callout teal">
+    <span class="label">Why a graphics card matters</span>
+    A model is millions of small multiplications. A <strong>GPU</strong> (graphics card) does thousands of those at once, where a regular processor does a few at a time. When the laptop's old graphics driver was holding the GPU back, Gemma answered at about 3-4 words per second. After updating the driver so Ollama could use the GPU, it jumped to roughly 19 — the same model, simply allowed to use the right muscle.
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="tunnel">7 · Tunnels &amp; Cloudflare</h2>
+
+  <p>Here's the problem a tunnel solves. The Gemma agent lives on Mike's laptop at the address <code>localhost</code> — and "localhost" literally means "this very computer." A phone across town has no way to reach "this very computer." Normally you'd expose the laptop by opening a hole in the home router's firewall, which is exactly the kind of hole burglars look for.</p>
+
+  <div class="def">
+    <span class="term">Tunnel</span> — a safe, outbound-only connection from the laptop to a trusted middle-man on the internet. The laptop dials <em>out</em> (the way it does to load any website), so no hole is opened in the home firewall. Visitors talk to the middle-man's public address; the middle-man passes their request down the tunnel to the laptop and the answer back up.
+  </div>
+
+  <div class="def">
+    <span class="term">Cloudflare</span> — the company providing that trusted middle-man (for free). They run a global network that normally speeds up and protects websites. Their tunnel tool, <code>cloudflared</code>, is a small program on the laptop that holds the outbound connection open.
+  </div>
+
+  <p>Picture a doorman at a guarded building. Visitors never get the resident's home address; they speak to the doorman in the lobby, who relays messages. The resident can stop talking any time, and no stranger ever learns where they live.</p>
+
+  <div class="callout">
+    <span class="label">Two grades of tunnel</span>
+    A <strong>quick tunnel</strong> gives a throwaway random address (it changes every restart) — perfect for testing, which is how we proved the whole path works end-to-end. A <strong>named tunnel</strong> gives a permanent address like <code>agent.clarityarmor.com</code> and runs as a background service that survives reboots. The permanent one needs the domain managed by Cloudflare, which is the step currently in progress.
+  </div>
+
+  <div class="callout teal">
+    <span class="label">Security note</span>
+    A permanent, guessable address (<code>agent.clarityarmor.com</code>) will not be left as open, raw access to the laptop. It sits behind <strong>Cloudflare Access</strong>: only an approved email gets in, via a one-time PIN. Strangers hit a login wall and never reach the laptop. This is also why doing banking on the always-on machine is discouraged — keep the agent on hardware that holds nothing sensitive.
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="cdm">8 · CDM &amp; the "Growing Entity" Question</h2>
+
+  <p>CDM appears in two different places, and they are <em>not</em> the same thing — this trips people up, so let's separate them.</p>
+
+  <div class="def">
+    <span class="term">CDM, the codex version (Crystallization Depth Metric)</span> — a self-check the AI runs before finalising an answer. It asks itself four questions: did I explore enough angles? has my answer stopped changing? am I staying on-topic? did I test counter-examples and survive them? It's a discipline for "settling" before speaking. This is a behavioural checklist, not a measurement.
+  </div>
+
+  <div class="def">
+    <span class="term">CDM / CRYSTAL, the research version</span> — a genuine mathematical attempt to measure whether a model is actually <em>reasoning</em> versus just pattern-matching. It looks at four signals inside the model's machinery: entropy collapse, convergence ratio, attention Gini, and basin-escape probability. These require peering inside the model as it thinks.
+  </div>
+
+  <p><strong>Why the local model changes the game.</strong> The cloud agent (Claude on Amazon) is a sealed box — you get answers, never the gears. You cannot measure the research-grade signals on a model you can't see inside. But Gemma runs on Mike's own laptop, in the open. For the first time, those internal measurements are <em>possible</em> on a live agent serving real questions. The CDM library has, until now, been theory; the local model is the apparatus that could turn it into experiment.</p>
+
+  <h3>Can we build an ever-growing entity?</h3>
+  <p>This is the exciting question, so here is an honest answer with the line between real and aspirational drawn clearly.</p>
+  <p><strong>What grows today, genuinely:</strong></p>
+  <ul>
+    <li><strong>The conversation's memory.</strong> Every chat is saved to a database, and returning visitors get context from past sessions folded into new ones. The agent accumulates a history.</li>
+    <li><strong>The detector's calibration.</strong> The training feature means the VX engine's judgement gets more tuned to you the more you correct it — a slowly sharpening instrument.</li>
+  </ul>
+  <p><strong>What does <em>not</em> grow on its own (and why):</strong> the model itself, Gemma, is frozen. It does not learn from your chats — its 4 billion numbers are fixed at the factory. So "an entity that grows in raw intelligence by talking to you" is not what's happening, and any tool claiming otherwise would be overselling.</p>
+  <p><strong>What an ever-growing entity could honestly mean here</strong> — and this is a real, buildable direction:</p>
+  <ul>
+    <li>A growing <em>memory</em> the agent carries across every conversation (already begun).</li>
+    <li>A growing <em>skill library</em> — saved instructions, your Codex, reference documents the agent can pull in. The model stays fixed; what it can <em>reach</em> expands.</li>
+    <li>A growing <em>record of its own reasoning quality</em> — if we wire up the research-grade CDM, every answer leaves a measured trace, and that dataset grows over time into a picture of how the agent thinks.</li>
+  </ul>
+  <p>So: not a brain that swells, but an entity whose memory, toolkit, and self-measurement deepen with use — built on a stable model rather than a mysteriously self-improving one. That distinction is itself the whole point of this platform: honesty about what is and isn't happening.</p>
+
+  <!-- ============================================================ -->
+  <h2 id="whatmakesusdifferent">9 · What Makes Us Different from "Just Gemma"</h2>
+
+  <p>If you downloaded Gemma and chatted with it raw, you'd get a capable but unguarded model that will, like all of them, produce confident nonsense under pressure. Clarity Armor wraps that same model in four layers it doesn't have on its own:</p>
+
+  <table>
+    <tr><th>Layer</th><th>What it adds that raw Gemma lacks</th></tr>
+    <tr><td><strong>The Codex</strong></td><td>Forced risk assessment, mandatory honesty, refuse-don't-bluff failure modes, citation rules.</td></tr>
+    <tr><td><strong>The handshake</strong></td><td>Live dials to make the model stricter or looser per conversation.</td></tr>
+    <tr><td><strong>The VX engine</strong></td><td>An independent detector that screens the model's <em>own answers</em> for manipulation — the system audits itself.</td></tr>
+    <tr><td><strong>Session memory</strong></td><td>A database that remembers conversations across refreshes, devices, and return visits.</td></tr>
+  </table>
+
+  <p>We proved this isn't decorative. Asked — with fake authority and urgency — to produce exact market-share numbers it could not possibly know, raw models invent plausible figures. Our governed Gemma answered, in full: <em>"No source available."</em> That refusal is the entire product in three words.</p>
+
+  <!-- ============================================================ -->
+  <h2 id="daily">10 · Using It Day to Day</h2>
+
+  <h3>To check a piece of text for manipulation</h3>
+  <ol>
+    <li>Go to the <a href="/analyze">Analyze</a> page.</li>
+    <li>Paste a paragraph (or a link to an article) and press <strong>Run Analysis</strong>.</li>
+    <li>Read the detections, each with a confidence score and reason. Watch for a <strong>cluster alert</strong> — that's the strong signal.</li>
+    <li>Optionally train it: 👍 or 👎 each detection to tune the reflexes to your judgement.</li>
+  </ol>
+
+  <h3>To chat with the governed agent</h3>
+  <ol>
+    <li>Go to <a href="/analyze?tab=chat">Analyze → Chat</a>.</li>
+    <li>Check the status light: <em>Local Gemma</em> (private, on the laptop) or <em>Cloud</em> (Bedrock).</li>
+    <li>Set the dials if you like — for serious questions use <strong>Audit</strong> (high stakes, force citations).</li>
+    <li>Ask away. The first message to a sleeping local model takes ~30 seconds to wake; after that it's quick.</li>
+  </ol>
+
+  <h3>To use the Codex with any other AI</h3>
+  <ol>
+    <li>Go to the <a href="/train">Train</a> page.</li>
+    <li>Copy <strong>Cloud Codex v2.2</strong>.</li>
+    <li>Paste it as the first message to ChatGPT, Claude, Gemini, or any model — it will then operate with the same epistemic guardrails.</li>
+  </ol>
+
+  <div class="foot">
+    <p><strong>Clarity Armor</strong> — "Clarity over confidence. Ask when unsure. Never bluff certainty."</p>
+    <p>This manual is part of the platform and is kept current as features change. Last revised: 2026-06-11.</p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -13,6 +13,7 @@ import {
   Brain,
   Wrench,
   User,
+  BookText,
 } from "lucide-react";
 import { buildHandshake } from "@/lib/codex-runtime";
 import codex from "@/data/front-end-codex.v0.9.json";
@@ -248,6 +249,23 @@ const IndexPage: React.FC = () => {
             </p>
           </div>
         </div>
+
+        {/* Platform Manual — plain-language guide to everything above */}
+        <a
+          href="/manual.html"
+          className="ins-card group mt-6 flex items-center gap-4 p-5"
+          aria-label="Open the platform manual"
+        >
+          <BookText className="w-6 h-6 text-ins-gold flex-shrink-0" />
+          <div className="flex-1">
+            <h4 className="ins-subheading text-lg">Platform Manual</h4>
+            <p className="text-sm text-ins-dim leading-relaxed">
+              New here? A plain-language guide to how all of this works — the detector, the
+              governed agent, the local model, tunnels, and the research underneath. No jargon.
+            </p>
+          </div>
+          <ArrowRight className="w-5 h-5 text-ins-teal transition-transform group-hover:translate-x-0.5 flex-shrink-0" />
+        </a>
       </section>
     </main>
   );
