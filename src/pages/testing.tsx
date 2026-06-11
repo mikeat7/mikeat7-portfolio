@@ -5,9 +5,9 @@ import BackButton from '@/components/BackButton';
 
 const TestingPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="ins-page py-8">
       <div className="max-w-6xl mx-auto px-4">
-        <BackButton />
+        <BackButton className="!text-ins-teal hover:!text-ins-goldbright" />
         <TestingSuite />
       </div>
     </div>

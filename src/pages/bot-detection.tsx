@@ -19,9 +19,9 @@ export default function BotDetectionPage() {
   const botReflexesLegacy: ReflexFrame[] = botReflexesVX.map(toReflexFrame);
 
   return (
-    <div className="p-6">
-      <BackButton />
-      <h1 className="text-2xl font-bold mb-4">Bot-Like Behavior Detection</h1>
+    <div className="ins-page p-6">
+      <BackButton className="!text-ins-teal hover:!text-ins-goldbright" />
+      <h1 className="ins-heading text-2xl mb-4 mt-4">Bot-Like Behavior Detection</h1>
 
       {/* CoFirePanel expects VXFrame[] */}
       <CoFirePanel reflexes={botReflexesVX} />
