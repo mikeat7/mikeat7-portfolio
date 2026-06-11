@@ -41,7 +41,20 @@ cold-starting successor — treat staleness as a bug.
 
 **Platform Manual (2026-06-11):** `public/manual.html` — plain-language guide to the whole
 platform (VX, Codex, training, agents, Gemma/Ollama, tunnels, CDM, growing-entity question).
-Linked from the homepage as a card below the feature blurbs. Keep it current with features.
+Linked from the homepage as a card below the feature blurbs. Has Copy-link / Email-this buttons
+(inline script; CSP allows 'unsafe-inline'). Keep it current with features.
+
+**Cloudflare:** clarityarmor.com is **Active on Cloudflare** (Free plan) as of 2026-06-11 — DNS
+only, Netlify still serves the site. Named tunnel for the Gemma agent is the next step (awaiting
+Mike's go; needs a browser Authorize click).
+
+**CDM glass-box reference (2026-06-11):** `docs/cdm-glassbox-reference.md` salvages the reusable
+CRYSTAL/CDM math from a prior separate attempt (`E:\mikeat7-network_portfolioQWEN1\README.md` —
+Qwen 32B on Vast.ai). Key point: **real measured CDM needs a Python Transformers backend
+(glass-box), NOT Ollama (black-box)** — would run on Gemma 4B on this laptop's GPU. The four
+signals' math is captured; Mike has the detailed derivation. This is a future project, not started.
+The Qwen attempt's fine-tuning/multi-agent "Network" goals are Mike's broader consciousness
+project, out of scope for the website itself.
 
 **Development moved to a new laptop** (DESKTOP-C01G4D4, i7-8750H, 16GB, GTX 1060 6GB — chosen so its GPU can host a local LLM):
 - Node via nvm-for-Windows; symlink is `C:\nvm4w\nodejs` (NOT Program Files). If `node` is not found, prefix: `$env:Path = "C:\nvm4w\nodejs;$env:Path"`. Use Node 20.19.0.

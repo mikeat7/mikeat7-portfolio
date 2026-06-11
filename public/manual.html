@@ -58,6 +58,12 @@
   .gold{color:var(--goldbright)}
   hr{border:none;border-top:1px solid var(--line);margin:36px 0}
   .foot{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);font-size:0.85rem;color:var(--dim)}
+
+  .sharebar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:22px 0 8px}
+  .sharebtn{display:inline-flex;align-items:center;gap:7px;font-family:'Share Tech Mono',monospace;font-size:0.78rem;letter-spacing:0.04em;color:var(--gold);background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:9px 14px;cursor:pointer;transition:border-color .15s,color .15s;text-decoration:none}
+  .sharebtn:hover{border-color:var(--gold);color:var(--goldbright)}
+  .sharebtn.copied{border-color:var(--teal);color:var(--teal)}
+  .sharehint{font-size:0.78rem;color:var(--dim)}
 </style>
 </head>
 <body>
@@ -68,6 +74,12 @@
   <div class="eyebrow">Platform Manual · Plain-Language Edition</div>
   <h1>How Clarity Armor Works</h1>
   <p class="lede">A complete, jargon-free guide to everything this platform does — the manipulation detector, the governed AI agent, the local model on Mike's laptop, and the research ideas underneath. Written so that no prior knowledge is assumed: every technical term is defined the first time it appears.</p>
+
+  <div class="sharebar">
+    <button class="sharebtn" id="copyBtn" onclick="copyManualLink()">🔗 Copy link</button>
+    <a class="sharebtn" id="emailBtn" href="#" onclick="return emailManual()">✉ Email this manual</a>
+    <span class="sharehint" id="shareHint">Share the link to this page — anyone can read it, no login.</span>
+  </div>
 
   <div class="toc">
     <h3>Contents</h3>
@@ -315,5 +327,50 @@
   </div>
 
 </div>
+
+<script>
+  // Always share the public URL, even when viewed on localhost during development.
+  var MANUAL_URL = "https://clarityarmor.com/manual.html";
+
+  function copyManualLink() {
+    var btn = document.getElementById("copyBtn");
+    var hint = document.getElementById("shareHint");
+    function ok() {
+      btn.textContent = "✓ Link copied";
+      btn.classList.add("copied");
+      hint.textContent = "Paste it into an email, text, or message.";
+      setTimeout(function () {
+        btn.textContent = "🔗 Copy link";
+        btn.classList.remove("copied");
+      }, 2500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(MANUAL_URL).then(ok, fallback);
+    } else {
+      fallback();
+    }
+    function fallback() {
+      // Older browsers: select a hidden field and copy.
+      var t = document.createElement("textarea");
+      t.value = MANUAL_URL;
+      document.body.appendChild(t);
+      t.select();
+      try { document.execCommand("copy"); ok(); }
+      catch (e) { hint.textContent = "Copy this link manually: " + MANUAL_URL; }
+      document.body.removeChild(t);
+    }
+  }
+
+  function emailManual() {
+    var subject = "Clarity Armor — Platform Manual";
+    var body =
+      "Here's the plain-language manual for Clarity Armor — how the manipulation detector, " +
+      "the governed AI agent, and the rest of the platform work:\n\n" +
+      MANUAL_URL + "\n";
+    window.location.href =
+      "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+    return false;
+  }
+</script>
 </body>
 </html>
