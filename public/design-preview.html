@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Design Preview — Three Directions for clarityarmor.com</title>
+<title>Design Preview — Four Directions for clarityarmor.com</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
@@ -73,16 +74,45 @@
   .opt3 .btn-primary { background: #0ea5e9; color: #06121f; }
   .opt3 .btn-secondary { background: transparent; color: #cbd5e1; border: 1px solid #334155; }
   .opt3 .note { margin-top: 20px; font-size: 13.5px; color: #64748b; font-style: italic; }
+
+  /* ===== OPTION 4 — Precision Instrument (Magnet Array Designer style) ===== */
+  .opt4 { background: #0a0c10; color: #d0cfc8; font-family: 'Share Tech Mono', monospace; border-top: 1px solid #1e2530; }
+  .opt4 .badge { background: rgba(200,168,75,0.08); color: #c8a84b; border: 1px solid rgba(200,168,75,0.35); font-family: 'Cinzel', serif; }
+  .opt4 .tabbar { display: flex; border: 1px solid #1e2530; background: #111318; border-radius: 3px; overflow-x: auto; margin-bottom: 20px; }
+  .opt4 .tabbar span { padding: 10px 16px; font-size: 0.63rem; letter-spacing: 0.1em; color: #6a6860; border-bottom: 2px solid transparent; font-family: 'Cinzel', serif; white-space: nowrap; cursor: pointer; }
+  .opt4 .tabbar span.on { color: #c8a84b; border-bottom-color: #c8a84b; }
+  .opt4 .hero { background: #111318; border: 1px solid #1e2530; border-radius: 3px; padding: 40px; }
+  .opt4 .eyebrow { font-size: 0.6rem; color: #c8a84b; letter-spacing: 0.18em; text-transform: uppercase; border-bottom: 1px solid #1e2530; padding-bottom: 6px; margin-bottom: 16px; }
+  .opt4 .hero h1 { font-family: 'Cinzel', serif; color: #c8a84b; font-weight: 600; letter-spacing: 0.04em; }
+  .opt4 .hero p.sub { color: #d0cfc8; font-size: 14.5px; line-height: 1.75; }
+  .opt4 .statrow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 22px; }
+  @media (max-width: 800px) { .opt4 .statrow { grid-template-columns: repeat(2, 1fr); } }
+  .opt4 .statbox { background: #0a0c10; border: 1px solid #1e2530; padding: 8px 10px; border-radius: 2px; }
+  .opt4 .statlabel { font-size: 0.55rem; color: #6a6860; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 3px; }
+  .opt4 .statval { font-size: 0.95rem; color: #4bc8c0; }
+  .opt4 .btn-primary { background: rgba(200,168,75,0.08); color: #c8a84b; border: 1px solid #c8a84b; border-radius: 2px; font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; letter-spacing: 0.08em; }
+  .opt4 .btn-secondary { background: #111318; color: #6a6860; border: 1px solid #1e2530; border-radius: 2px; font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; letter-spacing: 0.08em; }
+  .opt4 .btn-secondary:hover, .opt4 .btn-primary:hover { color: #4bc8c0; border-color: #4bc8c0; }
+  .opt4 .card { background: #111318; border: 1px solid #1e2530; border-radius: 3px; padding: 22px; transition: border-color .15s; }
+  .opt4 .card:hover { border-color: #c8a84b; }
+  .opt4 .card .sec { font-size: 0.57rem; color: #c8a84b; letter-spacing: 0.18em; text-transform: uppercase; border-bottom: 1px solid #1e2530; padding-bottom: 5px; margin-bottom: 12px; font-family: 'Cinzel', serif; }
+  .opt4 .card h3 { font-family: 'Cinzel', serif; color: #d0cfc8; font-weight: 400; font-size: 16px; }
+  .opt4 .card p { color: #8a8880; font-size: 12.5px; line-height: 1.7; margin-top: 8px; }
+  .opt4 .card .cta { color: #4bc8c0; font-size: 0.66rem; letter-spacing: 0.08em; }
+  .opt4 .callout { background: rgba(200,168,75,0.07); border-left: 3px solid #c8a84b; padding: 10px 14px; margin-top: 24px; font-size: 12.5px; line-height: 1.7; color: #d0cfc8; }
+  .opt4 .callout b { color: #c8a84b; font-weight: 400; }
+  .opt4 .note { margin-top: 16px; font-size: 12px; color: #6a6860; font-style: italic; font-family: -apple-system, "Segoe UI", sans-serif; }
 </style>
 </head>
 <body>
 
 <div class="intro">
   <div class="wrap">
-    <h1>Three design directions for clarityarmor.com</h1>
-    <p>Scroll through each option below. Every sample uses your real homepage content — hero, three category
-    cards, and buttons — restyled in that direction. The current neumorphic look would be replaced site-wide
-    by whichever you choose.</p>
+    <h1>Design directions for clarityarmor.com</h1>
+    <p>Scroll through each option below. Every sample uses your real homepage content — hero, category
+    cards, and buttons — restyled in that direction. <strong style="color:#c8a84b">Option 4 (bottom) is new:</strong>
+    the Precision Instrument look, built from the Magnet Array Designer's exact palette and fonts.
+    Keeping the current neumorphic design is also a perfectly valid choice.</p>
   </div>
 </div>
 
@@ -187,6 +217,69 @@
     </div>
     <p class="note">Note: the library reading pages already offer Light / Dark / Sepia themes — those stay.
     This option restyles the navigation and hub pages. Book-reading themes remain reader's choice.</p>
+  </div>
+</div>
+
+<!-- ============ OPTION 4 ============ -->
+<div class="section opt4">
+  <div class="wrap">
+    <span class="badge">Option 4 — Precision Instrument · from your Magnet Array Designer</span>
+
+    <div class="tabbar">
+      <span class="on">⬡ HOME</span>
+      <span>🛡 ANALYZE</span>
+      <span>📚 LIBRARY</span>
+      <span>🧠 CDM v2</span>
+      <span>🎓 EDUCATE</span>
+      <span>🔧 TOOLS</span>
+      <span>👤 AUTHOR</span>
+    </div>
+
+    <div class="hero">
+      <div class="eyebrow">AWS Agent Ready · Cloud CODEX v2.2 · Epistemic Defense Platform</div>
+      <h1>Truth Serum + Clarity Armor</h1>
+      <p class="sub">AI-powered epistemic truth detection. Analyze language, detect manipulation,
+      and build clarity — with default and agent-grade handshakes, context decay, and failure semantics.</p>
+      <div class="btnrow">
+        <a class="btn btn-primary" href="#">▶ OPEN THE ANALYZER</a>
+        <a class="btn btn-secondary" href="#">BROWSE THE LIBRARY</a>
+      </div>
+      <div class="statrow">
+        <div class="statbox"><span class="statlabel">VX Reflexes</span><span class="statval">14</span></div>
+        <div class="statbox"><span class="statlabel">Library Works</span><span class="statval">13</span></div>
+        <div class="statbox"><span class="statlabel">Codex</span><span class="statval">v2.2</span></div>
+        <div class="statbox"><span class="statlabel">Min Confidence</span><span class="statval">0.70</span></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="sec">Collection</div>
+        <h3>The Network Library</h3>
+        <p>Featuring Behold ENTITY and The Bridge Consciousness — writings on AI sentience and identity.</p>
+        <span class="cta">EXPLORE LIBRARY →</span>
+      </div>
+      <div class="card">
+        <div class="sec">Detection</div>
+        <h3>Analyze Language</h3>
+        <p>Run the VX reflex engine with semantic &amp; cluster detection, paper checks, and link audits.</p>
+        <span class="cta">OPEN ANALYZER →</span>
+      </div>
+      <div class="card">
+        <div class="sec">Workshop</div>
+        <h3>Tools</h3>
+        <p>Free standalone utilities — CrystalScope, G-Code Simulator, Media Sorter, and more.</p>
+        <span class="cta">SEE THE TOOLS →</span>
+      </div>
+    </div>
+
+    <div class="callout"><b>Design note:</b> headings use Cinzel (the engraved serif), labels and data use
+    Share Tech Mono, gold marks structure, teal marks live values — exactly the language of the Magnet
+    Array Designer. For long-form reading (library books, lessons), body text would switch to a larger,
+    friendlier font so essays stay comfortable to read; the instrument styling frames the page rather
+    than carrying the prose.</div>
+
+    <p class="note">Note: as with Option 3, the library reader's Light / Dark / Sepia themes stay — readers keep their choice.</p>
   </div>
 </div>
 
