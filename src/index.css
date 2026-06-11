@@ -175,6 +175,157 @@ html.dark {
   }
 }
 
+/* ------------------------------------------------------------------
+   Precision Instrument design tokens (Option 4 — June 2026 redesign)
+   Palette from the Magnet Array Designer; readability from Media
+   Sorter: sans-serif body at >=15px, brightened text for contrast.
+------------------------------------------------------------------- */
+:root {
+  --ins-bg: #0a0c10;
+  --ins-panel: #111318;
+  --ins-panel-deep: #0e1116;
+  --ins-line: #1e2530;
+  --ins-line-soft: #2a3342;
+  --ins-gold: #c8a84b;
+  --ins-gold-bright: #e0c068;
+  --ins-teal: #4bc8c0;
+  --ins-text: #e2e4e8;
+  --ins-dim: #9aa3b2;
+  --ins-warn: #e08030;
+}
+
+.ins-page {
+  background: var(--ins-bg);
+  color: var(--ins-text);
+  min-height: 100vh;
+}
+
+.ins-panel {
+  background: var(--ins-panel);
+  border: 1px solid var(--ins-line);
+  border-radius: 4px;
+}
+
+.ins-card {
+  background: var(--ins-panel);
+  border: 1px solid var(--ins-line);
+  border-radius: 4px;
+  transition: border-color 0.15s ease;
+}
+.ins-card:hover {
+  border-color: var(--ins-gold);
+}
+
+/* Uppercase gold section label, engraved-serif, hairline underline */
+.ins-sec {
+  font-family: "Cinzel", serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ins-gold);
+  border-bottom: 1px solid var(--ins-line);
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+}
+
+.ins-heading {
+  font-family: "Cinzel", serif;
+  color: var(--ins-gold);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.ins-subheading {
+  font-family: "Cinzel", serif;
+  color: var(--ins-text);
+  font-weight: 400;
+}
+
+/* Data / telemetry text — mono, never for paragraphs */
+.ins-mono {
+  font-family: "Share Tech Mono", "Cascadia Code", Consolas, monospace;
+}
+
+.ins-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 3px;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--ins-panel);
+  color: var(--ins-dim);
+  border: 1px solid var(--ins-line-soft);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.ins-btn:hover {
+  color: var(--ins-teal);
+  border-color: var(--ins-teal);
+}
+
+.ins-btn-gold {
+  background: rgba(200, 168, 75, 0.08);
+  color: var(--ins-gold-bright);
+  border-color: var(--ins-gold);
+}
+.ins-btn-gold:hover {
+  color: var(--ins-teal);
+  border-color: var(--ins-teal);
+  background: rgba(75, 200, 192, 0.08);
+}
+
+.ins-stat {
+  background: var(--ins-panel-deep);
+  border: 1px solid var(--ins-line);
+  border-radius: 3px;
+  padding: 10px 12px;
+}
+.ins-stat-label {
+  display: block;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ins-dim);
+  margin-bottom: 4px;
+}
+.ins-stat-value {
+  font-family: "Share Tech Mono", monospace;
+  font-size: 1.1rem;
+  color: var(--ins-teal);
+}
+
+.ins-callout {
+  background: rgba(200, 168, 75, 0.07);
+  border-left: 3px solid var(--ins-gold);
+  border-radius: 0 3px 3px 0;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+.ins-callout-teal {
+  background: rgba(75, 200, 192, 0.06);
+  border-left-color: var(--ins-teal);
+}
+
+/* Tag chip (tool tags, categories) */
+.ins-chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  padding: 3px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--ins-line-soft);
+  background: var(--ins-panel-deep);
+  color: var(--ins-dim);
+}
+
 /* --------------------------
    Narrator Feature Animations
 --------------------------- */

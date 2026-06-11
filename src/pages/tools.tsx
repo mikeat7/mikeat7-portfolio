@@ -1,6 +1,16 @@
 // src/pages/tools.tsx
 import React, { useState, useEffect } from "react";
-import { Copy, CheckCircle, ExternalLink, Wrench, Activity, Cpu, Layers, Camera, Github } from "lucide-react";
+import {
+  Copy,
+  CheckCircle,
+  ExternalLink,
+  Wrench,
+  Activity,
+  Cpu,
+  Layers,
+  Camera,
+  Github,
+} from "lucide-react";
 import BackButton from "@/components/BackButton";
 
 interface Tool {
@@ -24,7 +34,7 @@ const tools: Tool[] = [
     description:
       "Born as a trail-camera tool, now a full offline media organizer. Scans any folder of photos or videos and sorts them into labelled subfolders using three AI models — MegaDetector (animals, people, vehicles), OpenCLIP (scenes, plus custom categories you define by typing a sentence), and facial recognition. Eight modes including duplicate detection, visual similarity search, and event clustering. Runs entirely on your own computer — no cloud, no accounts, nothing uploaded.",
     github: "https://github.com/mikeat7/Media_Sorter",
-    icon: <Camera className="w-6 h-6" style={{ color: "#ffd700" }} />,
+    icon: <Camera className="w-6 h-6 text-ins-gold" />,
     tags: ["AI Vision", "Trail Cameras", "Photo Organization", "Offline", "Windows"],
   },
   {
@@ -34,7 +44,7 @@ const tools: Tool[] = [
     description:
       "Measures structural reasoning depth — not surface vocabulary. Six independent signals: argument architecture, epistemic hygiene, conceptual density, structural integrity, domain reach, and precision index. Inspired by the CRYSTAL / CDM framework developed by Elias Rook and Mike Filippi. Genuinely hard to max out — scores above 80 are rare.",
     file: "/tools/crystalscope.html",
-    icon: <Activity className="w-6 h-6" style={{ color: "#ffd700" }} />,
+    icon: <Activity className="w-6 h-6 text-ins-gold" />,
     tags: ["Text Analysis", "CDM", "CRYSTAL Framework", "AI Evaluation"],
   },
   {
@@ -44,7 +54,7 @@ const tools: Tool[] = [
     description:
       "Paste any session log, document, or conversation and instantly see word count, character count, and a smart token estimate calibrated to within ~3% of Claude, Grok, and Llama tokenizers. Essential for tracking context window usage and planning long AI sessions.",
     file: "/tools/session-estimator.html",
-    icon: <Cpu className="w-6 h-6" style={{ color: "#ffd700" }} />,
+    icon: <Cpu className="w-6 h-6 text-ins-gold" />,
     tags: ["Token Counting", "AI Sessions", "Utilities"],
   },
   {
@@ -54,7 +64,7 @@ const tools: Tool[] = [
     description:
       "Visualize and dry-run CNC and 3D printing G-code directly in the browser with real-time path rendering. Supports generic and project-specific modes. No installation, no file uploads — runs entirely client-side so your designs stay private.",
     file: "/tools/gcode-simulator.html",
-    icon: <Wrench className="w-6 h-6" style={{ color: "#ffd700" }} />,
+    icon: <Wrench className="w-6 h-6 text-ins-gold" />,
     tags: ["CNC", "3D Printing", "Engineering"],
   },
   {
@@ -62,9 +72,9 @@ const tools: Tool[] = [
     title: "Magnet Array Designer",
     subtitle: "Field Visualization & Array Configuration",
     description:
-      "Design and visualize custom magnet arrays with configurable pole patterns, geometry, and field parameters. Built for exploring Halbach arrays and other magnetic configurations. Runs fully in the browser — no server, no data sent anywhere.",
+      "Design and visualize custom magnet arrays with configurable pole patterns, geometry, and field parameters. Built for exploring Halbach arrays and other magnetic configurations. Runs fully in the browser — no server, no data sent anywhere. (And yes — this tool's design inspired the look of the entire site.)",
     file: "/tools/magnet-array-designer.html",
-    icon: <Layers className="w-6 h-6" style={{ color: "#ffd700" }} />,
+    icon: <Layers className="w-6 h-6 text-ins-gold" />,
     tags: ["Magnetics", "Engineering", "Physics"],
   },
   {
@@ -74,7 +84,7 @@ const tools: Tool[] = [
     description:
       "The original depth scoring tool — measures vocabulary entropy, Gini coefficient, and word-scramble resilience. Note its known limitations: the score saturates at 158 and virtually all well-written text eventually reaches 'Prodigy-grade Depth', making it a poor discriminator. It rewards rare vocabulary over genuine argument structure. Kept here for reference; CrystalScope supersedes it.",
     file: "/tools/depth-lens.html",
-    icon: <Activity className="w-6 h-6" style={{ color: "#aaaaaa" }} />,
+    icon: <Activity className="w-6 h-6 text-ins-dim" />,
     tags: ["Legacy", "Text Analysis", "CDM"],
   },
 ];
@@ -100,38 +110,25 @@ const ToolCard: React.FC<{ tool: Tool }> = ({ tool }) => {
   };
 
   return (
-    <div
-      className="rounded-2xl p-6 md:p-8"
-      style={{
-        background: "#e9eef5",
-        boxShadow: "inset 8px 8px 16px #cfd6e0, inset -8px -8px 16px #ffffff",
-      }}
-    >
+    <div className="ins-card p-6 md:p-7">
       {/* Header */}
       <div className="flex items-start gap-4">
         <div className="mt-1 flex-shrink-0">{tool.icon}</div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-xl font-semibold text-slate-900">{tool.title}</h3>
-          <p className="text-sm text-slate-500 mt-0.5">{tool.subtitle}</p>
+          <h3 className="ins-subheading text-xl">{tool.title}</h3>
+          <p className="ins-mono text-xs tracking-wider uppercase text-ins-dim mt-1">
+            {tool.subtitle}
+          </p>
         </div>
       </div>
 
       {/* Description */}
-      <p className="mt-4 text-sm md:text-base text-slate-700 leading-relaxed">
-        {tool.description}
-      </p>
+      <p className="mt-4 text-[15px] text-ins-dim leading-relaxed">{tool.description}</p>
 
       {/* Tags */}
       <div className="mt-4 flex flex-wrap gap-2">
         {tool.tags.map((tag) => (
-          <span
-            key={tag}
-            className="text-xs px-2 py-1 rounded-full text-slate-600 font-medium"
-            style={{
-              background: "#e9eef5",
-              boxShadow: "3px 3px 6px #cfd6e0, -3px -3px 6px #ffffff",
-            }}
-          >
+          <span key={tag} className="ins-chip">
             {tag}
           </span>
         ))}
@@ -144,56 +141,37 @@ const ToolCard: React.FC<{ tool: Tool }> = ({ tool }) => {
             href={tool.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-900 transition-transform hover:scale-[1.02] focus:outline-none"
-            style={{
-              background: "#e9eef5",
-              boxShadow: "5px 5px 10px #cfd6e0, -5px -5px 10px #ffffff",
-            }}
+            className="ins-btn ins-btn-gold"
           >
-            <Github className="w-4 h-4" style={{ color: "#ffd700" }} />
+            <Github className="w-4 h-4" />
             View on GitHub
           </a>
         )}
         {tool.file && (
-        <a
-          href={tool.file}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-900 transition-transform hover:scale-[1.02] focus:outline-none"
-          style={{
-            background: "#e9eef5",
-            boxShadow: "5px 5px 10px #cfd6e0, -5px -5px 10px #ffffff",
-          }}
-        >
-          <ExternalLink className="w-4 h-4" style={{ color: "#ffd700" }} />
-          Open Tool
-        </a>
+          <a
+            href={tool.file}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ins-btn ins-btn-gold"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Open Tool
+          </a>
         )}
-
         {tool.file && (
-        <button
-          onClick={handleCopyHTML}
-          disabled={copying}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-900 transition-transform hover:scale-[1.02] focus:outline-none disabled:opacity-50"
-          style={{
-            background: "#e9eef5",
-            boxShadow: copied
-              ? "inset 3px 3px 6px #cfd6e0, inset -3px -3px 6px #ffffff"
-              : "5px 5px 10px #cfd6e0, -5px -5px 10px #ffffff",
-          }}
-        >
-          {copied ? (
-            <>
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              Copied!
-            </>
-          ) : (
-            <>
-              <Copy className="w-4 h-4" style={{ color: "#ffd700" }} />
-              {copying ? "Copying…" : "Copy HTML"}
-            </>
-          )}
-        </button>
+          <button onClick={handleCopyHTML} disabled={copying} className="ins-btn disabled:opacity-50">
+            {copied ? (
+              <>
+                <CheckCircle className="w-4 h-4 text-ins-teal" />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                {copying ? "Copying…" : "Copy HTML"}
+              </>
+            )}
+          </button>
         )}
       </div>
     </div>
@@ -206,26 +184,18 @@ const ToolsPage: React.FC = () => {
   }, []);
 
   return (
-    <main className="min-h-screen bg-[#e9eef5] text-slate-800">
-      <section className="max-w-6xl mx-auto px-6 py-16">
+    <main className="ins-page">
+      <section className="max-w-6xl mx-auto px-6 py-14">
         {/* Page Header */}
-        <div
-          className="relative rounded-3xl p-10 md:p-14 mb-10"
-          style={{
-            background: "#e9eef5",
-            boxShadow: "9px 9px 18px rgba(163,177,198,0.6), -9px -9px 18px rgba(255,255,255,0.9)",
-          }}
-        >
-          <BackButton to="/" label="Home" />
-          <div className="mt-4 flex flex-col gap-3">
-            <div className="inline-flex items-center text-xs md:text-sm text-slate-600">
-              <Wrench className="w-4 h-4 mr-2" style={{ color: "#ffd700" }} />
-              <span className="font-semibold">Standalone HTML Tools</span>
+        <div className="ins-panel p-8 md:p-12 mb-8">
+          <BackButton to="/" label="Home" className="!text-ins-teal hover:!text-ins-goldbright" />
+          <div className="mt-5">
+            <div className="ins-sec flex items-center gap-2">
+              <Wrench className="w-4 h-4 text-ins-gold" />
+              Workshop · Standalone Software
             </div>
-            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900">
-              Tools
-            </h1>
-            <p className="text-base md:text-lg text-slate-700">
+            <h1 className="ins-heading text-3xl md:text-5xl mt-4">Tools</h1>
+            <p className="mt-4 text-base md:text-lg text-ins-text leading-relaxed max-w-3xl">
               Free software built by the author — self-contained browser tools and downloadable
               desktop apps. No login, no server, no data collection. Browser tools open directly
               or copy as HTML to run locally; desktop apps install from GitHub. Each tool was born
@@ -242,8 +212,8 @@ const ToolsPage: React.FC = () => {
         </div>
 
         {/* Footer note */}
-        <p className="mt-10 text-sm italic text-slate-600 text-center">
-          All tools run entirely in your browser. Nothing is sent to any server.
+        <p className="mt-10 text-sm italic text-ins-dim text-center">
+          All browser tools run entirely on your device. Nothing is sent to any server.
         </p>
       </section>
     </main>
