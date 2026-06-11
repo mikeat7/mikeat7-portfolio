@@ -181,16 +181,18 @@ html.dark {
    Sorter: sans-serif body at >=15px, brightened text for contrast.
 ------------------------------------------------------------------- */
 :root {
-  --ins-bg: #0a0c10;
-  --ins-panel: #111318;
-  --ins-panel-deep: #0e1116;
-  --ins-line: #1e2530;
-  --ins-line-soft: #2a3342;
+  /* Base layers use Media Sorter's soft green-black — easier on the eyes
+     than pure near-black; gold/teal accents kept from the Magnet Designer */
+  --ins-bg: #141814;
+  --ins-panel: #1c211c;
+  --ins-panel-deep: #111511;
+  --ins-line: #2e3e2e;
+  --ins-line-soft: #3a4e3a;
   --ins-gold: #c8a84b;
   --ins-gold-bright: #e0c068;
   --ins-teal: #4bc8c0;
-  --ins-text: #e2e4e8;
-  --ins-dim: #9aa3b2;
+  --ins-text: #e0e8e0;
+  --ins-dim: #9cb29c;
   --ins-warn: #e08030;
 }
 

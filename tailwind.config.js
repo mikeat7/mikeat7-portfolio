@@ -15,16 +15,16 @@ module.exports = {
         ring: "#93C5FD",
         // Precision Instrument palette (Option 4 redesign)
         ins: {
-          bg: "#0a0c10",
-          panel: "#111318",
-          deep: "#0e1116",
-          line: "#1e2530",
-          soft: "#2a3342",
+          bg: "#141814",
+          panel: "#1c211c",
+          deep: "#111511",
+          line: "#2e3e2e",
+          soft: "#3a4e3a",
           gold: "#c8a84b",
           goldbright: "#e0c068",
           teal: "#4bc8c0",
-          text: "#e2e4e8",
-          dim: "#9aa3b2",
+          text: "#e0e8e0",
+          dim: "#9cb29c",
         },
       },
       fontFamily: {
