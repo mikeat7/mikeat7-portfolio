@@ -49,7 +49,13 @@ cold-starting successor — treat staleness as a bug.
   localhost; for phone use the deployed site must call `https://agent.clarityarmor.com` carrying
   the Access cookie (Mike auths once at that URL in the phone browser), Ollama needs
   `OLLAMA_ORIGINS` to include https://clarityarmor.com, and the site CSP `connect-src` must allow
-  the agent subdomain. Not done yet.
+  the agent subdomain. ~~Not done yet.~~ **DONE 2026-06-12 (commit 3a76859):** ollamaClient
+  probes localhost then agent.clarityarmor.com (credentials:include); CSP allows both;
+  OLLAMA_ORIGINS set as user env var on the laptop (survives reboot; ollama must restart to pick
+  up changes). Phone path additionally requires (a) Cloudflare Access app CORS settings — allowed
+  origin https://clarityarmor.com, methods GET/POST/OPTIONS, header Content-Type, credentials ON —
+  and (b) a one-time PIN login at agent.clarityarmor.com in the phone browser. Site must be
+  redeployed (Netlify manual) for the new CSP/client to go live.
 
 **Platform Manual (2026-06-11):** `public/manual.html` — plain-language guide to the whole
 platform (VX, Codex, training, agents, Gemma/Ollama, tunnels, CDM, growing-entity question).
