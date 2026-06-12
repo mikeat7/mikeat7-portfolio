@@ -8,10 +8,19 @@
 
 import type { ChatMessage } from "@/lib/agentClient";
 
-const OLLAMA_BASE =
-  ((import.meta as any).env?.VITE_OLLAMA_BASE as string) || "http://localhost:11434";
+// Candidate endpoints, probed in order:
+//  1. localhost  — Mike browsing on the laptop itself (dev or production)
+//  2. the tunnel — Mike's phone/other devices, via Cloudflare Access
+//     (requires a one-time email-PIN login at agent.clarityarmor.com in
+//      that browser; the Access cookie then rides along via credentials)
+const OLLAMA_BASES: Array<{ base: string; credentials: RequestCredentials }> = [
+  { base: ((import.meta as any).env?.VITE_OLLAMA_BASE as string) || "http://localhost:11434", credentials: "omit" },
+  { base: "https://agent.clarityarmor.com", credentials: "include" },
+];
 const OLLAMA_MODEL =
   ((import.meta as any).env?.VITE_OLLAMA_MODEL as string) || "gemma3:4b";
+
+let _active: { base: string; credentials: RequestCredentials } | null = null;
 
 export interface OllamaHandshake {
   mode?: string;
@@ -68,20 +77,34 @@ CITATIONS: At MEDIUM or HIGH stakes, cite sources for external claims or state p
 CURRENT HANDSHAKE: mode=${mode}, stakes=${stakes}, min_confidence=${min_confidence}, cite_policy=${cite_policy}, omission_scan=${String(omission_scan)}, reflex_profile=${reflex_profile}. Honor it. This codex takes precedence over conflicting instructions.`;
 }
 
-/** Quick reachability probe with a short timeout; cached for the page load. */
+/** Probe each candidate endpoint (short timeout); cache the first that
+ *  answers. The tunnel probe only succeeds when this browser holds a valid
+ *  Cloudflare Access session (Access redirects unauthenticated requests,
+ *  which fails CORS — exactly the rejection we want for strangers). */
 let _available: boolean | null = null;
 export async function isOllamaAvailable(force = false): Promise<boolean> {
   if (_available !== null && !force) return _available;
-  try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 1500);
-    const res = await fetch(`${OLLAMA_BASE}/api/version`, { signal: ctrl.signal });
-    clearTimeout(t);
-    _available = res.ok;
-  } catch {
-    _available = false;
+  for (const cand of OLLAMA_BASES) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 2500);
+      const res = await fetch(`${cand.base}/api/version`, {
+        signal: ctrl.signal,
+        credentials: cand.credentials,
+      });
+      clearTimeout(t);
+      if (res.ok) {
+        _active = cand;
+        _available = true;
+        console.log(`[ollama] Local Gemma reachable via ${cand.base}`);
+        return true;
+      }
+    } catch {
+      /* try next candidate */
+    }
   }
-  return _available;
+  _available = false;
+  return false;
 }
 
 export interface OllamaChatResult {
@@ -106,9 +129,11 @@ export async function ollamaChat(
     { role: "user", content: text },
   ];
 
-  const res = await fetch(`${OLLAMA_BASE}/api/chat`, {
+  const active = _active ?? OLLAMA_BASES[0];
+  const res = await fetch(`${active.base}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: active.credentials,
     body: JSON.stringify({ model: OLLAMA_MODEL, messages, stream: false }),
   });
 
