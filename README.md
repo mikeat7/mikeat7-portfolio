@@ -78,8 +78,8 @@ remain for rollback. Mike's phone check of mobile reader features pending post-d
 **Music Library Scanner tool (2026-06-12):** Python suite (scanner + library builder) from
 Mike's music-restoration project added to /tools as a downloadable-scripts card with guide page
 public/tools/music-scanner.html; scripts at public/tools/musicscanner/ (docstring paths
-sanitized). Graduating to its own repo github.com/mikeat7/Music_Scanner (local repo prepared at
-D:\Music_Scanner; awaiting Mike creating the empty GitHub repo, then push + card gets github link).
+sanitized). Own repo LIVE: github.com/mikeat7/Music_Scanner (local clone at D:\Music_Scanner);
+tool card + guide page link to it.
 
 **CDM Small Model Addendum (2026-06-12):** Elias Rook answered the three calibration questions
 via Mike — adjusted Gemma-4B thresholds (entropy 1.6-1.8 bits, convergence ≤0.22-0.25, Gini
