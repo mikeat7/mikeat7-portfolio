@@ -22,6 +22,8 @@ interface Tool {
   file?: string;
   /** GitHub repo for downloadable desktop apps (View on GitHub button) */
   github?: string;
+  /** Guide page for downloadable scripts (Open Guide button; downloads live on the guide) */
+  guide?: string;
   icon: React.ReactNode;
   tags: string[];
 }
@@ -36,6 +38,16 @@ const tools: Tool[] = [
     github: "https://github.com/mikeat7/Media_Sorter",
     icon: <Camera className="w-6 h-6 text-ins-gold" />,
     tags: ["AI Vision", "Trail Cameras", "Photo Organization", "Offline", "Windows"],
+  },
+  {
+    id: "music-scanner",
+    title: "Music Library Scanner & Builder",
+    subtitle: "MP3/WAV Rescue Suite (Python Scripts)",
+    description:
+      "Two command-line tools that rescued a thirty-year music collection. The Scanner diagnoses every MP3 and WAV in a library — corruption, songs that cut off early, duplicates, ringtone-length fragments, even live recordings with spoken intros or applause. The Builder then copies only the healthy files into a clean, alphabetized Artist - Title library. Proven on 6,000+ real files (it found a 35% truncation rate in a Napster-era folder). Originals are never touched; everything runs offline.",
+    guide: "/tools/music-scanner.html",
+    icon: <Layers className="w-6 h-6 text-ins-gold" />,
+    tags: ["Music", "File Integrity", "Duplicates", "Offline", "Python"],
   },
   {
     id: "crystalscope",
@@ -145,6 +157,17 @@ const ToolCard: React.FC<{ tool: Tool }> = ({ tool }) => {
           >
             <Github className="w-4 h-4" />
             View on GitHub
+          </a>
+        )}
+        {tool.guide && (
+          <a
+            href={tool.guide}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ins-btn ins-btn-gold"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Guide &amp; Download
           </a>
         )}
         {tool.file && (

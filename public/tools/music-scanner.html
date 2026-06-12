@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music Library Scanner — Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Share+Tech+Mono&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#141814; --panel:#1c211c; --deep:#111511; --line:#2e3e2e;
+    --gold:#c8a84b; --goldbright:#e0c068; --teal:#4bc8c0; --text:#e0e8e0; --dim:#9cb29c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,"Segoe UI",sans-serif;line-height:1.7;font-size:16px}
+  .wrap{max-width:820px;margin:0 auto;padding:40px 24px 80px}
+  a{color:var(--teal);text-decoration:none}
+  a:hover{color:var(--goldbright)}
+  h1{font-family:'Cinzel',serif;color:var(--gold);font-size:2rem;font-weight:700;line-height:1.2}
+  h2{font-family:'Cinzel',serif;color:var(--gold);font-size:1.35rem;font-weight:600;margin:42px 0 6px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  p{margin:12px 0}
+  ul{margin:12px 0 12px 24px}
+  li{margin:6px 0}
+  .eyebrow{font-family:'Share Tech Mono',monospace;font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+  .lede{font-size:1.05rem;color:var(--dim)}
+  code,pre{font-family:'Share Tech Mono',monospace;background:var(--deep);border:1px solid var(--line);border-radius:3px;color:var(--teal)}
+  code{padding:1px 6px;font-size:0.85em}
+  pre{padding:12px 16px;margin:10px 0;overflow-x:auto;font-size:0.82rem;line-height:1.7}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:0.9rem}
+  th{background:var(--deep);color:var(--gold);font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;text-align:left;padding:8px 12px;border:1px solid var(--line)}
+  td{padding:8px 12px;border:1px solid var(--line);color:var(--dim);vertical-align:top}
+  td strong{color:var(--text)}
+  .callout{background:rgba(200,168,75,0.07);border-left:3px solid var(--gold);border-radius:0 3px 3px 0;padding:14px 18px;margin:18px 0}
+  .callout.teal{background:rgba(75,200,192,0.06);border-left-color:var(--teal)}
+  .backlink{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:0.78rem;letter-spacing:0.06em;color:var(--teal);margin-bottom:24px}
+  .dlrow{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}
+  .dlbtn{display:inline-flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:0.8rem;letter-spacing:0.05em;color:var(--goldbright);background:rgba(200,168,75,0.08);border:1px solid var(--gold);border-radius:3px;padding:11px 18px}
+  .dlbtn:hover{color:var(--teal);border-color:var(--teal)}
+  .statrow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+  @media(max-width:600px){.statrow{grid-template-columns:1fr}}
+  .stat{background:var(--deep);border:1px solid var(--line);border-radius:3px;padding:12px 14px;text-align:center}
+  .stat .v{font-family:'Share Tech Mono',monospace;font-size:1.5rem;color:var(--teal)}
+  .stat .l{font-size:0.72rem;color:var(--dim);text-transform:uppercase;letter-spacing:0.06em;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="backlink" href="/tools">&larr; BACK TO TOOLS</a>
+
+  <div class="eyebrow">Desktop Tool · Python · Fully Offline</div>
+  <h1>Music Library Scanner &amp; Builder</h1>
+  <p class="lede">Two command-line tools that rescued a thirty-year music collection — and can rescue yours.
+  The <strong>Scanner</strong> diagnoses every MP3 and WAV in your library: corruption, songs that cut off
+  early, duplicates, ringtone-length fragments, even live recordings with spoken intros. The
+  <strong>Builder</strong> then copies only the healthy files into a clean, alphabetized library.
+  Your originals are never touched.</p>
+
+  <div class="dlrow">
+    <a class="dlbtn" href="/tools/musicscanner/music_scanner_v2.py" download>⬇ music_scanner_v2.py</a>
+    <a class="dlbtn" href="/tools/musicscanner/library_builder.py" download>⬇ library_builder.py</a>
+  </div>
+
+  <h2>The Story (and the proof it works)</h2>
+  <p>This suite was built to answer one question: <em>can a script detect whether an MP3 ends
+  prematurely?</em> It was then run against a real collection — 1,338 vinyl-rip WAVs and 4,706
+  Napster-era MP3s. The diagnosis:</p>
+  <div class="statrow">
+    <div class="stat"><div class="v">35%</div><div class="l">of Napster-era MP3s truncated</div></div>
+    <div class="stat"><div class="v">53%</div><div class="l">duplicates</div></div>
+    <div class="stat"><div class="v">0</div><div class="l">defects in carefully-made vinyl rips</div></div>
+  </div>
+  <p>The strategy that emerged: don't operate on the sick patient — <em>clone the healthy one</em>.
+  The Builder extracts every file that passes integrity checks, runs 90 seconds or longer, and is
+  the best copy among its duplicates, into a fresh <code>Artist - Title</code> library.</p>
+
+  <h2>Setup (once)</h2>
+  <p>You need Python 3 (python.org/downloads — check "Add Python to PATH" during install).
+  For the live-recording detector only, also run:</p>
+  <pre>pip install librosa</pre>
+
+  <h2>Using the Scanner</h2>
+  <pre># Report only — nothing is moved
+python music_scanner_v2.py "C:\Music\My Music"
+
+# Move corrupt/truncated files to quarantine
+python music_scanner_v2.py "C:\Music\My Music" --quarantine "C:\Music_Bad"
+
+# Sort files under 90 seconds (ringtones, fragments)
+python music_scanner_v2.py "C:\Music\My Music" --short "C:\Music_Short"
+
+# Flag live recordings (spoken intros / applause) for review
+python music_scanner_v2.py "C:\Music\My Music" --live "C:\Music_Live_Review"</pre>
+  <p>Each run saves a CSV report (open in Excel, sort the status column) and a plain-text summary.</p>
+
+  <table>
+    <tr><th>Status</th><th>Meaning</th></tr>
+    <tr><td><strong>OK</strong></td><td>Healthy, structurally complete.</td></tr>
+    <tr><td><strong>TRUNCATED</strong></td><td>Ends before it should — the song cuts off. Report shows what % is present.</td></tr>
+    <tr><td><strong>CORRUPT</strong></td><td>Broken frame structure; often unplayable.</td></tr>
+    <tr><td><strong>READ_ERROR</strong></td><td>Windows couldn't open the file (locked or permissions).</td></tr>
+  </table>
+
+  <h2>Using the Builder</h2>
+  <pre># Build a clean library from one or more source folders
+python library_builder.py "C:\Music\albums" "C:\Music\My Music" --output "C:\Music_Clean"</pre>
+  <p>Qualifying rules: status OK · duration ≥ 90 s · longest copy wins among duplicates.
+  Output: one flat folder, <code>Artist - Song Title.ext</code>, alphabetized ignoring
+  "The/A/An". Originals untouched.</p>
+
+  <div class="callout teal">
+    <strong>Privacy:</strong> everything runs on your own computer. No internet connection is used
+    (except the one-time librosa install), nothing is uploaded, and nothing is deleted — files are
+    only ever <em>copied</em> or <em>moved to folders you name</em>.
+  </div>
+
+  <div class="callout">
+    <strong>Honest accuracy note:</strong> the live-recording detector is a pre-filter, not a judge —
+    roughly 80% accurate on applause, 70% on spoken intros. It moves candidates to a review folder
+    for your ears to decide. Soft acoustic intros can trigger false positives.
+  </div>
+
+  <p style="margin-top:40px;font-size:0.85rem;color:var(--dim)">Part of the
+  <a href="/tools">Clarity Armor tool collection</a> — free software built through human-AI
+  collaboration, refined on real problems.</p>
+</div>
+</body>
+</html>
