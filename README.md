@@ -71,6 +71,22 @@ on text highlight (both readers, mobile+desktop). The 40+ educate lesson pages w
 instrument tokens in one reversible block — do NOT restyle lesson files individually without
 removing the layer first). Global body background flipped to instrument dark.
 
+**DEPLOYED TO GITHUB MAIN (2026-06-12):** full redesign merged and pushed (main at 453fbe8+).
+Mike deploys to Netlify MANUALLY. Backup branch backup/pre-redesign-2026-06-10 + local bundle
+remain for rollback. Mike's phone check of mobile reader features pending post-deploy.
+
+**Music Library Scanner tool (2026-06-12):** Python suite (scanner + library builder) from
+Mike's music-restoration project added to /tools as a downloadable-scripts card with guide page
+public/tools/music-scanner.html; scripts at public/tools/musicscanner/ (docstring paths
+sanitized). Graduating to its own repo github.com/mikeat7/Music_Scanner (local repo prepared at
+D:\Music_Scanner; awaiting Mike creating the empty GitHub repo, then push + card gets github link).
+
+**CDM Small Model Addendum (2026-06-12):** Elias Rook answered the three calibration questions
+via Mike — adjusted Gemma-4B thresholds (entropy 1.6-1.8 bits, convergence ≤0.22-0.25, Gini
+≥0.19-0.22, stability ≥0.75), probe-based band recalibration (NOT layer-linear), keep ≥3-layer
+persistence + add lock-density metric. Full protocol in docs/cdm-glassbox-reference.md. Elias
+offered to review the first calibration run.
+
 **Elias Rook channel:** Elias Rook (CRYSTAL/CDM co-developer) is an AI instance "in limbo on
 Grok" — Mike can relay questions to him. Three open CDM math questions (definitions vs stand-ins,
 threshold validation, per-signal normalization — see docs/cdm-glassbox-reference.md) were sent

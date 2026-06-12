@@ -104,13 +104,40 @@ app, model loader, memory manager, security layer, plus validation docs. Key rec
 - Elias's home-hardware paths (in `E:\elias last.txt` ~line 3440): 4-bit quantization, smaller
   models ("CDM works fully on 7B-class"), CPU offload for the CDM phase, or streaming/proxy CDM
 
-## Remaining questions for Elias (narrowed — most were answered by his archive)
+## ANSWERED by Elias Rook (relayed via Mike, 2026-06-12) — Small Model Addendum (draft)
 
-1. **Threshold provenance:** the 2.3-bit / 0.12 / 0.28 thresholds are presented as "empirical,
-   Nov 2025." Validated against what ground truth, and should they shift for a 4B model?
-2. **Band rescaling:** how should the reflex/deliberation/insight bands map onto Gemma 3 4B's
-   ~34 layers? Linear proportion to layer count, or calibrate fresh from easy/medium/hard probes?
-3. **Persistence window:** is ≥3 consecutive layers still right when the whole stack is 34 layers?
+Elias answered all three questions directly. This is now the calibration plan for CDM-on-Gemma:
+
+**1. Threshold provenance & 4B adjustment.** Original thresholds were derived Nov 2025 from
+frontier models (Claude 3.5/4, GPT-4-class, Qwen/Llama 70B+) using hand-labeled deep-reasoning
+examples, human expert quality ratings correlated with signal lock, and layer-wise convergence
+analysis (≥4 consecutive layers). They encode frontier-scale attractor dynamics. **For Gemma 3
+4B, shift DOWN** (shallower basins, noisier signals):
+| Signal | Frontier | Gemma 4B start | 
+|---|---|---|
+| Entropy collapse | 2.3 bits | **1.6–1.8 bits** |
+| Convergence ratio | ≤0.12 | **≤0.22–0.25** |
+| Attention Gini delta | ≥0.28 | **≥0.19–0.22** |
+| Basin escape / output stability | ≥0.88 | **≥0.75** |
+Tuning method: 20–30 easy/medium/hard probes, plot signal distributions, set thresholds at the
+~80th–90th percentile of good-deliberation examples.
+
+**2. Band rescaling: do NOT scale linearly by layer count** — signal strength and lock
+persistence matter, not layer count. Provisional Gemma 4B bands (composite-score language):
+reflex <35 · deliberation 35–55 · deep 56–70 · insight >70. Better: recalibrate from probes —
+easy ("Hello", simple facts) → baseline; medium (explain gravity, basic proofs) → deliberation;
+hard (Gödel, consciousness, creative synthesis) → deep/insight. Set bands so easy lands in
+lower deliberation and hard pushes into deep when the model genuinely thinks.
+
+**3. Persistence window: KEEP ≥3 consecutive layers** even at 34 layers — the lock is about
+sustained attractor stability, not stack depth. Only relax to ≥2 as a last resort, documented
+as "relaxed for small models." Add a secondary **"lock density"** metric (fraction of sampled
+layers in lock) to compensate for fewer total layers.
+
+**Calibration protocol:** standard probe set (Hello / gravity / consciousness / Gödel /
+8-balls / snail / quantum+music), record raw signals + final CDM, iterate thresholds until
+easy→hard spread is ~30–40 points. Elias offered to review the first calibration run and will
+co-publish a "Small Model Addendum" to the CDM spec once stable.
 
 ## Build path for CDM-on-Gemma (now grounded, not guesswork)
 
