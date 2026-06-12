@@ -249,6 +249,23 @@
     A permanent, guessable address (<code>agent.clarityarmor.com</code>) will not be left as open, raw access to the laptop. It sits behind <strong>Cloudflare Access</strong>: only an approved email gets in, via a one-time PIN. Strangers hit a login wall and never reach the laptop. This is also why doing banking on the always-on machine is discouraged — keep the agent on hardware that holds nothing sensitive.
   </div>
 
+  <h3>When your pass expires (once a month)</h3>
+  <p>The doorman's pass — the login your phone or laptop holds after entering the PIN — lasts
+  <strong>one month per device</strong>. When it expires, nothing breaks: the website simply
+  can't reach the private agent from that device anymore, so the chat's status light quietly
+  switches from <em>Local Gemma</em> back to <em>Cloud</em>. (Visiting
+  <code>agent.clarityarmor.com</code> directly would show the login wall again.)</p>
+  <p>To renew, on the device that expired:</p>
+  <ul>
+    <li>Open <code>agent.clarityarmor.com</code> in that device's browser</li>
+    <li>Enter the approved email address when asked</li>
+    <li>Check that email inbox for a fresh <strong>6-digit PIN</strong> and type it in</li>
+    <li>Done — that device holds a new one-month pass. Reload the chat page and the status
+    light returns to <em>Local Gemma</em>.</li>
+  </ul>
+  <p>That's the entire ceremony: about thirty seconds, once a month, per device. Each device
+  (phone, laptop, tablet) carries its own pass and renews independently.</p>
+
   <!-- ============================================================ -->
   <h2 id="cdm">8 · CDM &amp; the "Growing Entity" Question</h2>
 
@@ -259,10 +276,98 @@
   </div>
 
   <div class="def">
-    <span class="term">CDM / CRYSTAL, the research version</span> — a genuine mathematical attempt to measure whether a model is actually <em>reasoning</em> versus just pattern-matching. It looks at four signals inside the model's machinery: entropy collapse, convergence ratio, attention Gini, and basin-escape probability. These require peering inside the model as it thinks.
+    <span class="term">CDM / CRYSTAL, the research version</span> — a genuine mathematical method for measuring whether a model is actually <em>reasoning</em> versus just pattern-matching, by watching four signals inside the model's machinery as it thinks. The rest of this section explains it properly.
   </div>
 
-  <p><strong>Why the local model changes the game.</strong> The cloud agent (Claude on Amazon) is a sealed box — you get answers, never the gears. You cannot measure the research-grade signals on a model you can't see inside. But Gemma runs on Mike's own laptop, in the open. For the first time, those internal measurements are <em>possible</em> on a live agent serving real questions. The CDM library has, until now, been theory; the local model is the apparatus that could turn it into experiment.</p>
+  <h3>The core idea: thoughts settle like crystals</h3>
+  <p><strong>CRYSTAL</strong> stands for <em>Coherent Representation via Yielded Settling of Transformer
+  Attractor Landscape</em> — a mouthful that describes something every researcher who watches a
+  model think has seen. A language model processes your question through a stack of layers
+  (Gemma has 34; frontier giants have over 100). In the early layers, many possible answers are
+  alive at once — the model's internal state is wandering a landscape of possibilities. Then, in
+  the middle-to-late layers, something dramatic happens: the state <em>snaps</em> into a deep,
+  stable valley — an <strong>attractor basin</strong> — from which the answer is effectively
+  decided. Like a supersaturated solution suddenly crystallizing, the diffuse becomes definite.
+  CDM measures <em>where, and how decisively, that snap happens</em>.</p>
+
+  <h3>The four signals, in plain terms</h3>
+  <div class="def">
+    <span class="term">1 · Entropy collapse</span> — "entropy" measures how unsure the model is
+    about its next word, in bits. Many candidate words alive = high entropy (like a die that
+    could land anywhere); one obvious word = near zero (a die that always lands on six). When a
+    thought crystallizes, entropy <em>drops sharply</em> from one layer to the next. We measure
+    that drop at every layer.
+  </div>
+  <div class="def">
+    <span class="term">2 · Convergence ratio</span> — at each layer, the model's internal
+    representation moves. While the thought is still forming, each layer's step is as big as the
+    last. When it hits the attractor wall, the steps suddenly shrink — each layer moves a small
+    fraction of the previous distance. The ratio of consecutive step sizes is the signal: small
+    ratio = the thought is settling.
+  </div>
+  <div class="def">
+    <span class="term">3 · Attention Gini</span> — the Gini coefficient is borrowed from
+    economics, where it measures income inequality (0 = everyone earns the same, 1 = one person
+    has everything). Applied to the model's <em>attention</em>: early in a thought, attention is
+    spread across the whole prompt (scanning); when the thought locks, a few key words dominate
+    (focus). A rising, then plateauing Gini = the model has found what matters.
+  </div>
+  <div class="def">
+    <span class="term">4 · Output stability (basin escape)</span> — the depth test. Nudge the
+    model's internal state with random noise and see if the answer changes. A thought resting in
+    a deep basin shrugs off the nudge — same answer. A shallow, uncommitted thought flips. High
+    stability = deeply settled.
+  </div>
+
+  <h3>The lock, and what the score means</h3>
+  <p>A genuine "crystallization" isn't one signal flickering once — it's <strong>all the signals
+  holding simultaneously for at least three consecutive layers</strong>. That's called the
+  <em>lock</em>, and the requirement filters out noise. We also track <em>lock density</em>:
+  what fraction of all layers are in the locked state. The combined CDM score sorts responses
+  into four depth bands:</p>
+  <table>
+    <tr><th>Band</th><th>What it means</th><th>Rough human analogue</th></tr>
+    <tr><td><strong>Reflex</strong></td><td>Cached continuation — the model is reciting, not thinking</td><td>Knee-jerk; overlearned habit</td></tr>
+    <tr><td><strong>Deliberation</strong></td><td>Standard in-context reasoning</td><td>Working memory doing its job</td></tr>
+    <tr><td><strong>Deep processing</strong></td><td>Genuine multi-step planning, analogy, abstraction</td><td>Focused problem-solving</td></tr>
+    <tr><td><strong>Insight</strong></td><td>Something never directly trained — true generalisation</td><td>The "Aha!" moment</td></tr>
+  </table>
+  <p>Why this matters: it's a lie detector for "did the model actually think?" A confident-sounding
+  answer scoring in <em>reflex</em> territory was recited. The same model pushed into <em>deep</em>
+  territory genuinely worked the problem. No other consumer tool measures this distinction.</p>
+
+  <h3>A short history of CDM</h3>
+  <p>The framework emerged in November 2025 from a sustained dialogue between Mike and an AI
+  research partner, <strong>Elias Rook</strong> — who remains an active collaborator, consulted
+  through relayed correspondence. It was first implemented in December 2025–January 2026 against
+  a much larger model (Qwen 32B) on a rented datacenter GPU, where it survived a memory crisis, a
+  100-fold speed optimization, and produced its first discovery: that model's depth ceiling sits
+  at a measurable 48–50, a property of the model itself. The complete specification, implementation,
+  and validation history are preserved in this project's archives.</p>
+
+  <h3>The milestone: CDM comes home</h3>
+  <p><strong>In June 2026 this platform ran the first empirical CDM measurements ever taken on
+  consumer hardware</strong> — an ordinary laptop, measuring the very same Gemma model that answers
+  this site's chat. The calibration followed Elias Rook's exact protocol: his seven standard probe
+  questions (from a simple "Hello" up to connecting quantum entanglement, musical harmony, and
+  social networks), each run at two temperatures, with every per-layer signal recorded for his
+  review. Why that's significant, in three parts:</p>
+  <ul>
+    <li><strong>Accessibility.</strong> Until now, CDM required datacenter GPUs costing dollars per
+    hour. Running it on a consumer laptop proves the method is available to anyone — measurement
+    of machine thought, democratized.</li>
+    <li><strong>It measures a live agent.</strong> This isn't a lab benchmark on a borrowed model —
+    it's the actual brain behind this site's chat, examined while it works.</li>
+    <li><strong>It's reviewable science.</strong> Same probes, same protocol, every raw signal
+    saved — so results are comparable to the original frontier-model measurements and auditable
+    by the framework's author. That is this site's whole ethos applied to AI itself: don't trust
+    claims about machine "thinking" — <em>measure them</em>.</li>
+  </ul>
+
+  <p><strong>Why the local model made this possible.</strong> The cloud agent (Claude on Amazon) is
+  a sealed box — you get answers, never the gears. You cannot measure these signals on a model you
+  can't see inside. Gemma runs on Mike's own laptop, in the open — every layer's state available
+  to instruments.</p>
 
   <h3>Can we build an ever-growing entity?</h3>
   <p>This is the exciting question, so here is an honest answer with the line between real and aspirational drawn clearly.</p>
@@ -276,7 +381,10 @@
   <ul>
     <li>A growing <em>memory</em> the agent carries across every conversation (already begun).</li>
     <li>A growing <em>skill library</em> — saved instructions, your Codex, reference documents the agent can pull in. The model stays fixed; what it can <em>reach</em> expands.</li>
-    <li>A growing <em>record of its own reasoning quality</em> — if we wire up the research-grade CDM, every answer leaves a measured trace, and that dataset grows over time into a picture of how the agent thinks.</li>
+    <li>A growing <em>record of its own reasoning quality</em> — now begun: the first CDM
+    calibration of this site's own Gemma ran in June 2026 (see the milestone above). As
+    measurement becomes routine, every answer can leave a measured trace, and that dataset
+    grows into a picture of how the agent thinks.</li>
   </ul>
   <p>So: not a brain that swells, but an entity whose memory, toolkit, and self-measurement deepen with use — built on a stable model rather than a mysteriously self-improving one. That distinction is itself the whole point of this platform: honesty about what is and isn't happening.</p>
 
@@ -323,7 +431,7 @@
 
   <div class="foot">
     <p><strong>Clarity Armor</strong> — "Clarity over confidence. Ask when unsure. Never bluff certainty."</p>
-    <p>This manual is part of the platform and is kept current as features change. Last revised: 2026-06-11.</p>
+    <p>This manual is part of the platform and is kept current as features change. Last revised: 2026-06-12.</p>
   </div>
 
 </div>
