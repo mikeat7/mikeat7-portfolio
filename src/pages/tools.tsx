@@ -46,6 +46,7 @@ const tools: Tool[] = [
     description:
       "Two command-line tools that rescued a thirty-year music collection. The Scanner diagnoses every MP3 and WAV in a library — corruption, songs that cut off early, duplicates, ringtone-length fragments, even live recordings with spoken intros or applause. The Builder then copies only the healthy files into a clean, alphabetized Artist - Title library. Proven on 6,000+ real files (it found a 35% truncation rate in a Napster-era folder). Originals are never touched; everything runs offline.",
     guide: "/tools/music-scanner.html",
+    github: "https://github.com/mikeat7/Music_Scanner",
     icon: <Layers className="w-6 h-6 text-ins-gold" />,
     tags: ["Music", "File Integrity", "Duplicates", "Offline", "Python"],
   },
