@@ -87,7 +87,9 @@ export async function isOllamaAvailable(force = false): Promise<boolean> {
   for (const cand of OLLAMA_BASES) {
     try {
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 2500);
+      // 6s: the tunnel probe travels phone → Cloudflare edge → tunnel →
+      // laptop → Ollama and back, which can exceed a tight 2.5s on mobile.
+      const t = setTimeout(() => ctrl.abort(), 6000);
       const res = await fetch(`${cand.base}/api/version`, {
         signal: ctrl.signal,
         credentials: cand.credentials,
