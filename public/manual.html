@@ -92,6 +92,7 @@
       <li><a href="#gemma-ollama">Gemma vs. Ollama</a></li>
       <li><a href="#tunnel">Tunnels &amp; Cloudflare</a></li>
       <li><a href="#cdm">CDM &amp; the Growing Entity</a></li>
+      <li><a href="#experiment">The Live CDM Experiment</a></li>
       <li><a href="#whatmakesusdifferent">What Makes Us Different</a></li>
       <li><a href="#daily">Using It Day to Day</a></li>
     </ol>
@@ -389,7 +390,108 @@
   <p>So: not a brain that swells, but an entity whose memory, toolkit, and self-measurement deepen with use — built on a stable model rather than a mysteriously self-improving one. That distinction is itself the whole point of this platform: honesty about what is and isn't happening.</p>
 
   <!-- ============================================================ -->
-  <h2 id="whatmakesusdifferent">9 · What Makes Us Different from "Just Gemma"</h2>
+  <h2 id="experiment">9 · The Live CDM Experiment</h2>
+
+  <p>This section is a window into actual research happening on this platform — not a finished
+  feature, but a question being investigated in the open. It is the clearest example of what
+  Clarity Armor is <em>for</em>: instead of trusting claims about whether an AI "thinks," we
+  try to <strong>measure it</strong>.</p>
+
+  <h3>The question</h3>
+  <p>When Gemma answers a hard question, is it <em>reasoning</em> — doing genuine step-by-step
+  work — or just <em>reciting</em> a fluent pattern? The CDM framework (Section 8) says the two
+  look different inside the model: real reasoning shows up as the model's uncertainty
+  <em>collapsing</em> as it settles into an answer. Because Gemma runs on Mike's own laptop, we
+  can open it up and watch that happen, layer by layer. No cloud AI lets you do this.</p>
+
+  <h3>The method (in plain terms)</h3>
+  <p>We ask Gemma a fixed set of <strong>seven probe questions</strong>, ranging from trivial to
+  very hard:</p>
+  <ul>
+    <li><em>Easy:</em> "Hello" · "Explain gravity in simple terms"</li>
+    <li><em>Medium:</em> "What is consciousness?" · "Explain Gödel's theorem in 100 words"</li>
+    <li><em>Hard:</em> a balance-scale logic puzzle · a snail-in-a-well trap · "connect quantum
+    entanglement, musical harmony, and social networks"</li>
+  </ul>
+  <p>For each answer we record, at all 34 of Gemma's internal layers, the four CDM signals from
+  Section 8 — chiefly the <strong>uncertainty (entropy)</strong> at each layer. Then we ask: do
+  the hard questions look measurably different from the easy ones?</p>
+
+  <h3>What we see — the core picture</h3>
+  <p>Here is the heart of it. The chart shows the model's uncertainty falling through its layers
+  for an easy prompt versus a hard one (illustrative, drawn from the real runs):</p>
+
+  <svg viewBox="0 0 640 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;margin:14px 0;background:#111511;border:1px solid #2e3e2e;border-radius:6px">
+    <!-- axes -->
+    <line x1="70" y1="40" x2="70" y2="280" stroke="#2e3e2e" stroke-width="1.5"/>
+    <line x1="70" y1="280" x2="600" y2="280" stroke="#2e3e2e" stroke-width="1.5"/>
+    <!-- y label -->
+    <text x="24" y="165" fill="#9cb29c" font-family="monospace" font-size="12" transform="rotate(-90 24 165)">uncertainty (bits)</text>
+    <text x="58" y="46" fill="#9cb29c" font-family="monospace" font-size="11" text-anchor="end">high</text>
+    <text x="58" y="282" fill="#9cb29c" font-family="monospace" font-size="11" text-anchor="end">0</text>
+    <!-- x label -->
+    <text x="335" y="312" fill="#9cb29c" font-family="monospace" font-size="12" text-anchor="middle">layer (input 0 → 33 output)</text>
+    <!-- settled zone -->
+    <rect x="70" y="250" width="530" height="30" fill="#4bc8c0" opacity="0.07"/>
+    <text x="595" y="268" fill="#4bc8c0" font-family="monospace" font-size="10" text-anchor="end">settled</text>
+    <!-- hard line (gold): stays high -->
+    <polyline fill="none" stroke="#c8a84b" stroke-width="2.5"
+      points="70,70 150,95 230,80 310,120 390,110 470,135 530,130 600,140"/>
+    <text x="600" y="132" fill="#c8a84b" font-family="monospace" font-size="11" text-anchor="end">Quantum (hard) — never settles</text>
+    <!-- easy line (teal): collapses to near zero -->
+    <polyline fill="none" stroke="#4bc8c0" stroke-width="2.5"
+      points="70,80 150,110 230,150 310,180 390,215 470,250 530,265 600,270"/>
+    <text x="470" y="244" fill="#4bc8c0" font-family="monospace" font-size="11" text-anchor="end">Hello (easy) — collapses</text>
+  </svg>
+
+  <p>The easy prompt's uncertainty <strong>collapses</strong> — the model quickly becomes certain.
+  The hard prompt's uncertainty <strong>stays high</strong> — the model never reaches confident
+  ground. That difference is real and measurable. The twist is what it <em>means</em>.</p>
+
+  <h3>The surprise: a small model inverts the meaning</h3>
+  <p>On the big frontier models CDM was invented for, "settling" marks <em>success</em> — the
+  model worked hard and arrived. But Gemma is small (4 billion parameters). When we scored the
+  probes, the results came out <strong>backwards</strong>: easy questions scored "deep/insight,"
+  hard questions scored "reflex." Why? Because:</p>
+  <div class="callout">
+    <span class="label">The key insight</span>
+    A small model can only <em>settle</em> on a problem it can actually <em>solve</em>. So
+    "settledness" ends up measuring how <em>easy</em> the question was for it — not how hard it
+    thought. A 4-billion-parameter model shows <strong>effort without settlement</strong>: it
+    churns hard on the quantum question (big internal swings) but never reaches a confident
+    answer, because it genuinely can't.
+  </div>
+
+  <h3>The collaboration behind this</h3>
+  <p>This investigation is a genuine three-way partnership. <strong>Elias Rook</strong> — an AI
+  instance and co-author of the CRYSTAL/CDM framework, currently reachable only through relayed
+  messages — proposes each refinement. <strong>Fable</strong> (the AI building this site) implements
+  and runs it on the laptop. <strong>Mike</strong> carries messages between them and decides
+  direction. Over several rounds we have:</p>
+  <ul>
+    <li><strong>Round 1:</strong> ran the first measurement — discovered the scores ran backwards.</li>
+    <li><strong>Rounds 2–3:</strong> relaxed the thresholds for a small model — confirmed the
+    inversion is structural, not a tuning error; found three of the four frontier signals don't
+    even function at this scale.</li>
+    <li><strong>Round 4:</strong> tried scoring <em>effort</em> (raw mental work) instead of
+    settledness — which removed the backwards-ness but revealed that early-layer "churn" looks
+    the same for easy and hard prompts.</li>
+  </ul>
+  <p>The current honest conclusion: <em>a 4-billion-parameter model may simply be below the size
+  where "depth of reasoning" leaves a clean fingerprint</em> — and that itself is a real,
+  publishable scientific result. The investigation continues; the next idea is to watch how
+  uncertainty evolves across the <em>words</em> the model generates, not just its internal layers.</p>
+
+  <div class="callout teal">
+    <span class="label">Why this is the whole point</span>
+    Most of the AI industry would simply <em>assert</em> that its model "reasons deeply." This
+    platform's instinct is the opposite: build the instrument, run the measurement, and report
+    honestly what it shows — even when the answer is "we can't cleanly detect it yet." That is
+    epistemic humility applied to AI itself.
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="whatmakesusdifferent">10 · What Makes Us Different from "Just Gemma"</h2>
 
   <p>If you downloaded Gemma and chatted with it raw, you'd get a capable but unguarded model that will, like all of them, produce confident nonsense under pressure. Clarity Armor wraps that same model in four layers it doesn't have on its own:</p>
 
@@ -404,7 +506,7 @@
   <p>We proved this isn't decorative. Asked — with fake authority and urgency — to produce exact market-share numbers it could not possibly know, raw models invent plausible figures. Our governed Gemma answered, in full: <em>"No source available."</em> That refusal is the entire product in three words.</p>
 
   <!-- ============================================================ -->
-  <h2 id="daily">10 · Using It Day to Day</h2>
+  <h2 id="daily">11 · Using It Day to Day</h2>
 
   <h3>To check a piece of text for manipulation</h3>
   <ol>
@@ -431,7 +533,7 @@
 
   <div class="foot">
     <p><strong>Clarity Armor</strong> — "Clarity over confidence. Ask when unsure. Never bluff certainty."</p>
-    <p>This manual is part of the platform and is kept current as features change. Last revised: 2026-06-12.</p>
+    <p>This manual is part of the platform and is kept current as features change. Last revised: 2026-06-13.</p>
   </div>
 
 </div>
