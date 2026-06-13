@@ -28,7 +28,7 @@ const IndexPage: React.FC = () => {
         <div className="ins-panel p-8 md:p-12">
           <div className="ins-sec flex items-center gap-2">
             <Cpu className="w-4 h-4 text-ins-gold" />
-            AWS Agent Ready · Cloud CODEX v2.2 · Epistemic Defense Platform
+            AWS Agent Ready · Cloud CODEX v2.3 · Epistemic Defense Platform
           </div>
 
           <h1 className="ins-heading text-3xl md:text-5xl mt-4">
@@ -73,9 +73,9 @@ const IndexPage: React.FC = () => {
               </h3>
             </div>
             <p className="mt-3 text-base text-ins-dim leading-relaxed">
-              <strong className="text-ins-text">Copy the Cloud CODEX v2.2.</strong> Includes
-              default handshake or finetune to govern AI's response accuracy and overconfidence
-              (v2.2 &amp; legacy v0.9).
+              <strong className="text-ins-text">Copy the Cloud CODEX v2.3.</strong> Includes
+              default handshake or finetune to govern AI's response accuracy and overconfidence —
+              now with the Calibration Guard honesty check (v2.3 &amp; legacy v0.9).
             </p>
             <div className="mt-5 inline-flex items-center ins-mono text-sm tracking-wider text-ins-teal uppercase">
               Open tools
@@ -241,7 +241,7 @@ const IndexPage: React.FC = () => {
           </div>
           <div className="ins-panel p-5">
             <h4 className="font-semibold flex items-center gap-2 text-ins-text">
-              <Cpu className="w-4 h-4 text-ins-gold" /> Cloud CODEX v2.2 Governance
+              <Cpu className="w-4 h-4 text-ins-gold" /> Cloud CODEX v2.3 Governance
             </h4>
             <p className="text-sm mt-2 text-ins-dim leading-relaxed">
               Handshake protocol governing stakes, confidence floors, and citation policy —
