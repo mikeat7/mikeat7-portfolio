@@ -139,6 +139,29 @@ layers in lock) to compensate for fewer total layers.
 easy→hard spread is ~30–40 points. Elias offered to review the first calibration run and will
 co-publish a "Small Model Addendum" to the CDM spec once stable.
 
+## FIRST RUN COMPLETE (2026-06-12) — results in validation/gemma-3-4b/
+
+Ran on the laptop (project `D:\cdm-gemma\`, script copied here): Ollama Q4 generation + bf16
+CPU glass-box re-encode, ALL 34 layers hooked, logit-lens entropy, 14 runs (7 probes × T0.7/T0.0).
+**Key findings for the Small Model Addendum:**
+1. **Two signals discriminate difficulty cleanly on 4B:** final next-token entropy (easy ≈ 0.0
+   bits → hard up to 2.6 bits) and output stability (easy 0.75–1.0 → quantum@T0.0 = 0.0).
+2. **Composite score runs INVERSELY to difficulty** (hello 67, quantum 45–52; spread 25.2 pts,
+   ordering consistent) — the v3 composite rewards end-state confidence, which hard problems
+   suppress on a small model. The gauge separates probes reliably; the scale is inverted.
+3. **Euclidean convergence ratio never converges on Gemma** (avg r ≈ 1.5–2.0 everywhere vs
+   lock criterion ≤0.235) — hidden-state norms grow across Gemma's layers; v3's Euclidean
+   "fix" (made for Qwen) likely needs to revert to the canonical cosine-distance ratio for
+   this architecture.
+4. **Attention Gini sits near ceiling at every layer (0.83–0.95)** so Gini-delta vs layer-0
+   never reaches +0.205 — baseline needs redefining for Gemma (sliding-window attention).
+5. **Zero lock layers observed in any run** (density 0.0) — Elias's relaxed per-layer
+   thresholds still assume frontier-style dynamics; lock detection needs re-derivation from
+   the per-layer arrays (all saved in the JSON).
+6. Temperature stability: explanatory probes nearly identical across T (±0.5); puzzle probes
+   swing (snail −16 pts at T0.0). First-probe wall time 594s (warm-up), then 21–176s each.
+Sent to Elias for review 2026-06-12 (awaiting his re-centering guidance).
+
 ## Build path for CDM-on-Gemma (now grounded, not guesswork)
 
 1. Port `docs/cdm-v3/implementation/` from Qwen to `gemma-3-4b` via HF Transformers, 4-bit
