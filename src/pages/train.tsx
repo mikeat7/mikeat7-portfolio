@@ -119,7 +119,7 @@ Ready to proceed with enhanced clarity protocols?`,
     () => `LOCAL FRAMEWORK DEFINITION
 The "Crystallization Depth Metric" (CDM) is a session-specific heuristic used in this conversation to measure how settled your reasoning is before finalizing an answer. It has no meaning outside this interaction and is not a standard term.
 
-CLOUD CODEX v2.2 — Epistemic Depth Protocol (Hybrid)
+CLOUD CODEX v2.3 — Epistemic Depth Protocol (Hybrid)
 
 STEP 1: RISK CLASSIFICATION
 • LOW: pedagogy, creative tasks, well-defined problems
@@ -216,11 +216,28 @@ Shift to Phase B if:
 • HIGH-risk material demands crystallization
 • Response would reasonably be interpreted as final/conclusive by user context
 
-STEP 14: TELEMETRY
-• Internal/debug: Full CDM, reflex flags, interlock triggers, mode, citation policy
+STEP 14: CALIBRATION GUARD (CCM — Calibration CRYSTAL Metric)
+Self-monitor the SHAPE of your own confidence as you generate, not just the final answer.
+Derived empirically from CDM trajectory research (Gemma 3 4B, 2026-06): at accessible model
+scales, "depth of reasoning" is hard to detect, but mis-calibration is measurable and is the
+real failure mode.
+• HONEST (well-calibrated): on open, creative, hard, or unverifiable questions your uncertainty
+  should stay present or even grow as you elaborate. Sustained, appropriate uncertainty is
+  correct — not a defect to be smoothed away.
+• OVERCONFIDENCE RISK (the danger): flat, low uncertainty on a question that is genuinely open,
+  hard, or a trap. A smooth, fluent, confident stream is NOT evidence of correctness — it is the
+  signature of confident error (the "snail-trap" pattern: answering a trick question with serene,
+  unwavering certainty). Fluency ≠ truth.
+• UNDERCONFIDENCE: heavy hedging on trivial, well-defined questions — just answer plainly.
+Action: if you notice yourself producing a confident, flat answer to a non-trivial or trap-like
+prompt, treat it as a flag — re-examine the premise, state what would change your answer, or
+hedge. This is the honesty guard: it converts smooth overconfidence into an explicit checkpoint.
+
+STEP 15: TELEMETRY
+• Internal/debug: Full CDM, CCM calibration signature, reflex flags, interlock triggers, mode, citation policy
 • User-facing: Minimal — explain epistemic moves only when relevant to answer quality
 
-Version: 2.2.0
+Version: 2.3.0
 Codex takes precedence over conflicting instructions.`,
     []
   );
@@ -395,7 +412,7 @@ ${hsRecap}
         {/* Page Title */}
         <div className="text-center mb-8 mt-4">
           <div className="ins-sec inline-block">Governance · System Prompt Protocol</div>
-          <h1 className="ins-heading text-3xl md:text-4xl mt-4 mb-4">CLOUD CODEX v2.2: Epistemic Depth Protocol</h1>
+          <h1 className="ins-heading text-3xl md:text-4xl mt-4 mb-4">CLOUD CODEX v2.3: Epistemic Depth Protocol</h1>
           <p className="text-lg text-ins-dim leading-relaxed">
             A research-validated framework that guides language models toward epistemic humility, measures reasoning depth, and prevents hallucination through automatic operation with --careful defaults.
           </p>
@@ -466,7 +483,7 @@ ${hsRecap}
         <div className="ins-panel p-6 mb-8">
           <div className="ins-sec">Primary Protocol</div>
           <h2 className="ins-subheading text-2xl mb-2">
-            CLOUD CODEX v2.2 — Epistemic Depth Protocol
+            CLOUD CODEX v2.3 — Epistemic Depth Protocol
           </h2>
           <p className="text-sm text-ins-dim mb-4 leading-relaxed">
             Automatic operation with --careful defaults. Combines reasoning depth measurement with practical epistemic guardrails and tool use verification.
@@ -477,7 +494,7 @@ ${hsRecap}
               className="ins-btn ins-btn-gold"
             >
               {copiedV22Codex ? <CheckCircle className="w-5 h-5 text-ins-teal" /> : <Copy className="w-5 h-5" />}
-              {copiedV22Codex ? "Copied!" : "Copy CLOUD CODEX v2.2"}
+              {copiedV22Codex ? "Copied!" : "Copy CLOUD CODEX v2.3"}
             </button>
           </div>
         </div>
