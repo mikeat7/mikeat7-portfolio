@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemma Tunnel Diagnostic</title>
+<style>
+  body{font-family:-apple-system,"Segoe UI",sans-serif;background:#141814;color:#e0e8e0;margin:0;padding:18px;line-height:1.5}
+  h1{font-size:1.2rem;color:#c8a84b}
+  .test{border:1px solid #2e3e2e;border-radius:6px;padding:12px;margin:12px 0;background:#1c211c}
+  .label{font-size:.8rem;color:#9cb29c;text-transform:uppercase;letter-spacing:.08em}
+  .pass{color:#4bc8c0;font-weight:bold}
+  .fail{color:#e0726a;font-weight:bold}
+  pre{white-space:pre-wrap;word-break:break-all;font-size:.8rem;background:#111511;padding:8px;border-radius:4px;margin:6px 0}
+  button{background:#c8a84b;color:#141814;border:none;border-radius:6px;padding:10px 18px;font-size:1rem;font-weight:bold;margin-top:8px}
+</style>
+</head>
+<body>
+<h1>Gemma Tunnel Diagnostic</h1>
+<p style="font-size:.85rem;color:#9cb29c">Open this on the phone AFTER logging in once at
+<code>agent.clarityarmor.com</code>. It runs the exact probe the chat uses and shows what
+actually happens. Tap Run again to retry.</p>
+<button onclick="runAll()">▶ Run tests</button>
+<div id="out"></div>
+
+<script>
+const TUNNEL = "https://agent.clarityarmor.com/api/version";
+const out = document.getElementById("out");
+
+function card(title){
+  const d = document.createElement("div");
+  d.className = "test";
+  d.innerHTML = `<div class="label">${title}</div><div class="body">…running…</div>`;
+  out.appendChild(d);
+  return d.querySelector(".body");
+}
+
+async function timed(promise, ms){
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), ms);
+  try { return await promise(ctrl.signal); }
+  finally { clearTimeout(t); }
+}
+
+async function test(title, url, creds, timeoutMs){
+  const body = card(`${title} (credentials:${creds}, ${timeoutMs}ms)`);
+  const start = performance.now();
+  try {
+    const res = await timed((signal)=>fetch(url,{credentials:creds,signal}), timeoutMs);
+    const dt = Math.round(performance.now()-start);
+    const text = await res.text();
+    body.innerHTML = `<span class="${res.ok?'pass':'fail'}">HTTP ${res.status} ${res.ok?'OK':res.statusText}</span> in ${dt}ms`
+      + `<pre>${text.slice(0,300)}</pre>`;
+  } catch(e){
+    const dt = Math.round(performance.now()-start);
+    body.innerHTML = `<span class="fail">FAILED</span> after ${dt}ms`
+      + `<pre>${e.name}: ${e.message}</pre>`
+      + `<div style="font-size:.78rem;color:#9cb29c">A "TypeError: Failed to fetch" with a tiny time = CORS rejection or blocked. An "AbortError" = timeout (too slow). A long time then fail = network/tunnel down.</div>`;
+  }
+}
+
+async function runAll(){
+  out.innerHTML = "";
+  card("User agent").textContent = navigator.userAgent;
+  // The real probe the site uses:
+  await test("Tunnel probe WITH credentials", TUNNEL, "include", 6000);
+  // Without credentials — isolates whether the cookie/credentialed-CORS is the problem:
+  await test("Tunnel probe WITHOUT credentials", TUNNEL, "omit", 6000);
+  // Longer timeout — isolates whether it's just slow:
+  await test("Tunnel probe WITH credentials, 15s", TUNNEL, "include", 15000);
+  card("Done").innerHTML = "<span class='pass'>Tests complete.</span> Screenshot this and send it.";
+}
+runAll();
+</script>
+</body>
+</html>
