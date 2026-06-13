@@ -56,7 +56,12 @@ cold-starting successor — treat staleness as a bug.
   origin https://clarityarmor.com, methods GET/POST/OPTIONS, header Content-Type, credentials ON —
   and (b) a one-time PIN login at agent.clarityarmor.com in the phone browser. Site must be
   redeployed (Netlify manual) for the new CSP/client to go live.
-- **PHONE STILL FALLS BACK TO BEDROCK — root cause found 2026-06-13:** Ollama's *actual*
+- **PHONE → LOCAL GEMMA WORKING 2026-06-13** (verified via /gemma-test.html on Android: WITH
+  credentials → HTTP 200 version JSON in ~68ms; WITHOUT credentials → blocked, i.e. Access lock
+  intact). The full remote path works: phone → Cloudflare Access (PIN cookie) → tunnel → CORS
+  proxy → Ollama. Diagnostic page public/gemma-test.html can be deleted on a future deploy (kept
+  for now for re-testing). Root-cause history below for reference:
+- **(resolved) Phone fell back to Bedrock — root cause found 2026-06-13:** Ollama's *actual*
   response (not preflight) sends `Access-Control-Allow-Origin` but NOT
   `Access-Control-Allow-Credentials: true`. The phone probe uses `credentials:"include"` (needed
   to carry the CF_Authorization cookie), and browsers reject a credentialed response that lacks
