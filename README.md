@@ -76,6 +76,12 @@ cold-starting successor — treat staleness as a bug.
   redeploy to activate, helps mobile reliability but not required for the fix.
   **NOTE:** the agent now depends on TWO user-login processes (Ollama app + GemmaCorsProxy task)
   plus the boot-time Cloudflared service. All three must be up; after a reboot Mike must log in.
+  **GOTCHA (hit 2026-06-13):** the CORS proxy runs from `D:\cdm-gemma\venv\Scripts\` — a blanket
+  `Get-Process python | Stop-Process` (e.g. during a CDM run cleanup) WILL kill it → tunnel origin
+  dies → agent.clarityarmor.com returns 502 Bad Gateway → phone falls back to cloud. It's now
+  launched as **pythonw** via the GemmaCorsProxy scheduled task to dodge `python.exe` kills.
+  Restart it any time with: `schtasks /Run /TN GemmaCorsProxy`. Verify with
+  `curl http://localhost:11435/api/version`.
 
 **Platform Manual (2026-06-11):** `public/manual.html` — plain-language guide to the whole
 platform (VX, Codex, training, agents, Gemma/Ollama, tunnels, CDM, growing-entity question).
