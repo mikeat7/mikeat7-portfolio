@@ -62,13 +62,20 @@ cold-starting successor — treat staleness as a bug.
   to carry the CF_Authorization cookie), and browsers reject a credentialed response that lacks
   ACAC:true → silent CORS failure → fallback. Preflight is fine (Cloudflare Access supplies ACAC
   on OPTIONS); the gap is the proxied GET/POST from Ollama. Ollama has no env to add ACAC.
-  **FIX (pending Mike, in Cloudflare dash):** Rules → Transform Rules → Modify Response Header →
-  add static `Access-Control-Allow-Credentials: true` when hostname = agent.clarityarmor.com
-  (Ollama already sends the specific ACAO, so no duplication). Fallback if that misbehaves: a tiny
-  localhost CORS proxy between the tunnel and Ollama. Also bumped probe timeout 2.5s→6s
-  (commit 4e78103) for mobile latency. Everything else verified working: Ollama up, OLLAMA_ORIGINS
-  correct, tunnel 302, deployed bundle contains tunnel code, preflight returns correct credentialed
-  CORS.
+  **FIXED 2026-06-13 via local CORS proxy** (Cloudflare Transform Rule path was blocked — it
+  refuses to set `Access-Control-*` headers because the Access app "manages" CORS → "invalid
+  header name"). Solution: `D:\cdm-gemma\cors-proxy\gemma_cors_proxy.py` (Python stdlib, no deps)
+  listens on localhost:11435, forwards to Ollama 11434, and adds the full credentialed CORS set
+  (ACAO reflect-allowlisted-origin + ACAC:true + methods + headers) on EVERY response incl. the
+  actual GET/POST; strips Origin/rewrites Host inbound so Ollama sees a clean local call.
+  Tunnel config (both `~/.cloudflared` and systemprofile copies) now points
+  `agent.clarityarmor.com` → localhost:**11435**. Proxy auto-starts via Scheduled Task
+  "GemmaCorsProxy" (ONLOGON, user ncfil, runs pythonw from the cdm-gemma venv). Re-wire script:
+  `D:\backups\wire-cors-proxy.ps1` (elevated). Verified: tunnel preflight now returns ACAC:true,
+  unauth still 302 (Access lock intact). Also bumped probe timeout 2.5s→6s (commit 4e78103) —
+  redeploy to activate, helps mobile reliability but not required for the fix.
+  **NOTE:** the agent now depends on TWO user-login processes (Ollama app + GemmaCorsProxy task)
+  plus the boot-time Cloudflared service. All three must be up; after a reboot Mike must log in.
 
 **Platform Manual (2026-06-11):** `public/manual.html` — plain-language guide to the whole
 platform (VX, Codex, training, agents, Gemma/Ollama, tunnels, CDM, growing-entity question).
