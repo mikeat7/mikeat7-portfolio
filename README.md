@@ -56,6 +56,19 @@ cold-starting successor — treat staleness as a bug.
   origin https://clarityarmor.com, methods GET/POST/OPTIONS, header Content-Type, credentials ON —
   and (b) a one-time PIN login at agent.clarityarmor.com in the phone browser. Site must be
   redeployed (Netlify manual) for the new CSP/client to go live.
+- **PHONE STILL FALLS BACK TO BEDROCK — root cause found 2026-06-13:** Ollama's *actual*
+  response (not preflight) sends `Access-Control-Allow-Origin` but NOT
+  `Access-Control-Allow-Credentials: true`. The phone probe uses `credentials:"include"` (needed
+  to carry the CF_Authorization cookie), and browsers reject a credentialed response that lacks
+  ACAC:true → silent CORS failure → fallback. Preflight is fine (Cloudflare Access supplies ACAC
+  on OPTIONS); the gap is the proxied GET/POST from Ollama. Ollama has no env to add ACAC.
+  **FIX (pending Mike, in Cloudflare dash):** Rules → Transform Rules → Modify Response Header →
+  add static `Access-Control-Allow-Credentials: true` when hostname = agent.clarityarmor.com
+  (Ollama already sends the specific ACAO, so no duplication). Fallback if that misbehaves: a tiny
+  localhost CORS proxy between the tunnel and Ollama. Also bumped probe timeout 2.5s→6s
+  (commit 4e78103) for mobile latency. Everything else verified working: Ollama up, OLLAMA_ORIGINS
+  correct, tunnel 302, deployed bundle contains tunnel code, preflight returns correct credentialed
+  CORS.
 
 **Platform Manual (2026-06-11):** `public/manual.html` — plain-language guide to the whole
 platform (VX, Codex, training, agents, Gemma/Ollama, tunnels, CDM, growing-entity question).
