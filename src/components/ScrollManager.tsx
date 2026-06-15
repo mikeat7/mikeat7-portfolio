@@ -38,8 +38,15 @@ export default function ScrollManager() {
       try { document.activeElement.blur(); } catch {}
     }
 
-    // Helper to set scroll on all likely targets
+    // Helper to set scroll on all likely targets.
+    // THE REAL FIX (2026-06): `html,body,#root { height:100%; overflow-x:hidden }`
+    // makes #root the actual vertical scroll container (overflow-x:hidden promotes
+    // overflow-y to auto). Past attempts only reset window/documentElement/body —
+    // never #root — so they could never move the real scroll position. Reset it too.
+    const rootEl = document.getElementById("root");
     const setTop = () => {
+      if (rootEl) rootEl.scrollTop = 0;
+      if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
