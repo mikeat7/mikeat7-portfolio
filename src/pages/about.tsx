@@ -49,6 +49,48 @@ const workAreas = [
   },
 ];
 
+/*
+  SERVICES — drawn from Filippi's Finest (cestclever.wixsite.com/website).
+  Saw-milling details are from the live site; the home-repair / "House Physician"
+  framing is Mike's. NOTE TO MIKE: refine wording / add or remove services freely.
+*/
+const services = [
+  {
+    sec: "Saw-Milling",
+    title: "Custom Saw-Milling",
+    text: "Custom-cut lumber milled to any dimension or grade — hardwoods, softwoods, and specialty species. Bring your own logs or use wood I provide. For contractors, DIY builders, and woodworkers who can't find the right size or quality off the shelf.",
+  },
+  {
+    sec: "Workshop",
+    title: "Wood-Working & Custom Builds",
+    text: "Finished woodwork and custom pieces, milled and built to your specification — practical, well-made, and true to the standard.",
+  },
+  {
+    sec: "Home Care",
+    title: "Home Diagnosis & Repair",
+    text: "As a “House Physician,” I diagnose and treat the maladies that affect a home — careful, practical repairs and maintenance done properly the first time.",
+  },
+  {
+    sec: "Logistics",
+    title: "Free Pick-Up & Delivery",
+    text: "Free pick-up and delivery on milling jobs throughout the Mississauga area — finding the right lumber shouldn't be a hassle.",
+  },
+];
+
+/*
+  WORK GALLERY — drop photos into public/images/work/ named work-01.jpg, work-02.jpg, …
+  (any web image format works; just match the src below). Edit the captions to match.
+  Missing files render as a neat placeholder tile, so it never looks broken.
+*/
+const workImages = [
+  { src: "/images/work/work-01.jpg", caption: "Custom-milled lumber" },
+  { src: "/images/work/work-02.jpg", caption: "Slab & dimensional cuts" },
+  { src: "/images/work/work-03.jpg", caption: "Finished woodwork" },
+  { src: "/images/work/work-04.jpg", caption: "Home repair project" },
+  { src: "/images/work/work-05.jpg", caption: "Workshop" },
+  { src: "/images/work/work-06.jpg", caption: "On site" },
+];
+
 const AboutPage: React.FC = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -71,14 +113,15 @@ const AboutPage: React.FC = () => {
             </div>
 
             <div className="flex-1">
-              <h1 className="ins-heading text-3xl md:text-4xl">Mike Filippi</h1>
+              <h1 className="ins-heading text-3xl md:text-4xl">Mike Filippi, Maker.</h1>
               <p className="ins-mono mt-2 text-sm tracking-wider uppercase text-ins-teal">
                 Craftsman · Independent Researcher · Builder of Epistemic Tools
               </p>
 
               <div className="mt-6 space-y-4 text-[15.5px] text-ins-text leading-relaxed">
                 <p>
-                  By trade, I'm a sawyer and woodworker. I run{" "}
+                  By trade I am a "House Physician" — someone skilled in the art of diagnosing
+                  and prescribing remedies, and treating the maladies that affect your home. I run{" "}
                   <a
                     href="https://cestclever.wixsite.com/website"
                     target="_blank"
@@ -128,6 +171,51 @@ const AboutPage: React.FC = () => {
                 <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
               </Link>
             </div>
+          ))}
+        </div>
+
+        {/* What Services Do I Offer */}
+        <h2 className="ins-heading text-xl mt-12">What Services Do I Offer</h2>
+        <p className="mt-2 text-sm text-ins-dim max-w-3xl">
+          Filippi's Finest — Saw-Milling &amp; Wood-Working, Mississauga, Ontario.
+          Welcome to Mike's Milling.
+        </p>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {services.map((s) => (
+            <div key={s.title} className="ins-card p-6 flex flex-col">
+              <div className="ins-sec">{s.sec}</div>
+              <h3 className="ins-subheading text-lg">{s.title}</h3>
+              <p className="mt-3 text-sm text-ins-dim leading-relaxed flex-1">{s.text}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 ins-panel p-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+          <span className="ins-mono text-xs uppercase tracking-wider text-ins-gold">Get in touch</span>
+          <a href="mailto:cestclever@gmail.com" className="text-ins-teal hover:text-ins-goldbright transition-colors">cestclever@gmail.com</a>
+          <a href="tel:+14163335426" className="text-ins-teal hover:text-ins-goldbright transition-colors">416-333-5426</a>
+          <span className="text-ins-dim">Mississauga, ON</span>
+        </div>
+
+        {/* Examples of My Work */}
+        <h2 className="ins-heading text-xl mt-12">Examples of My Work</h2>
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+          {workImages.map((w) => (
+            <figure
+              key={w.src}
+              className="ins-card overflow-hidden flex flex-col"
+            >
+              <div className="relative w-full aspect-[4/3] bg-ins-deep flex items-center justify-center">
+                <span className="absolute text-3xl opacity-40" aria-hidden>🪵</span>
+                <img
+                  src={w.src}
+                  alt={w.caption}
+                  loading="lazy"
+                  className="relative w-full h-full object-cover"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                />
+              </div>
+              <figcaption className="p-3 text-xs text-ins-dim">{w.caption}</figcaption>
+            </figure>
           ))}
         </div>
 
