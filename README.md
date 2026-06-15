@@ -23,6 +23,16 @@ A multi-faceted platform combining:
 
 ### Recent Changes (June 2026) — READ THIS FIRST
 
+**Scroll-to-top FIXED + browser-verified (2026-06-13, commit a0e7971):** the long-standing
+"new page opens mid-scroll" bug. Root cause: `html,body,#root { height:100%; overflow-x:hidden }`
+— overflow-x:hidden promotes overflow-y to auto, so **#root is the real vertical scroll container**,
+not window/document. Every prior fix reset window/documentElement/body (all pinned at 0).
+ScrollManager.tsx now also resets `#root.scrollTop`. Verified in Preview (Mechanism: .claude/launch.json
+"vite-dev" + mcp Preview eval/click): #root held 600/500px, reset to 0 after nav. NEEDS DEPLOY to reach live.
+
+**FUTURE ROADMAP filed:** `docs/NEXT-local-agent-evolution.md` — LoRA + 3 growth mechanisms (local
+memory, document-RAG skill library, CCM self-measurement log). Deferred until website + Wix done.
+
 **HANDOFF MAINTENANCE RULE (Mike, 2026-06-11):** Keep this section + the AI memory files
 current *without being asked*. Update on **every 4th conversational turn**, and immediately on
 any major addition or change to the website. This block is the single source of truth for a
