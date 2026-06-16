@@ -82,14 +82,11 @@ const services = [
   (any web image format works; just match the src below). Edit the captions to match.
   Missing files render as a neat placeholder tile, so it never looks broken.
 */
-const workImages = [
-  { src: "/images/work/work-01.jpg", caption: "Custom-milled lumber" },
-  { src: "/images/work/work-02.jpg", caption: "Slab & dimensional cuts" },
-  { src: "/images/work/work-03.jpg", caption: "Finished woodwork" },
-  { src: "/images/work/work-04.jpg", caption: "Home repair project" },
-  { src: "/images/work/work-05.jpg", caption: "Workshop" },
-  { src: "/images/work/work-06.jpg", caption: "On site" },
-];
+const WORK_COUNT = 99;
+const workImages = Array.from(
+  { length: WORK_COUNT },
+  (_, i) => `/images/work/work-${String(i + 1).padStart(3, "0")}.jpg`
+);
 
 const AboutPage: React.FC = () => {
   useEffect(() => {
@@ -198,24 +195,26 @@ const AboutPage: React.FC = () => {
 
         {/* Examples of My Work */}
         <h2 className="ins-heading text-xl mt-12">Examples of My Work</h2>
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
-          {workImages.map((w) => (
-            <figure
-              key={w.src}
-              className="ins-card overflow-hidden flex flex-col"
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+          {workImages.map((src, i) => (
+            <a
+              key={src}
+              href={src}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ins-card overflow-hidden block aspect-[4/3] bg-ins-deep"
             >
-              <div className="relative w-full aspect-[4/3] bg-ins-deep flex items-center justify-center">
-                <span className="absolute text-3xl opacity-40" aria-hidden>🪵</span>
-                <img
-                  src={w.src}
-                  alt={w.caption}
-                  loading="lazy"
-                  className="relative w-full h-full object-cover"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                />
-              </div>
-              <figcaption className="p-3 text-xs text-ins-dim">{w.caption}</figcaption>
-            </figure>
+              <img
+                src={src}
+                alt={`Mike Filippi — work sample ${i + 1}`}
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform duration-300 hover:scale-[1.04]"
+                onError={(e) => {
+                  const tile = e.currentTarget.parentElement as HTMLElement | null;
+                  if (tile) tile.style.display = "none";
+                }}
+              />
+            </a>
           ))}
         </div>
 
