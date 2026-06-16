@@ -175,12 +175,20 @@ const AboutPage: React.FC = () => {
           Filippi's Finest — Saw-Milling &amp; Wood-Working, Mississauga, Ontario.
           Welcome to Mike's Milling.
         </p>
-        <img
-          src="/images/sawn-log.jpg"
-          alt="Fresh-sawn log"
-          loading="lazy"
-          className="mt-4 w-full h-44 md:h-56 object-cover rounded border border-ins-line"
-        />
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <img
+            src="/images/sawn-log.jpg"
+            alt="Fresh-sawn log"
+            loading="lazy"
+            className="w-full h-44 md:h-56 object-cover rounded border border-ins-line"
+          />
+          <img
+            src="/images/sawmill.jpg"
+            alt="The sawmill"
+            loading="lazy"
+            className="w-full h-44 md:h-56 object-cover rounded border border-ins-line"
+          />
+        </div>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           {services.map((s) => (
             <div key={s.title} className="ins-card p-6 flex flex-col">

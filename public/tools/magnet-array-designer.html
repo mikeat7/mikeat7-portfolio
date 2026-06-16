@@ -6,11 +6,12 @@
 <title>Magnet Array Designer</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Share+Tech+Mono&display=swap');
-:root{--bg:#0a0c10;--panel:#111318;--border:#1e2530;--accent:#c8a84b;--accent2:#4bc8c0;--north:#e05050;--south:#5090e0;--text:#d0cfc8;--dim:#6a6860;--warn:#e08030;}
+:root{
+  font-size:14px;--bg:#0a0c10;--panel:#111318;--border:#1e2530;--accent:#c8a84b;--accent2:#4bc8c0;--north:#e05050;--south:#5090e0;--text:#d0cfc8;--dim:#9a9890;--warn:#e08030;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
 .tab-bar{display:flex;border-bottom:1px solid var(--border);background:var(--panel);flex-shrink:0;overflow-x:auto;}
-.tab{padding:10px 16px;cursor:pointer;font-size:0.63rem;letter-spacing:0.1em;color:var(--dim);border-bottom:2px solid transparent;transition:all 0.15s;font-family:'Cinzel',serif;white-space:nowrap;}
+.tab{padding:10px 16px;cursor:pointer;font-size:0.88rem;letter-spacing:0.1em;color:var(--dim);border-bottom:2px solid transparent;transition:all 0.15s;font-family:'Cinzel',serif;white-space:nowrap;}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .tab-content{display:none;flex:1;overflow:hidden;}
 .tab-content.active{display:flex;}
@@ -18,50 +19,50 @@ body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monosp
 /* DESIGNER */
 .designer-layout{display:flex;flex:1;overflow:hidden;}
 .controls{width:262px;min-width:262px;padding:12px 11px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:11px;overflow-y:auto;}
-.sec{font-size:0.57rem;color:var(--accent);letter-spacing:0.18em;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:6px;}
+.sec{font-size:0.98rem;color:var(--accent);letter-spacing:0.18em;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:6px;}
 .cr{display:flex;flex-direction:column;gap:3px;margin-bottom:6px;}
-label{font-size:0.62rem;color:var(--dim);}
+label{font-size:0.85rem;color:var(--dim);}
 .v{color:var(--accent2);float:right;}
-.vi{color:var(--accent);font-size:0.57rem;float:right;margin-left:3px;}
+.vi{color:var(--accent);font-size:0.98rem;float:right;margin-left:3px;}
 input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--border);border-radius:2px;outline:none;}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--accent);cursor:pointer;}
-select{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:0.62rem;padding:4px 6px;border-radius:2px;width:100%;outline:none;cursor:pointer;}
+select{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:0.85rem;padding:4px 6px;border-radius:2px;width:100%;outline:none;cursor:pointer;}
 .tr{display:flex;gap:4px;flex-wrap:wrap;}
-.tb{padding:4px 7px;font-family:'Share Tech Mono',monospace;font-size:0.59rem;background:var(--panel);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:2px;transition:all 0.15s;}
+.tb{padding:4px 7px;font-family:'Share Tech Mono',monospace;font-size:0.82rem;background:var(--panel);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:2px;transition:all 0.15s;}
 .tb.active{border-color:var(--accent);color:var(--accent);background:rgba(200,168,75,0.08);}
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
 .sb{background:var(--panel);border:1px solid var(--border);padding:5px 7px;border-radius:2px;}
-.sl{font-size:0.52rem;color:var(--dim);letter-spacing:0.06em;display:block;margin-bottom:2px;}
-.sv{font-size:0.78rem;color:var(--accent2);}
-.sv-sub{font-size:0.57rem;color:var(--dim);display:block;}
-.warn-banner{background:rgba(224,128,48,0.12);border:1px solid var(--warn);border-radius:2px;padding:5px 8px;font-size:0.58rem;color:var(--warn);line-height:1.5;display:none;}
+.sl{font-size:0.76rem;color:var(--dim);letter-spacing:0.06em;display:block;margin-bottom:2px;}
+.sv{font-size:0.98rem;color:var(--accent2);}
+.sv-sub{font-size:0.98rem;color:var(--dim);display:block;}
+.warn-banner{background:rgba(224,128,48,0.12);border:1px solid var(--warn);border-radius:2px;padding:5px 8px;font-size:0.80rem;color:var(--warn);line-height:1.5;display:none;}
 .warn-banner.show{display:block;}
 .leg{display:flex;flex-direction:column;gap:4px;}
-.li{display:flex;align-items:center;gap:5px;font-size:0.59rem;color:var(--dim);}
+.li{display:flex;align-items:center;gap:5px;font-size:0.82rem;color:var(--dim);}
 .sw{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .canvas-area{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;overflow:hidden;}
 canvas#c{border:1px solid var(--border);border-radius:2px;display:block;}
 .unit-row{display:flex;gap:5px;align-items:center;margin-bottom:7px;}
-.unit-btn{padding:3px 7px;font-family:'Share Tech Mono',monospace;font-size:0.57rem;background:var(--panel);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:2px;}
+.unit-btn{padding:3px 7px;font-family:'Share Tech Mono',monospace;font-size:0.98rem;background:var(--panel);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:2px;}
 .unit-btn.active{border-color:var(--accent2);color:var(--accent2);}
-.info-bar{border-top:1px solid var(--border);padding:5px 12px;font-size:0.55rem;color:var(--dim);display:flex;gap:16px;flex-shrink:0;flex-wrap:wrap;}
+.info-bar{border-top:1px solid var(--border);padding:5px 12px;font-size:0.98rem;color:var(--dim);display:flex;gap:16px;flex-shrink:0;flex-wrap:wrap;}
 
 /* MANUAL / APPS / FIELD CALC */
 .manual-wrap{flex:1;overflow-y:auto;display:flex;justify-content:center;padding:22px 16px;}
 .manual-inner{max-width:820px;width:100%;}
-h2{font-family:'Cinzel',serif;color:var(--accent);font-size:0.9rem;letter-spacing:0.1em;margin:22px 0 8px;border-bottom:1px solid var(--border);padding-bottom:6px;}
+h2{font-family:'Cinzel',serif;color:var(--accent);font-size:1.05rem;letter-spacing:0.1em;margin:22px 0 8px;border-bottom:1px solid var(--border);padding-bottom:6px;}
 h2:first-child{margin-top:0;}
-h3{font-family:'Cinzel',serif;color:var(--accent2);font-size:0.75rem;letter-spacing:0.08em;margin:14px 0 5px;}
-p{line-height:1.75;color:var(--text);font-size:0.71rem;margin-bottom:8px;}
-ul{margin:4px 0 10px 15px;font-size:0.71rem;line-height:1.85;color:var(--text);}
+h3{font-family:'Cinzel',serif;color:var(--accent2);font-size:0.96rem;letter-spacing:0.08em;margin:14px 0 5px;}
+p{line-height:1.75;color:var(--text);font-size:0.92rem;margin-bottom:8px;}
+ul{margin:4px 0 10px 15px;font-size:0.92rem;line-height:1.85;color:var(--text);}
 .hi{color:var(--accent2);} .gold{color:var(--accent);} .nc{color:#e05050;} .sc{color:#5090e0;} .wc{color:var(--warn);}
 .dr{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0 18px;align-items:flex-start;}
 .db{display:flex;flex-direction:column;align-items:center;gap:6px;}
-.dc{font-size:0.58rem;color:var(--dim);text-align:center;max-width:170px;line-height:1.5;}
-.callout{background:rgba(200,168,75,0.07);border-left:3px solid var(--accent);padding:8px 11px;margin:9px 0;font-size:0.68rem;line-height:1.65;color:var(--text);}
+.dc{font-size:0.80rem;color:var(--dim);text-align:center;max-width:170px;line-height:1.5;}
+.callout{background:rgba(200,168,75,0.07);border-left:3px solid var(--accent);padding:8px 11px;margin:9px 0;font-size:0.90rem;line-height:1.65;color:var(--text);}
 .callout.info{border-color:var(--accent2);background:rgba(75,200,192,0.05);}
-table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:0.63rem;}
-th{background:var(--panel);color:var(--accent);padding:5px 9px;text-align:left;border:1px solid var(--border);font-family:'Cinzel',serif;font-size:0.6rem;}
+table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:0.88rem;}
+th{background:var(--panel);color:var(--accent);padding:5px 9px;text-align:left;border:1px solid var(--border);font-family:'Cinzel',serif;font-size:0.82rem;}
 td{padding:5px 9px;border:1px solid var(--border);color:var(--text);line-height:1.5;}
 td.hi{color:var(--accent2);} td.gold{color:var(--accent);}
 
@@ -70,26 +71,26 @@ td.hi{color:var(--accent2);} td.gold{color:var(--accent);}
 .calc-inner{max-width:700px;width:100%;}
 .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;}
 .calc-box{background:var(--panel);border:1px solid var(--border);border-radius:3px;padding:14px;}
-.calc-title{font-family:'Cinzel',serif;color:var(--accent);font-size:0.75rem;margin-bottom:10px;}
+.calc-title{font-family:'Cinzel',serif;color:var(--accent);font-size:0.96rem;margin-bottom:10px;}
 .calc-row{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
-.calc-label{font-size:0.62rem;color:var(--dim);}
+.calc-label{font-size:0.85rem;color:var(--dim);}
 .calc-val{color:var(--accent2);float:right;}
 input[type=range].calc-slider{-webkit-appearance:none;width:100%;height:3px;background:var(--border);border-radius:2px;outline:none;}
 input[type=range].calc-slider::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--accent2);cursor:pointer;}
 .result-box{background:rgba(75,200,192,0.07);border:1px solid var(--accent2);border-radius:3px;padding:12px;margin:10px 0;}
-.result-title{font-size:0.6rem;color:var(--dim);margin-bottom:6px;}
-.result-val{font-size:1.4rem;color:var(--accent2);font-family:'Cinzel',serif;}
-.result-sub{font-size:0.6rem;color:var(--dim);margin-top:3px;}
+.result-title{font-size:0.82rem;color:var(--dim);margin-bottom:6px;}
+.result-val{font-size:1.5rem;color:var(--accent2);font-family:'Cinzel',serif;}
+.result-sub{font-size:0.82rem;color:var(--dim);margin-top:3px;}
 .gauss-bar{height:6px;background:var(--border);border-radius:3px;margin:6px 0;overflow:hidden;}
 .gauss-fill{height:100%;border-radius:3px;transition:width 0.3s;}
 .zone-table{width:100%;margin:10px 0;}
-.zone-row{display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid var(--border);font-size:0.62rem;}
+.zone-row{display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid var(--border);font-size:0.85rem;}
 .zone-dist{color:var(--dim);width:80px;flex-shrink:0;}
 .zone-val{color:var(--accent2);width:80px;flex-shrink:0;}
 .zone-bar{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
 .zone-fill{height:100%;border-radius:2px;}
-.zone-label{color:var(--dim);font-size:0.58rem;width:120px;flex-shrink:0;}
-.target-line{background:rgba(200,168,75,0.1);border:1px solid var(--accent);border-radius:2px;padding:6px 10px;font-size:0.65rem;color:var(--accent);margin:6px 0;}
+.zone-label{color:var(--dim);font-size:0.80rem;width:120px;flex-shrink:0;}
+.target-line{background:rgba(200,168,75,0.1);border:1px solid var(--accent);border-radius:2px;padding:6px 10px;font-size:0.88rem;color:var(--accent);margin:6px 0;}
 canvas#field-chart{border:1px solid var(--border);border-radius:2px;width:100%;max-height:200px;}
 </style>
 </head>
@@ -97,6 +98,7 @@ canvas#field-chart{border:1px solid var(--border);border-radius:2px;width:100%;m
 
 <div class="tab-bar">
   <div class="tab active" onclick="showTab('designer')">⬡ ARRAY DESIGNER</div>
+  <div class="tab" onclick="showTab('threecell')">⬡⬡⬡ 3-CELL ARRAY</div>
   <div class="tab" onclick="showTab('manual')">📖 MANUAL</div>
   <div class="tab" onclick="showTab('stats')">📊 STATS GUIDE</div>
   <div class="tab" onclick="showTab('field')">⚡ FIELD CALCULATOR</div>
@@ -211,7 +213,25 @@ canvas#field-chart{border:1px solid var(--border);border-radius:2px;width:100%;m
   <div class="db"><canvas id="d-d3" width="220" height="220"></canvas><div class="dc"><span class="gold">Depth 3</span> · 228 magnets · 19 cells · bed-scale device · field extends ~1 metre</div></div>
 </div>
 <div class="callout">Depth 3 spans roughly 105cm at 25mm magnet diameter — close to a queen mattress width. Build it as 19 individual cells in a carrier board for modular assembly.</div>
-<h2>5 · Magnet Shape and Thickness</h2>
+
+<h2>5 · Field Topology Visualisation</h2>
+<p>Top-down field maps at 30mm above the array. Colour: <span style="color:#4bc8c0">teal = weak</span> · <span style="color:#c8a84b">gold = moderate</span> · <span style="color:#e05050">red = strong</span>. Calculated by dipole superposition — directionally accurate, not quantitatively precise. The 3D elevation view shows estimated field strength at cross-section heights from surface to 100mm above.</p>
+<div class="dr" style="gap:24px;align-items:flex-start;">
+  <div class="db" style="flex-direction:column;gap:6px;">
+    <canvas id="field-vis-1cell" width="280" height="280"></canvas>
+    <div class="dc" style="max-width:280px;"><span class="gold">Single cell — top view</span> · Hex flat top/bottom as physically cut. Gap at right vertex (0°). Field peaks above each magnet, null zones between poles. Gap creates asymmetric emission lobe on gap axis.</div>
+  </div>
+  <div class="db" style="flex-direction:column;gap:6px;">
+    <canvas id="field-vis-3cell" width="520" height="240"></canvas>
+    <div class="dc" style="max-width:340px;"><span class="gold">3-cell vertical stack — top view</span> · Photo 1 arrangement: all cells identical, gap at right vertex, flat faces top/bottom. All junctions attract. Gap lobes all point right — field asymmetry consistent across array.</div>
+  </div>
+  <div class="db" style="flex-direction:column;gap:6px;">
+    <canvas id="field-vis-3d" width="340" height="280"></canvas>
+    <div class="dc" style="max-width:340px;"><span class="gold">3-cell array — side elevation (3D)</span> · Cross-section showing field strength at heights 0–100mm above array surface. Red = strong (near surface), teal = weak (far). Shows how field decays with distance and where the therapeutic zone lies.</div>
+  </div>
+</div>
+
+<h2>6 · Magnet Shape and Thickness</h2>
 <ul>
   <li><span class="hi">Disc</span>: wide pole face → broad field, best lateral coupling between neighbours. <span class="gold">Recommended.</span></li>
   <li><span class="hi">Cylinder</span>: narrow pole face → focused deep field along axis. Less coupling.</li>
@@ -261,8 +281,8 @@ canvas#field-chart{border:1px solid var(--border);border-radius:2px;width:100%;m
 <!-- ══ FIELD CALCULATOR ══ -->
 <div class="tab-content" id="tab-field">
 <div class="calc-wrap"><div class="calc-inner">
-  <h2 style="font-family:'Cinzel',serif;color:var(--accent);font-size:0.9rem;margin-bottom:14px;">⚡ Field-at-Distance Calculator</h2>
-  <p style="font-size:0.7rem;color:var(--dim);margin-bottom:16px;">Set your magnet parameters and target distance. The calculator estimates field strength at that distance and tells you which configuration achieves a given therapeutic target.</p>
+  <h2 style="font-family:'Cinzel',serif;color:var(--accent);font-size:1.05rem;margin-bottom:14px;">⚡ Field-at-Distance Calculator</h2>
+  <p style="font-size:0.92rem;color:var(--dim);margin-bottom:16px;">Set your magnet parameters and target distance. The calculator estimates field strength at that distance and tells you which configuration achieves a given therapeutic target.</p>
 
   <div class="calc-grid">
     <div class="calc-box">
@@ -322,7 +342,93 @@ canvas#field-chart{border:1px solid var(--border);border-radius:2px;width:100%;m
 </div></div>
 </div>
 
-<!-- ══ APPLICATIONS ══ -->
+<!-- ══ 3-CELL ARRANGEMENT ══ -->
+<div class="tab-content" id="tab-threecell" style="flex-direction:column;overflow-y:auto;padding:18px 20px;">
+
+<div style="font-family:'Cinzel',serif;font-size:1.2rem;color:var(--accent);letter-spacing:0.15em;margin-bottom:4px;">3-CELL LINEAR ARRAY</div>
+<div style="font-size:0.93rem;color:var(--dim);margin-bottom:16px;">For 10×20 inch microgreens tray · 36 magnets total · recommended gap orientation</div>
+
+<!-- THE DIAGRAM -->
+<div style="background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:16px;margin-bottom:16px;">
+<div style="font-size:0.88rem;color:var(--accent);letter-spacing:0.15em;margin-bottom:10px;">RECOMMENDED CONFIGURATION — GAPS INWARD</div>
+<canvas id="threecell-canvas" width="760" height="310" style="width:100%;max-width:760px;display:block;margin:0 auto;"></canvas>
+</div>
+
+<!-- COMPARISON TABLE -->
+<div style="background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:16px;">
+<div style="font-size:0.88rem;color:var(--accent);letter-spacing:0.15em;margin-bottom:10px;">GAP ORIENTATION COMPARISON — z=30mm above array</div>
+<table style="width:100%;border-collapse:collapse;font-size:0.93rem;">
+<tr style="color:var(--dim);border-bottom:1px solid var(--border);">
+  <td style="padding:5px 8px;">Configuration</td>
+  <td style="padding:5px 8px;text-align:center;">Relative<br>field strength</td>
+  <td style="padding:5px 8px;text-align:center;">Uniformity<br>(min/max)</td>
+  <td style="padding:5px 8px;text-align:center;">Null zones<br>in tray zone?</td>
+  <td style="padding:5px 8px;">Verdict</td>
+</tr>
+<tr style="border-bottom:1px solid var(--border);color:var(--text);">
+  <td style="padding:5px 8px;">All gaps <span style="color:var(--accent2)">DOWN</span></td>
+  <td style="padding:5px 8px;text-align:center;">baseline</td>
+  <td style="padding:5px 8px;text-align:center;">0.083</td>
+  <td style="padding:5px 8px;text-align:center;color:var(--ok)">No</td>
+  <td style="padding:5px 8px;color:var(--dim)">Weak — wastes gap emission downward</td>
+</tr>
+<tr style="border-bottom:1px solid var(--border);color:var(--text);">
+  <td style="padding:5px 8px;">All gaps <span style="color:var(--accent2)">UP</span></td>
+  <td style="padding:5px 8px;text-align:center;">baseline</td>
+  <td style="padding:5px 8px;text-align:center;">0.036</td>
+  <td style="padding:5px 8px;text-align:center;color:var(--bad)">Yes — 3 nulls</td>
+  <td style="padding:5px 8px;color:var(--bad)">Avoid — null points in root zone</td>
+</tr>
+<tr style="border-bottom:1px solid var(--border);color:var(--text);">
+  <td style="padding:5px 8px;">Gaps <span style="color:var(--accent2)">OUTWARD</span></td>
+  <td style="padding:5px 8px;text-align:center;">−3%</td>
+  <td style="padding:5px 8px;text-align:center;">0.121</td>
+  <td style="padding:5px 8px;text-align:center;color:var(--warn)">Edge only</td>
+  <td style="padding:5px 8px;color:var(--dim)">Better — nulls at array edges</td>
+</tr>
+<tr style="color:var(--text);background:rgba(200,168,75,0.06);">
+  <td style="padding:5px 8px;color:var(--accent)">Gaps <strong>INWARD</strong> ★</td>
+  <td style="padding:5px 8px;text-align:center;color:var(--ok)">+5%</td>
+  <td style="padding:5px 8px;text-align:center;color:var(--ok)">0.193 best</td>
+  <td style="padding:5px 8px;text-align:center;color:var(--ok)">Between cells</td>
+  <td style="padding:5px 8px;color:var(--ok)">Recommended — best uniformity + strength</td>
+</tr>
+</table>
+<div style="font-size:0.85rem;color:var(--dim);margin-top:8px;">Model uses dipole approximation. Values are relative comparisons, not absolute measurements. Results are directionally correct; quantitative precision requires Hall-effect gaussmeter mapping.</div>
+</div>
+
+<!-- ASSEMBLY INSTRUCTIONS -->
+<div style="background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:16px;">
+<div style="font-size:0.88rem;color:var(--accent);letter-spacing:0.15em;margin-bottom:10px;">ASSEMBLY GUIDE — GAPS INWARD
+<div style="font-size:0.80rem;color:var(--ok);margin-bottom:8px;">✓ Carrier board is correct — no re-cutting needed. Hex orientation is fixed as cut. Only the empty pocket position varies per cell.</div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+  <div style="background:var(--bg);border:1px solid var(--border2);padding:10px;border-radius:3px;">
+    <div style="font-size:0.88rem;color:var(--accent2);margin-bottom:5px;">LEFT CELL</div>
+    <div style="font-size:0.93rem;color:var(--text);line-height:1.7;">Leave pocket at <strong style="color:var(--accent)">0°</strong> empty<br>(right-side pocket)<br>Fill other 11 pockets<br><span style="color:var(--dim)">Hex orientation: as cut</span></div>
+  </div>
+  <div style="background:var(--bg);border:1px solid var(--border2);padding:10px;border-radius:3px;">
+    <div style="font-size:0.88rem;color:var(--accent2);margin-bottom:5px;">CENTER CELL</div>
+    <div style="font-size:0.93rem;color:var(--text);line-height:1.7;">Leave pocket at <strong style="color:var(--accent)">270°</strong> empty<br>(bottom pocket)<br>Fill other 11 pockets<br><span style="color:var(--dim)">Hex orientation: as cut</span></div>
+  </div>
+  <div style="background:var(--bg);border:1px solid var(--border2);padding:10px;border-radius:3px;">
+    <div style="font-size:0.88rem;color:var(--accent2);margin-bottom:5px;">RIGHT CELL</div>
+    <div style="font-size:0.93rem;color:var(--text);line-height:1.7;">Leave pocket at <strong style="color:var(--accent)">180°</strong> empty<br>(left-side pocket)<br>Fill other 11 pockets<br><span style="color:var(--dim)">Hex orientation: as cut</span></div>
+  </div>
+</div>
+</div>
+
+<!-- PHYSICS NOTE -->
+<div style="background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:14px;">
+<div style="font-size:0.88rem;color:var(--accent);letter-spacing:0.15em;margin-bottom:8px;">PHYSICS BASIS</div>
+<div style="font-size:0.93rem;color:var(--text);line-height:1.8;">
+The 13th gap removes one cancelling magnet from the outer ring. By Maxwell superposition, the two flanking magnets on either side of the gap are no longer opposed — their combined field projects more strongly along the gap axis than it would in a complete ring. Pointing both outer cell gaps <em>inward</em> directs this stronger emission toward the array center, improving coverage of the tray's hardest-to-reach zone. The center cell's gap points downward so its associated null point forms below the array rather than in the growing medium.<br><br>
+<span style="color:var(--dim)">Note: this model uses dipole field approximation (accurate for distances > 2× magnet diameter). The recommendation is physically well-motivated but should be verified with a calibrated Hall-effect gaussmeter before drawing scientific conclusions.</span>
+</div>
+</div>
+
+</div><!-- end tab-threecell -->
+
+
 <div class="tab-content" id="tab-apps">
 <div class="manual-wrap"><div class="manual-inner">
 <h2>Application Guides</h2>
@@ -353,13 +459,14 @@ canvas#field-chart{border:1px solid var(--border);border-radius:2px;width:100%;m
 <script>
 // ─── TAB ──────────────────────────────────────────────────
 function showTab(n){
-  const ns=['designer','manual','stats','field','apps'];
+  const ns=['designer','threecell','manual','stats','field','apps'];
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',ns[i]===n));
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   document.getElementById('tab-'+n).classList.add('active');
   if(n==='designer')resizeDesigner();
   if(n==='manual')drawManual();
   if(n==='field'){calcField();drawFieldChart();}
+  if(n==='threecell')drawThreeCell();
 }
 
 // ─── UNIT ─────────────────────────────────────────────────
@@ -715,6 +822,7 @@ function clr(d){d.x.fillStyle='#0f1118';d.x.fillRect(0,0,d.w,d.h);}
 
 function drawManual(){
   manSeed();manFOL();manPolar();manDepth('d-d1',1);manDepth('d-d2',2);manDepth('d-d3',3);
+  drawFieldVis();
 }
 
 function manSeed(){
@@ -783,6 +891,405 @@ function manDepth(id,depth){
 // init
 updateLabels();
 resizeDesigner();
+
+// ─── FIELD VISUALISATION ─────────────────────────────────────
+// Photo 1 configuration:
+// Hex: flat TOP/BOTTOM, pointy LEFT/RIGHT (board rotated 90° by Josh)
+// All cells identical, gap at 0° (right-pointing vertex)
+// 3-cell: vertical stack at Y = +166, 0, -166
+// All junctions ATTRACT
+
+function drawFieldVis(){
+  drawFieldVisCanvas('field-vis-1cell','single');
+  drawFieldVisCanvas('field-vis-3cell','three');
+  drawFieldVis3D('field-vis-3d');
+}
+
+function cellMagnetsVis(cx,cy,gapDeg){
+  // Canonical orientation: flat L/R, pointy T/B — as physically cut
+  const mags=[{x:cx,y:cy,p:+1}];
+  const iBase=[-30,30,90,150,210,270], iP=[-1,+1,-1,+1,-1,+1];
+  iBase.forEach((a,i)=>{
+    mags.push({x:cx+37.1*Math.cos(a*Math.PI/180),y:cy+37.1*Math.sin(a*Math.PI/180),p:iP[i]});
+  });
+  const oBase=[-30,30,90,150,210,270], oP=[+1,-1,+1,-1,+1,-1];
+  const gn=((gapDeg%360)+360)%360;
+  oBase.forEach((a,i)=>{
+    const an=((a%360)+360)%360;
+    if(Math.abs(an-gn)<1)return;
+    mags.push({x:cx+74.2*Math.cos(a*Math.PI/180),y:cy+74.2*Math.sin(a*Math.PI/180),p:oP[i]});
+  });
+  return mags;
+}
+
+function Bfield(px,py,pz,mags,Br=14800,R=14.65,L=8.4){
+  let t=0;
+  mags.forEach(({x,y,p})=>{
+    const rl=Math.sqrt((px-x)**2+(py-y)**2);
+    const B0=(Br/2)*((pz+L)/Math.sqrt((pz+L)**2+rl**2)-Math.max(pz,0.1)/Math.sqrt(Math.max(pz,0.1)**2+rl**2));
+    const dist=Math.sqrt(rl**2+pz**2);
+    const cosT=pz/dist;
+    t+=p*B0*(3*cosT**2-1)/2;
+  });
+  return Math.abs(t);
+}
+
+function fCol(t){
+  let r,g,b;
+  if(t<0.33){const u=t/0.33;r=Math.round(8+67*u);g=Math.round(9+191*u);b=Math.round(12+180*u);}
+  else if(t<0.66){const u=(t-0.33)/0.33;r=Math.round(75+125*u);g=Math.round(200-32*u);b=Math.round(192-117*u);}
+  else{const u=(t-0.66)/0.34;r=Math.round(200+24*u);g=Math.round(168-88*u);b=Math.round(75+5*u);}
+  return[r,g,b];
+}
+
+function drawFieldVisCanvas(id,mode){
+  const cv=document.getElementById(id);if(!cv)return;
+  const W=cv.width,H=cv.height;
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='#08090c';ctx.fillRect(0,0,W,H);
+
+  // Flat L/R hex. Outer ring: 30,90,150,210,270,330° → N,S,N,S,N,S
+  // Inner ring same angles → S,N,S,N,S,N. Center: N.
+  // Single: gap at 90° (12 o'clock, removes S)
+  // Three-cell horizontal: left gap=270°, center gap=90°, right gap=270°
+  // flip=true reverses all polarities (left/right cells when physical cell is flipped)
+  function buildCell(cx,cy,gapDeg,flip){
+    const f=flip?-1:+1;
+    const mags=[{x:cx,y:cy,p:+1*f}]; // center: N normally, S if flipped... 
+    // Actually center stays N per user: "make them identical to middle cell"
+    // The flip only affects outer/inner ring, not center
+    const mags2=[{x:cx,y:cy,p:+1}]; // center always N
+    const oA=[30,90,150,210,270,330];
+    const oP=flip?[-1,+1,-1,+1,-1,+1]:[+1,-1,+1,-1,+1,-1];
+    const iA=[30,90,150,210,270,330];
+    const iP=flip?[+1,-1,+1,-1,+1,-1]:[-1,+1,-1,+1,-1,+1];
+    const gn=((gapDeg%360)+360)%360;
+    iA.forEach((a,i)=>mags2.push({x:cx+37.1*Math.cos(a*Math.PI/180),y:cy+37.1*Math.sin(a*Math.PI/180),p:iP[i]}));
+    oA.forEach((a,i)=>{if(Math.abs(((a%360)+360)%360-gn)<1)return;
+      mags2.push({x:cx+74.2*Math.cos(a*Math.PI/180),y:cy+74.2*Math.sin(a*Math.PI/180),p:oP[i]});});
+    return mags2;
+  }
+
+  let allMags,cellDefs,xMin,xRange,yMin,yRange;
+  if(mode==='single'){
+    cellDefs=[{cx:0,cy:0,gap:90}];
+    allMags=buildCell(0,0,90,false); // single: no flip
+    xMin=-110;xRange=220;yMin=-110;yRange=220;
+  }else{
+    cellDefs=[{cx:-166,cy:0,gap:270},{cx:0,cy:0,gap:90},{cx:166,cy:0,gap:270}];
+    // Left and right cells are physically flipped → flip=true
+    allMags=[...buildCell(-166,0,270,true),...buildCell(0,0,90,false),...buildCell(166,0,270,true)];
+    xMin=-280;xRange=560;yMin=-120;yRange=240;
+  }
+  const sc=W/xRange;
+
+  // Field grid
+  const gW=Math.round(W/3),gH=Math.round(H/3);
+  const vals=new Float32Array(gW*gH);let vMax=0;
+  for(let gi=0;gi<gW;gi++)for(let gj=0;gj<gH;gj++){
+    const v=Bfield(xMin+(gi/gW)*xRange,yMin+(gj/gH)*yRange,30,allMags);
+    vals[gi*gH+gj]=v;if(v>vMax)vMax=v;
+  }
+
+  // Heatmap
+  const img=ctx.createImageData(W,H);
+  for(let pi=0;pi<W;pi++)for(let pj=0;pj<H;pj++){
+    const t=Math.pow(vals[Math.min(gW-1,Math.floor(pi/W*gW))*gH+Math.min(gH-1,Math.floor(pj/H*gH))]/vMax,0.45);
+    const[r,g,b]=fCol(t);const idx=(pj*W+pi)*4;
+    img.data[idx]=r;img.data[idx+1]=g;img.data[idx+2]=b;img.data[idx+3]=215;
+  }
+  ctx.putImageData(img,0,0);
+
+  function m2p(mx,my){return[(mx-xMin)/xRange*W,(my-yMin)/yRange*H];}
+
+  // Hex outlines — flat L/R, vertices at 30°+i*60°
+  cellDefs.forEach(({cx,cy})=>{
+    const[cxp,cyp]=m2p(cx,cy);const vr=84.25/Math.cos(Math.PI/6)*sc;
+    ctx.beginPath();
+    for(let i=0;i<6;i++){const a=Math.PI/6+i*Math.PI/3;
+      i===0?ctx.moveTo(cxp+vr*Math.cos(a),cyp+vr*Math.sin(a))
+           :ctx.lineTo(cxp+vr*Math.cos(a),cyp+vr*Math.sin(a));}
+    ctx.closePath();
+    ctx.strokeStyle=mode==='single'?'rgba(200,168,75,0.75)':'rgba(200,168,75,0.55)';
+    ctx.lineWidth=1.3;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+  });
+
+  // Magnets
+  const mr=Math.max(3,14.65*sc*0.65);
+  allMags.forEach(({x,y,p})=>{
+    const[px,py]=m2p(x,y);
+    ctx.beginPath();ctx.arc(px,py,mr,0,Math.PI*2);
+    ctx.fillStyle=p>0?'rgba(255,100,100,0.88)':'rgba(100,150,255,0.88)';ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=0.7;ctx.stroke();
+    ctx.fillStyle='#fff';
+    ctx.font=`bold ${Math.max(6,Math.round(mr*0.78))}px Share Tech Mono,monospace`;
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p>0?'N':'S',px,py);
+    ctx.textBaseline='alphabetic';
+  });
+
+  // Gap markers
+  cellDefs.forEach(({cx,cy,gap})=>{
+    const[px,py]=m2p(cx+74.2*Math.cos(gap*Math.PI/180),cy+74.2*Math.sin(gap*Math.PI/180));
+    ctx.strokeStyle='rgba(200,168,75,0.9)';ctx.lineWidth=1.5;ctx.setLineDash([2,2]);
+    ctx.beginPath();ctx.arc(px,py,mr,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(200,168,75,0.8)';
+    ctx.font=`${Math.max(5,Math.round(mr*0.6))}px Share Tech Mono,monospace`;
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('gap',px,py);
+    ctx.textBaseline='alphabetic';
+  });
+
+  // Colour bar
+  const bx=W-16,by=6,bw=8,bh=H-14;
+  for(let i=0;i<bh;i++){const t=1-i/bh;const[r,g,b]=fCol(t);ctx.fillStyle=`rgb(${r},${g},${b})`;ctx.fillRect(bx,by+i,bw,1);}
+  ctx.fillStyle='rgba(200,200,200,0.7)';ctx.font='7px Share Tech Mono,monospace';ctx.textAlign='left';
+  ctx.fillText('strong',bx+bw+2,by+7);ctx.fillText('weak',bx+bw+2,by+bh);
+}
+
+
+function drawFieldVis3D(id){
+  const cv=document.getElementById(id);if(!cv)return;
+  const W=cv.width,H=cv.height;
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='#08090c';ctx.fillRect(0,0,W,H);
+  // Horizontal array: left(-166,0) gap=270, center(0,0) gap=90, right(166,0) gap=270
+  const mags=[...cellMagnetsVis(-166,0,270),...cellMagnetsVis(0,0,90),...cellMagnetsVis(166,0,270)];
+  const mg={l:42,r:18,t:18,b:32};
+  const pw=W-mg.l-mg.r,ph=H-mg.t-mg.b;
+  const xMin=-280,xMax=280,zMax=100;
+  const gW=Math.round(pw/2),gH=Math.round(ph/2);
+  const vals=new Float32Array(gW*gH);let vMax=0;
+  for(let gi=0;gi<gW;gi++)for(let gj=0;gj<gH;gj++){
+    const px=xMin+(gi/gW)*(xMax-xMin);
+    const pz=Math.max(0.5,zMax*(1-gj/gH));
+    const v=Bfield(px,0,pz,mags);vals[gi*gH+gj]=v;if(v>vMax)vMax=v;
+  }
+  const img=ctx.createImageData(pw,ph);
+  for(let pi=0;pi<pw;pi++)for(let pj=0;pj<ph;pj++){
+    const gi=Math.min(gW-1,Math.floor(pi/pw*gW)),gj=Math.min(gH-1,Math.floor(pj/ph*gH));
+    const t=Math.pow(vals[gi*gH+gj]/vMax,0.38);
+    const[r,g,b]=fCol(t);const idx=(pj*pw+pi)*4;
+    img.data[idx]=r;img.data[idx+1]=g;img.data[idx+2]=b;img.data[idx+3]=220;
+  }
+  ctx.putImageData(img,mg.l,mg.t);
+  // Axes
+  ctx.strokeStyle='rgba(200,168,75,0.4)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(mg.l,mg.t+ph);ctx.lineTo(mg.l+pw,mg.t+ph);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(mg.l,mg.t);ctx.lineTo(mg.l,mg.t+ph);ctx.stroke();
+  ctx.fillStyle='rgba(200,168,75,0.75)';ctx.font='8px Share Tech Mono,monospace';
+  [0,25,50,75,100].forEach(z=>{
+    const py=mg.t+ph*(1-z/zMax);
+    ctx.textAlign='right';ctx.fillText(`${z}mm`,mg.l-3,py+3);
+    ctx.strokeStyle='rgba(200,168,75,0.1)';ctx.lineWidth=0.5;ctx.setLineDash([3,4]);
+    ctx.beginPath();ctx.moveTo(mg.l,py);ctx.lineTo(mg.l+pw,py);ctx.stroke();ctx.setLineDash([]);
+  });
+  [-150,0,150].forEach(x=>{
+    const px=mg.l+(x-xMin)/(xMax-xMin)*pw;
+    ctx.textAlign='center';ctx.fillText(`${x}`,px,mg.t+ph+12);
+  });
+  // Therapeutic zone
+  const z1y=mg.t+ph*(1-50/zMax),z2y=mg.t+ph*(1-10/zMax);
+  ctx.fillStyle='rgba(75,200,112,0.07)';ctx.fillRect(mg.l,z1y,pw,z2y-z1y);
+  ctx.strokeStyle='rgba(75,200,112,0.35)';ctx.lineWidth=0.8;ctx.setLineDash([2,4]);
+  ctx.beginPath();ctx.moveTo(mg.l,z1y);ctx.lineTo(mg.l+pw,z1y);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(mg.l,z2y);ctx.lineTo(mg.l+pw,z2y);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(75,200,112,0.75)';ctx.font='8px Share Tech Mono,monospace';ctx.textAlign='left';
+  ctx.fillText('therapeutic zone (10–50mm)',mg.l+3,z1y-3);
+  // Titles
+  ctx.fillStyle='rgba(200,168,75,0.8)';ctx.font='bold 8px Share Tech Mono,monospace';
+  ctx.textAlign='center';ctx.fillText('position across array (mm)',mg.l+pw/2,H-2);
+  ctx.save();ctx.translate(9,mg.t+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText('height (mm)',0,0);ctx.restore();
+  ctx.textAlign='left';ctx.fillText('SIDE ELEVATION — Y=0 cross-section',mg.l,mg.t-4);
+}
+
+
+
+function drawThreeCell(){
+  const canvas = document.getElementById('threecell-canvas');
+  if(!canvas) return;
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+
+  const C = {
+    bg:'#08090c', accent:'#c8a84b', teal:'#4bc8c0',
+    dim:'#9a9890', text:'#dedad0', ok:'#4bc870',
+  };
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0,0,W,H);
+
+  // Board flat on table, viewed from above.
+  // Hex: flat at 3 o'clock and 9 o'clock (flat L/R), pointy at 12 and 6.
+  // Three cells side by side. Flat faces meet at junctions.
+  // Gap (missing S) positions:
+  //   LEFT cell:   6 o'clock = 270° (bottom pointy vertex)
+  //   CENTER cell: 12 o'clock = 90°  (top pointy vertex)
+  //   RIGHT cell:  6 o'clock = 270° (bottom pointy vertex)
+
+  const scale = (W - 100) / 560;
+  const cy0 = H / 2;
+
+  const cells = [
+    { cx: W/2 - 166*scale, label:'LEFT',   gap:270 },
+    { cx: W/2,              label:'CENTER', gap:90  },
+    { cx: W/2 + 166*scale,  label:'RIGHT',  gap:270 },
+  ];
+
+  const apothem = 84.25 * scale;  // flat-face half-width
+  const hexVR   = apothem / Math.cos(Math.PI/6); // vertex radius
+  const innerR  = 37.1  * scale;
+  const outerR  = 74.2  * scale;
+  const magR    = 14.65 * scale;
+
+  // Tray outline above array
+  const trayH = 22;
+  const trayY = cy0 - hexVR - trayH - 6;
+  const trayX = cells[0].cx - apothem;
+  const trayW = cells[2].cx + apothem - trayX;
+  ctx.fillStyle='rgba(75,200,192,0.06)';
+  ctx.fillRect(trayX,trayY,trayW,trayH);
+  ctx.strokeStyle=C.teal;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+  ctx.strokeRect(trayX,trayY,trayW,trayH);ctx.setLineDash([]);
+  ctx.fillStyle=C.teal;ctx.font='bold 9px Share Tech Mono,monospace';
+  ctx.textAlign='center';
+  ctx.fillText('10×20″ MICROGREENS TRAY',W/2,trayY+14);
+
+  // ── helpers ──────────────────────────────────────────────────
+  function drawHexOutline(cx,cy){
+    // flat L/R hex: vertices at 30,90,150,210,270,330°
+    ctx.beginPath();
+    for(let i=0;i<6;i++){
+      const a = Math.PI/6 + i*Math.PI/3;
+      const x = cx + hexVR*Math.cos(a);
+      const y = cy + hexVR*Math.sin(a);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle=C.accent;ctx.lineWidth=1.4;ctx.stroke();
+  }
+
+  function drawMag(x,y,pol){
+    const r = magR;
+    const grd=ctx.createRadialGradient(x,y,r*0.15,x,y,r);
+    if(pol>0){grd.addColorStop(0,'rgba(230,80,80,0.95)');grd.addColorStop(1,'rgba(150,35,35,0.8)');}
+    else     {grd.addColorStop(0,'rgba(80,130,220,0.95)');grd.addColorStop(1,'rgba(35,65,150,0.8)');}
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=grd;ctx.fill();
+    ctx.strokeStyle=pol>0?'rgba(255,150,150,0.5)':'rgba(150,190,255,0.5)';
+    ctx.lineWidth=0.8;ctx.stroke();
+    ctx.fillStyle='#fff';
+    ctx.font=`bold ${Math.max(7,Math.round(r*0.72))}px Share Tech Mono,monospace`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(pol>0?'N':'S',x,y);
+    ctx.textBaseline='alphabetic';
+  }
+
+  function drawGapMarker(x,y){
+    ctx.beginPath();ctx.arc(x,y,magR,0,Math.PI*2);
+    ctx.strokeStyle=C.accent;ctx.lineWidth=1.5;ctx.setLineDash([2,2]);
+    ctx.stroke();ctx.setLineDash([]);
+  }
+
+  // ── polarity maps ─────────────────────────────────────────────
+  // Clock positions with flat L/R hex:
+  // 12 o'clock = 90°  (top vertex)
+  // 3 o'clock  = 0°   (right flat face midpoint — no magnet here)
+  // 6 o'clock  = 270° (bottom vertex)
+  // 9 o'clock  = 180° (left flat face midpoint — no magnet here)
+  //
+  // Outer ring sits at vertices: 30,90,150,210,270,330°
+  // (these are the 6 "corner" positions of the flat L/R hex)
+  // Polarity alternates: 30°=N, 90°=S, 150°=N, 210°=S, 270°=N, 330°=S
+  // BUT the gap removes one — so one position is empty.
+  //
+  // Wait — gap at 90° (12 o'clock) removes the S at 90°.
+  // Gap at 270° (6 o'clock) removes the N at 270°.
+  // 
+  // However: user says gap removes the S at 12 o'clock.
+  // So polarity at 90° is S. Let's set:
+  // 30°=N, 90°=S, 150°=N, 210°=S, 270°=N, 330°=S (alternating starting N at 30°)
+  // This gives: gap at 90° removes S ✓, gap at 270° removes N.
+  //
+  // Inner ring at same angular positions but r=37.1mm:
+  // 30°=S, 90°=N, 150°=S, 210°=N, 270°=S, 330°=N (opposite of outer)
+  // Center: N
+
+  const outerAngles = [30,  90,  150, 210, 270, 330];
+  const innerAngles = [30,  90,  150, 210, 270, 330];
+  // Center cell (gap=90°): oP=N,S,N,S,N,S  iP=S,N,S,N,S,N
+  // Left/Right cells (gap=270°): physically flipped → oP=S,N,S,N,S,N  iP=N,S,N,S,N,S
+  // This makes 12 o'clock show N on all three cells consistently.
+
+  // ── draw each cell ────────────────────────────────────────────
+  cells.forEach(({cx,label,gap})=>{
+    const gn = ((gap%360)+360)%360;
+    const flip = (gap===270); // left/right cells are flipped
+    const outerPols = flip?[-1,+1,-1,+1,-1,+1]:[+1,-1,+1,-1,+1,-1];
+    const innerPols = flip?[+1,-1,+1,-1,+1,-1]:[-1,+1,-1,+1,-1,+1];
+
+    drawHexOutline(cx, cy0);
+
+    // Center always N
+    drawMag(cx, cy0, +1);
+
+    // Inner ring — all 6, no gap
+    innerAngles.forEach((ang,i)=>{
+      const mx = cx + innerR*Math.cos(ang*Math.PI/180);
+      const my = cy0 + innerR*Math.sin(ang*Math.PI/180);
+      drawMag(mx,my,innerPols[i]);
+    });
+
+    // Outer ring — skip gap position
+    outerAngles.forEach((ang,i)=>{
+      const an = ((ang%360)+360)%360;
+      if(Math.abs(an-gn)<1){ 
+        // Draw gap marker here
+        const gx=cx+outerR*Math.cos(ang*Math.PI/180);
+        const gy=cy0+outerR*Math.sin(ang*Math.PI/180);
+        drawGapMarker(gx,gy);
+        return;
+      }
+      const mx=cx+outerR*Math.cos(ang*Math.PI/180);
+      const my=cy0+outerR*Math.sin(ang*Math.PI/180);
+      drawMag(mx,my,outerPols[i]);
+    });
+
+    // Label
+    ctx.fillStyle=C.accent;ctx.font='bold 10px Share Tech Mono,monospace';
+    ctx.textAlign='center';
+    ctx.fillText(label,cx,cy0+hexVR+15);
+    ctx.fillStyle=C.dim;ctx.font='8px Share Tech Mono,monospace';
+    const gLabel={90:'gap↑ 12°',270:'gap↓ 6°'}[gap]||`gap ${gap}°`;
+    ctx.fillText(gLabel,cx,cy0+hexVR+25);
+  });
+
+  // ── junction markers ──────────────────────────────────────────
+  [0,1].forEach(i=>{
+    const jx=(cells[i].cx+cells[i+1].cx)/2;
+    ctx.strokeStyle='rgba(200,168,75,0.35)';ctx.lineWidth=1;ctx.setLineDash([2,3]);
+    ctx.beginPath();ctx.moveTo(jx,cy0-apothem*0.7);ctx.lineTo(jx,cy0+apothem*0.7);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=C.ok;ctx.font='8px Share Tech Mono,monospace';ctx.textAlign='center';
+    ctx.fillText('attract ✓',jx,cy0-apothem*0.75);
+  });
+
+  // ── legend ────────────────────────────────────────────────────
+  const lx=8,ly=H-58;
+  ctx.fillStyle='rgba(220,70,70,0.85)';
+  ctx.beginPath();ctx.arc(lx+6,ly,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=C.text;ctx.font='9px Share Tech Mono,monospace';ctx.textAlign='left';
+  ctx.fillText('N pole',lx+14,ly+4);
+  ctx.fillStyle='rgba(70,120,210,0.85)';
+  ctx.beginPath();ctx.arc(lx+6,ly+16,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=C.text;ctx.fillText('S pole',lx+14,ly+20);
+  ctx.strokeStyle=C.accent;ctx.lineWidth=1.3;ctx.setLineDash([2,2]);
+  ctx.beginPath();ctx.arc(lx+6,ly+32,5,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle=C.accent;ctx.fillText('13th gap',lx+14,ly+36);
+  ctx.fillStyle=C.ok;ctx.fillText('all junctions attract ✓',lx+14,ly+50);
+}
+
+
+window.addEventListener('load', () => {});
+
 </script>
 </body>
 </html>

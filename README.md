@@ -183,7 +183,16 @@ conflict-of-interest cues" (never existed in code; only vx-fp01/vx-da01 catch pa
 - NVIDIA driver updated 462.31 → 582.53 to enable GPU; runs 51/49 CPU/GPU at ~19 tok/s.
 - Next steps: Cloudflare Tunnel; a Netlify function or client routing that prefers the laptop endpoint with Bedrock fallback; CODEX system prompt injection for Gemma.
 
-**Wix migration (future):** recreate cestclever.wixsite.com/website (Filippi's Finest — Home/Services/Work/About/Contact) on clarityarmor.com with a gallery of Mike's builds, then close Wix. Photos must be retrieved from Wix first (Mike hit upload limits there).
+**Wix migration — DONE (2026-06-13):** Filippi's Finest folded into /about (src/pages/about.tsx):
+"Mike Filippi, Maker." + House-Physician bio, "What Services Do I Offer" (4 cards + contact bar,
+email ekimat7@rogers.com), sawn-log + sawmill photo accents, "Examples of My Work" 99-photo
+gallery (public/images/work/work-001..099.jpg, web-optimized 469MB→22MB via
+D:\backups\resize-work-pics.ps1), portrait public/images/mike.jpg, and an "Off the Clock"
+hobbies section (heli.jpg pilot, tkd.jpg black belt). Source photos were E:\pics\pics + E:\pics\1-5.jpg.
+Retire Wix once Mike confirms live.
+
+**Magnet Array Designer updated (2026-06-13):** public/tools/magnet-array-designer.html replaced
+with Mike's revised version from E:\magnet-array-designer.html (46KB→71KB).
 
 ### Recent Changes (January-February 2026)
 
