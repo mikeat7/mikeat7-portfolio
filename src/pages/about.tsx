@@ -1,7 +1,6 @@
 // src/pages/about.tsx
 import React, { useEffect } from "react";
 import {
-  User,
   Github,
   Library,
   Brain,
@@ -102,12 +101,11 @@ const AboutPage: React.FC = () => {
         <div className="mt-6 ins-panel p-8 md:p-12">
           <div className="ins-sec">About the Author</div>
           <div className="mt-6 flex flex-col md:flex-row gap-8 items-start">
-            {/* PORTRAIT — replace with a real photo when ready:
-                <img src="/images/mike.jpg" alt="Mike Filippi"
-                     className="w-32 h-32 rounded-full object-cover border border-ins-line" /> */}
-            <div className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-ins-deep border border-ins-line flex items-center justify-center flex-shrink-0">
-              <User className="w-12 h-12 text-ins-dim" />
-            </div>
+            <img
+              src="/images/mike.jpg"
+              alt="Mike Filippi"
+              className="w-28 h-28 md:w-32 md:h-32 rounded-full object-cover border border-ins-line flex-shrink-0"
+            />
 
             <div className="flex-1">
               <h1 className="ins-heading text-3xl md:text-4xl">Mike Filippi, Maker.</h1>
@@ -177,6 +175,12 @@ const AboutPage: React.FC = () => {
           Filippi's Finest — Saw-Milling &amp; Wood-Working, Mississauga, Ontario.
           Welcome to Mike's Milling.
         </p>
+        <img
+          src="/images/sawn-log.jpg"
+          alt="Fresh-sawn log"
+          loading="lazy"
+          className="mt-4 w-full h-44 md:h-56 object-cover rounded border border-ins-line"
+        />
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           {services.map((s) => (
             <div key={s.title} className="ins-card p-6 flex flex-col">
@@ -188,7 +192,7 @@ const AboutPage: React.FC = () => {
         </div>
         <div className="mt-4 ins-panel p-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
           <span className="ins-mono text-xs uppercase tracking-wider text-ins-gold">Get in touch</span>
-          <a href="mailto:cestclever@gmail.com" className="text-ins-teal hover:text-ins-goldbright transition-colors">cestclever@gmail.com</a>
+          <a href="mailto:ekimat7@rogers.com" className="text-ins-teal hover:text-ins-goldbright transition-colors">ekimat7@rogers.com</a>
           <a href="tel:+14163335426" className="text-ins-teal hover:text-ins-goldbright transition-colors">416-333-5426</a>
           <span className="text-ins-dim">Mississauga, ON</span>
         </div>
@@ -216,6 +220,27 @@ const AboutPage: React.FC = () => {
               />
             </a>
           ))}
+        </div>
+
+        {/* Off the Clock — hobbies / a bit more about Mike */}
+        <h2 className="ins-heading text-xl mt-12">Off the Clock</h2>
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <figure className="ins-card overflow-hidden flex flex-col">
+            <img src="/images/heli.jpg" alt="Mike Filippi flying a commercial helicopter"
+                 loading="lazy" className="w-full h-56 object-cover" />
+            <figcaption className="p-4 text-sm text-ins-dim">
+              <span className="ins-sec">Former Career</span>
+              A previous life in the air — commercial helicopter pilot, now retired.
+            </figcaption>
+          </figure>
+          <figure className="ins-card overflow-hidden flex flex-col">
+            <img src="/images/tkd.jpg" alt="Mike Filippi with his Tae Kwon Do master"
+                 loading="lazy" className="w-full h-56 object-cover" />
+            <figcaption className="p-4 text-sm text-ins-dim">
+              <span className="ins-sec">Discipline</span>
+              Tae Kwon Do black belt — with my master.
+            </figcaption>
+          </figure>
         </div>
 
         {/* Philosophy */}
