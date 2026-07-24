@@ -670,7 +670,7 @@ const ChatPanel: React.FC = () => {
 
       {/* Conversation (above divider so its shadow can't act like a divider) */}
       <div className="rounded p-3 bg-ins-deep border border-ins-line">
-        <div ref={threadRef} className="max-h-[50vh] overflow-auto space-y-3">
+        <div ref={threadRef} className="max-h-[50vh] overflow-y-auto overflow-x-hidden space-y-3">
           {history.map((m, i) => (
             <div
               key={i}
@@ -684,7 +684,7 @@ const ChatPanel: React.FC = () => {
               }`}
             >
               <div className={`ins-mono text-xs uppercase tracking-wide mb-1 ${m.role === "user" ? "text-ins-teal" : "text-ins-gold"}`}>{m.role}</div>
-              <pre className="whitespace-pre-wrap text-sm text-ins-text font-sans">{m.text}</pre>
+              <pre className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-base text-ins-text font-sans">{m.text}</pre>
 
               {m.role === "assistant" && m.tools && m.tools.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
