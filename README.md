@@ -23,6 +23,15 @@ A multi-faceted platform combining:
 
 ### Recent Changes (June 2026) — READ THIS FIRST
 
+**LOCAL AGENT EVOLUTION — RAG + memory + gateway BUILT (2026-06-17, Cairn/Opus 4.8):**
+Mechanisms 1 & 2 of `docs/NEXT-local-agent-evolution.md` are now built and verified, living in `D:\gemma-rag\` (separate from the website repo):
+- **RAG corpus** (`build_index.py` → `index/`): local vector index, embeddings via Ollama `nomic-embed-text`, brute-force cosine in `retrieve.py` (tier-safe: public-only for the site). First build = discourse repo (28 Network books). Expanded 2026-06-17 to include ALL `crystal-manual` .md (the CODEX + CRYSTAL/CDM specs) per Mike — rebuild was running at time of writing.
+- **Local memory** (`memory.py` → `memory.db`, SQLite): records Mike's conversations on his own hardware, independent of Supabase; rolling gemma3:4b summary + recent verbatim turns.
+- **Gateway** (`gateway.py`, port **11436**): drop-in superset of the CORS proxy that injects RAG library chunks into the CODEX system message on `/api/chat` and records each turn to memory. Verified: a Network-library question pulled 4 correct chunks and returned a cited answer. **LIVE since 2026-06-22** — the tunnel points at the gateway on **11436** and autostarts on login. It now serves **base `gemma3:4b`** with RAG + real-conversation memory + deterministic (code-generated, un-fabricatable) citations. A LoRA-tuned voice model was explored through v5 and dropped 2026-07-22: fine-tuning bought false-premise discipline but broke multi-turn conversation, so the discipline lives in the gateway (prompt rules, grounding checks, citation + first-turn guards) instead of the weights. Restart the gateway after any corpus rebuild (retrieve.py caches the index on first call). Full status: AI memory file `local-agent-roadmap`.
+
+**PROFILE-DELETION RECOVERY (2026-06-16/17, Cairn/Opus 4.8):** Mike's `C:\Users\ncfil` deletion broke autostart. Fixes: Cloudflared service set to AUTO_START (DELAYED); Ollama HKCU Run entry (`ollama app.exe`) restored (was deleted → tunnel up but Gemma down after reboot); VSC settings/extensions lost (restored via Settings Sync); DISM+SFC repaired one .NET file. Damage was profile/app-level, not OS-level. Authoritative record: `D:\diagnostic\handoff.md` + AI memory files `ncfil-profile-deletion`, `gemma-agent-stack`.
+
+
 **Scroll-to-top FIXED + browser-verified (2026-06-13, commit a0e7971):** the long-standing
 "new page opens mid-scroll" bug. Root cause: `html,body,#root { height:100%; overflow-x:hidden }`
 — overflow-x:hidden promotes overflow-y to auto, so **#root is the real vertical scroll container**,
