@@ -13,8 +13,11 @@ import type { ChatMessage } from "@/lib/agentClient";
 //  2. the tunnel — Mike's phone/other devices, via Cloudflare Access
 //     (requires a one-time email-PIN login at agent.clarityarmor.com in
 //      that browser; the Access cookie then rides along via credentials)
+// Both point at the GATEWAY (11436), not raw Ollama (11434), so the web-chat tab
+// gets RAG + citations + prompt rules on the Dell too — not just via the tunnel.
+// (Changed 2026-07-22: local was :11434 raw, which left pc web chat ungrounded.)
 const OLLAMA_BASES: Array<{ base: string; credentials: RequestCredentials }> = [
-  { base: ((import.meta as any).env?.VITE_OLLAMA_BASE as string) || "http://localhost:11434", credentials: "omit" },
+  { base: ((import.meta as any).env?.VITE_OLLAMA_BASE as string) || "http://localhost:11436", credentials: "omit" },
   { base: "https://agent.clarityarmor.com", credentials: "include" },
 ];
 const OLLAMA_MODEL =
