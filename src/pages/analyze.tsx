@@ -406,12 +406,15 @@ const ChatPanel: React.FC = () => {
     setActiveDoc(null);
   }
 
-  // NEW: autoscroll to latest message
+  // Scroll the TOP of the newest message into view (NOT the thread bottom), so a long
+  // answer starts at the top and reads top-down — no scrolling up to find its start.
   const threadRef = useRef<HTMLDivElement | null>(null);
+  const lastMsgRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (threadRef.current) {
-      threadRef.current.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
-    }
+    const c = threadRef.current, el = lastMsgRef.current;
+    if (!c || !el) return;
+    const top = el.getBoundingClientRect().top - c.getBoundingClientRect().top + c.scrollTop;
+    c.scrollTo({ top, behavior: "smooth" });
   }, [history]);
 
   function formatError(e: any) {
@@ -671,6 +674,7 @@ const ChatPanel: React.FC = () => {
           {history.map((m, i) => (
             <div
               key={i}
+              ref={i === history.length - 1 ? lastMsgRef : null}
               className={`p-3 rounded border ${
                 m.role === "user"
                   ? "bg-ins-panel border-ins-soft"
