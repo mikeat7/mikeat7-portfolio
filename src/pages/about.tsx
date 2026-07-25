@@ -11,6 +11,7 @@ import {
   X,
   Download,
   ShoppingCart,
+  BookOpen,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import BackButton from "@/components/BackButton";
@@ -121,7 +122,6 @@ type Book = (typeof BOOKS)[number];
 
 const AboutPage: React.FC = () => {
   const [openBook, setOpenBook] = useState<Book | null>(null);
-  const [reading, setReading] = useState(false);
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -213,10 +213,7 @@ const AboutPage: React.FC = () => {
             <button
               key={b.slug}
               type="button"
-              onClick={() => {
-                setOpenBook(b);
-                setReading(false);
-              }}
+              onClick={() => setOpenBook(b)}
               className="group text-left focus:outline-none"
               aria-label={`Open ${b.title}`}
             >
@@ -224,7 +221,7 @@ const AboutPage: React.FC = () => {
                 src={b.cover}
                 alt={`${b.title} — cover`}
                 loading="lazy"
-                className="w-40 md:w-44 rounded shadow-lg border border-ins-line transition-transform duration-200 group-hover:-translate-y-1 group-hover:shadow-2xl"
+                className="h-52 md:h-60 w-auto rounded shadow-lg border border-ins-line transition-transform duration-200 group-hover:-translate-y-1 group-hover:shadow-2xl"
               />
               <div className="mt-2 ins-subheading text-sm">{b.title}</div>
               {b.subtitle && (
@@ -371,7 +368,7 @@ const AboutPage: React.FC = () => {
           aria-label={openBook.title}
         >
           <div
-            className="relative w-full max-w-3xl max-h-[92vh] flex flex-col items-center"
+            className="relative w-full max-w-md max-h-[92vh] flex flex-col items-center"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -383,89 +380,61 @@ const AboutPage: React.FC = () => {
               <X className="w-5 h-5" />
             </button>
 
-            {!reading ? (
-              <div className="flex flex-col items-center text-center overflow-y-auto">
-                <button
-                  type="button"
-                  onClick={() => setReading(true)}
-                  className="focus:outline-none"
-                  aria-label={`Read ${openBook.title}`}
+            <div className="flex flex-col items-center text-center overflow-y-auto">
+              <a
+                href={openBook.pdf}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Read ${openBook.title}`}
+                className="focus:outline-none"
+              >
+                <img
+                  src={openBook.cover}
+                  alt={`${openBook.title} — cover`}
+                  className="max-h-[64vh] rounded shadow-2xl cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
+                />
+              </a>
+              <div className="mt-4 ins-subheading text-lg">
+                {openBook.title}
+                {openBook.subtitle ? ` — ${openBook.subtitle}` : ""}
+              </div>
+              <div className="ins-mono text-xs uppercase tracking-wider text-ins-dim">
+                by {openBook.author}
+              </div>
+              <p className="mt-3 text-sm text-ins-dim max-w-md leading-relaxed">
+                {openBook.blurb}
+              </p>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+                <a
+                  href={openBook.pdf}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ins-btn"
                 >
-                  <img
-                    src={openBook.cover}
-                    alt={`${openBook.title} — cover`}
-                    className="max-h-[64vh] rounded shadow-2xl cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
-                  />
-                </button>
-                <div className="mt-4 ins-subheading text-lg">
-                  {openBook.title}
-                  {openBook.subtitle ? ` — ${openBook.subtitle}` : ""}
-                </div>
-                <div className="ins-mono text-xs uppercase tracking-wider text-ins-dim">
-                  by {openBook.author}
-                </div>
-                <p className="mt-3 text-sm text-ins-dim max-w-xl leading-relaxed">
-                  {openBook.blurb}
-                </p>
-                <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setReading(true)}
+                  <BookOpen className="w-4 h-4" />
+                  Read the book
+                </a>
+                {openBook.amazon && (
+                  <a
+                    href={openBook.amazon}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="ins-btn"
                   >
-                    <Library className="w-4 h-4" />
-                    Read it here
-                  </button>
-                  {openBook.amazon && (
-                    <a
-                      href={openBook.amazon}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ins-btn"
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      Buy on Amazon
-                    </a>
-                  )}
-                </div>
+                    <ShoppingCart className="w-4 h-4" />
+                    Buy on Amazon
+                  </a>
+                )}
+                <a
+                  href={openBook.pdf}
+                  download
+                  className="inline-flex items-center ins-mono text-xs tracking-wider uppercase text-ins-teal hover:text-ins-goldbright"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1.5" />
+                  Download
+                </a>
               </div>
-            ) : (
-              <div className="w-full h-[88vh] flex flex-col">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <button
-                    type="button"
-                    onClick={() => setReading(false)}
-                    className="ins-mono text-xs tracking-wider uppercase text-ins-teal hover:text-ins-goldbright"
-                  >
-                    ← Cover
-                  </button>
-                  <div className="flex items-center gap-3">
-                    <a
-                      href={openBook.pdf}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center ins-mono text-xs tracking-wider uppercase text-ins-teal hover:text-ins-goldbright"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                      New tab
-                    </a>
-                    <a
-                      href={openBook.pdf}
-                      download
-                      className="inline-flex items-center ins-mono text-xs tracking-wider uppercase text-ins-teal hover:text-ins-goldbright"
-                    >
-                      <Download className="w-3.5 h-3.5 mr-1.5" />
-                      Download
-                    </a>
-                  </div>
-                </div>
-                <iframe
-                  src={openBook.pdf}
-                  title={openBook.title}
-                  className="flex-1 w-full rounded border border-ins-line bg-white"
-                />
-              </div>
-            )}
+            </div>
           </div>
         </div>
       )}
