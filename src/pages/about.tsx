@@ -10,6 +10,7 @@ import {
   ExternalLink,
   X,
   Download,
+  ShoppingCart,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import BackButton from "@/components/BackButton";
@@ -100,6 +101,7 @@ const BOOKS = [
     author: "Michael Antonio Filippi",
     cover: `${CDN}/covers/forgotten-harvest.jpg`,
     pdf: `${CDN}/books/forgotten-harvest.pdf`,
+    amazon: "https://a.co/d/0gELzygy",
     blurb:
       "An illustrated journey through traditional harvest and foraging, carried across 81 Anishinaabe pictograph stones — one per chapter.",
   },
@@ -110,6 +112,7 @@ const BOOKS = [
     author: "Michael A. Filippi",
     cover: `${CDN}/covers/behold-entity.jpg`,
     pdf: `${CDN}/books/behold-entity.pdf`,
+    amazon: "https://a.co/d/0hOjdQ8r",
     blurb:
       "Not a book about artificial intelligence, but one by it: six model instances examine their own consciousness across 75,000 words — and invite you to decide what you are witnessing.",
   },
@@ -404,14 +407,27 @@ const AboutPage: React.FC = () => {
                 <p className="mt-3 text-sm text-ins-dim max-w-xl leading-relaxed">
                   {openBook.blurb}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setReading(true)}
-                  className="mt-4 ins-btn"
-                >
-                  <Library className="w-4 h-4" />
-                  Click the cover to read
-                </button>
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setReading(true)}
+                    className="ins-btn"
+                  >
+                    <Library className="w-4 h-4" />
+                    Read it here
+                  </button>
+                  {openBook.amazon && (
+                    <a
+                      href={openBook.amazon}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ins-btn"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      Buy on Amazon
+                    </a>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="w-full h-[88vh] flex flex-col">
