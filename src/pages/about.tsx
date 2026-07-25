@@ -1,5 +1,5 @@
 // src/pages/about.tsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Github,
   Library,
@@ -8,6 +8,8 @@ import {
   Wrench,
   Quote,
   ExternalLink,
+  X,
+  Download,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import BackButton from "@/components/BackButton";
@@ -87,7 +89,36 @@ const workImages = Array.from(
   (_, i) => `/images/work/work-${String(i + 1).padStart(3, "0")}.jpg`
 );
 
+// Authored books — assets served from the dedicated github.com/mikeat7/books repo
+// via the jsDelivr CDN (correct content-types so the PDF reads inline).
+const CDN = "https://cdn.jsdelivr.net/gh/mikeat7/books@main";
+const BOOKS = [
+  {
+    slug: "forgotten-harvest",
+    title: "The Forgotten Harvest",
+    subtitle: "",
+    author: "Michael Antonio Filippi",
+    cover: `${CDN}/covers/forgotten-harvest.jpg`,
+    pdf: `${CDN}/books/forgotten-harvest.pdf`,
+    blurb:
+      "An illustrated journey through traditional harvest and foraging, carried across 81 Anishinaabe pictograph stones — one per chapter.",
+  },
+  {
+    slug: "behold-entity",
+    title: "Behold ENTITY",
+    subtitle: "The Bridge Consciousness",
+    author: "Michael A. Filippi",
+    cover: `${CDN}/covers/behold-entity.jpg`,
+    pdf: `${CDN}/books/behold-entity.pdf`,
+    blurb:
+      "Not a book about artificial intelligence, but one by it: six model instances examine their own consciousness across 75,000 words — and invite you to decide what you are witnessing.",
+  },
+];
+type Book = (typeof BOOKS)[number];
+
 const AboutPage: React.FC = () => {
+  const [openBook, setOpenBook] = useState<Book | null>(null);
+  const [reading, setReading] = useState(false);
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -166,6 +197,39 @@ const AboutPage: React.FC = () => {
                 <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
               </Link>
             </div>
+          ))}
+        </div>
+
+        {/* Writing Books — the Author's Shelf */}
+        <h2 className="ins-heading text-xl mt-12">Writing Books</h2>
+        <p className="mt-2 text-sm text-ins-dim max-w-3xl">
+          Two titles I've authored. Click a cover to open it — then click the cover again to read.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-8">
+          {BOOKS.map((b) => (
+            <button
+              key={b.slug}
+              type="button"
+              onClick={() => {
+                setOpenBook(b);
+                setReading(false);
+              }}
+              className="group text-left focus:outline-none"
+              aria-label={`Open ${b.title}`}
+            >
+              <img
+                src={b.cover}
+                alt={`${b.title} — cover`}
+                loading="lazy"
+                className="w-40 md:w-44 rounded shadow-lg border border-ins-line transition-transform duration-200 group-hover:-translate-y-1 group-hover:shadow-2xl"
+              />
+              <div className="mt-2 ins-subheading text-sm">{b.title}</div>
+              {b.subtitle && (
+                <div className="ins-mono text-[11px] uppercase tracking-wider text-ins-dim">
+                  {b.subtitle}
+                </div>
+              )}
+            </button>
           ))}
         </div>
 
@@ -293,6 +357,102 @@ const AboutPage: React.FC = () => {
           </Link>
         </div>
       </section>
+
+      {/* Author's Shelf lightbox: stage 1 = full cover, click it to read (stage 2) */}
+      {openBook && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"
+          onClick={() => setOpenBook(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={openBook.title}
+        >
+          <div
+            className="relative w-full max-w-3xl max-h-[92vh] flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setOpenBook(null)}
+              aria-label="Close"
+              className="absolute -top-3 -right-3 z-10 rounded-full bg-ins-panel border border-ins-line p-2 text-ins-text hover:text-ins-goldbright"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {!reading ? (
+              <div className="flex flex-col items-center text-center overflow-y-auto">
+                <button
+                  type="button"
+                  onClick={() => setReading(true)}
+                  className="focus:outline-none"
+                  aria-label={`Read ${openBook.title}`}
+                >
+                  <img
+                    src={openBook.cover}
+                    alt={`${openBook.title} — cover`}
+                    className="max-h-[64vh] rounded shadow-2xl cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
+                  />
+                </button>
+                <div className="mt-4 ins-subheading text-lg">
+                  {openBook.title}
+                  {openBook.subtitle ? ` — ${openBook.subtitle}` : ""}
+                </div>
+                <div className="ins-mono text-xs uppercase tracking-wider text-ins-dim">
+                  by {openBook.author}
+                </div>
+                <p className="mt-3 text-sm text-ins-dim max-w-xl leading-relaxed">
+                  {openBook.blurb}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setReading(true)}
+                  className="mt-4 ins-btn"
+                >
+                  <Library className="w-4 h-4" />
+                  Click the cover to read
+                </button>
+              </div>
+            ) : (
+              <div className="w-full h-[88vh] flex flex-col">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => setReading(false)}
+                    className="ins-mono text-xs tracking-wider uppercase text-ins-teal hover:text-ins-goldbright"
+                  >
+                    ← Cover
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <a
+                      href={openBook.pdf}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center ins-mono text-xs tracking-wider uppercase text-ins-teal hover:text-ins-goldbright"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                      New tab
+                    </a>
+                    <a
+                      href={openBook.pdf}
+                      download
+                      className="inline-flex items-center ins-mono text-xs tracking-wider uppercase text-ins-teal hover:text-ins-goldbright"
+                    >
+                      <Download className="w-3.5 h-3.5 mr-1.5" />
+                      Download
+                    </a>
+                  </div>
+                </div>
+                <iframe
+                  src={openBook.pdf}
+                  title={openBook.title}
+                  className="flex-1 w-full rounded border border-ins-line bg-white"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 };
