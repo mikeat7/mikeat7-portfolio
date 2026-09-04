@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Soundsmith — local speech ⇄ text workshop</title>
+<style>
+  :root{
+    --bg:#0e1014; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a;
+    --text:#e7e9ee; --muted:#9aa3b0; --accent:#f5a524; --accent2:#ffb84d;
+    --ok:#34d399; --mono:ui-monospace,"Cascadia Code",Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;line-height:1.6;}
+  .wrap{max-width:880px;margin:0 auto;padding:0 22px;}
+  a{color:var(--accent2);}
+
+  .hero{text-align:center;padding:64px 22px 40px;}
+  .logo{width:84px;height:84px;border-radius:22px;background:var(--accent);
+    color:#1a1205;display:flex;align-items:center;justify-content:center;
+    font-size:48px;margin:0 auto 22px;}
+  .hero h1{font-size:46px;margin:0 0 10px;font-weight:700;letter-spacing:.5px;}
+  .tagline{font-size:20px;color:var(--accent2);margin:0 0 14px;font-weight:500;}
+  .lede{font-size:17px;color:var(--muted);max-width:620px;margin:0 auto;}
+  .badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px;}
+  .badge{font-size:13px;padding:7px 14px;border-radius:999px;background:var(--panel2);
+    border:1px solid var(--line);color:var(--text);}
+  .badge b{color:var(--accent);}
+
+  section{padding:34px 0;border-top:1px solid var(--line);}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:1.6px;color:var(--muted);
+    margin:0 0 22px;font-weight:600;}
+
+  .twoway{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .dir{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;}
+  .dir .ic{font-size:30px;}
+  .dir h3{margin:12px 0 6px;font-size:20px;}
+  .dir p{margin:0;color:var(--muted);font-size:15px;}
+  .flow{font-family:var(--mono);font-size:13px;color:var(--accent2);margin-top:16px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;}
+
+  .feat{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .f{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;}
+  .f .ic{font-size:22px;}
+  .f h4{margin:10px 0 5px;font-size:16px;font-weight:600;}
+  .f p{margin:0;color:var(--muted);font-size:14px;}
+
+  .steps{counter-reset:s;display:grid;gap:12px;}
+  .step{display:flex;gap:16px;align-items:flex-start;background:var(--panel);
+    border:1px solid var(--line);border-radius:14px;padding:16px 20px;}
+  .step::before{counter-increment:s;content:counter(s);flex:none;width:34px;height:34px;
+    border-radius:10px;background:var(--accent);color:#1a1205;font-weight:700;
+    display:flex;align-items:center;justify-content:center;font-size:17px;}
+  .step h4{margin:3px 0 3px;font-size:16px;}
+  .step p{margin:0;color:var(--muted);font-size:14px;}
+
+  .fmts{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{font-family:var(--mono);font-size:12.5px;padding:5px 10px;border-radius:7px;
+    background:var(--panel2);border:1px solid var(--line);color:var(--text);}
+
+  .mock{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .mock .bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--line);
+    background:var(--panel2);}
+  .mock .dot{width:11px;height:11px;border-radius:50%;background:#3a3f4a;}
+  .mock .url{margin-left:10px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .mock .body{padding:20px;}
+  .mrow{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:13.5px;}
+  .mrow .nm{flex:1;color:var(--text);}
+  .tag{font-size:11px;padding:3px 9px;border-radius:999px;}
+  .tag.done{background:rgba(52,211,153,.15);color:var(--ok);}
+  .tag.todo{background:#2a2f3a;color:var(--muted);}
+  .pbar{height:11px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;
+    overflow:hidden;margin:16px 0 6px;}
+  .pbar>i{display:block;height:100%;width:64%;background:var(--accent);}
+  .pmeta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);}
+
+  .priv{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:24px;text-align:center;}
+  .priv .big{font-size:22px;color:var(--accent2);margin:0 0 8px;font-weight:600;}
+  .priv p{margin:0;color:var(--muted);font-size:15px;}
+
+  footer{text-align:center;color:var(--muted);font-size:13px;padding:40px 22px 60px;
+    border-top:1px solid var(--line);}
+  @media (max-width:680px){.twoway,.feat{grid-template-columns:1fr;}.hero h1{font-size:36px;}}
+</style>
+</head>
+<body>
+  <div class="hero">
+    <div class="logo">&#9874;</div>
+    <h1>Soundsmith</h1>
+    <p class="tagline">A local speech &harr; text workshop</p>
+    <p class="lede">Turn audiobooks, podcasts, and videos into clean text — and turn
+      text back into spoken audio. All on your own computer, nothing sent to the cloud.</p>
+    <div class="badges">
+      <span class="badge"><b>100%</b> offline</span>
+      <span class="badge"><b>GPU</b> accelerated</span>
+      <span class="badge"><b>30+</b> audio &amp; video formats</span>
+      <span class="badge">free &amp; <b>private</b></span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <section>
+      <h2>Two directions</h2>
+      <div class="twoway">
+        <div class="dir">
+          <div class="ic">&#127908;</div>
+          <h3>Transcribe</h3>
+          <p>Speech becomes text. Feed it an audiobook, lecture, interview, or video and
+            get an accurate, timestamped transcript.</p>
+          <div class="flow">audio / video &nbsp;&rarr;&nbsp; text</div>
+        </div>
+        <div class="dir">
+          <div class="ic">&#128483;</div>
+          <h3>Speak</h3>
+          <p>Text becomes speech. Drop in a text file and get natural-sounding spoken
+            audio out, as a WAV or MP3.</p>
+          <div class="flow">text &nbsp;&rarr;&nbsp; spoken audio</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>What makes it nice</h2>
+      <div class="feat">
+        <div class="f"><div class="ic">&#128274;</div><h4>Completely private</h4>
+          <p>Runs entirely on your machine. Your files never leave your computer.</p></div>
+        <div class="f"><div class="ic">&#9889;</div><h4>GPU powered</h4>
+          <p>Uses your graphics card when available, and falls back to the CPU on its own.</p></div>
+        <div class="f"><div class="ic">&#128218;</div><h4>Handles huge files</h4>
+          <p>Multi-hour audiobooks are processed in chunks — no memory meltdowns.</p></div>
+        <div class="f"><div class="ic">&#128257;</div><h4>Stop &amp; resume</h4>
+          <p>Pause anytime. Finished items are skipped; interrupted ones pick up again.</p></div>
+        <div class="f"><div class="ic">&#127916;</div><h4>Almost any format</h4>
+          <p>Audiobooks, MP3, WAV, FLAC, MP4, MKV and more — it just works.</p></div>
+        <div class="f"><div class="ic">&#129520;</div><h4>One-click app</h4>
+          <p>A clean browser dashboard with live progress — or a simple command line.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>The dashboard</h2>
+      <div class="mock">
+        <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="url">localhost &middot; Soundsmith</span></div>
+        <div class="body">
+          <div class="mrow"><span class="nm">A Hunter-Gatherer's Guide — ep7.aax</span><span class="tag done">done</span></div>
+          <div class="mrow"><span class="nm">The Aliens from Planet X — ep7.aax</span><span class="tag todo">queued</span></div>
+          <div class="mrow"><span class="nm">Cosmos — chapter 3.mp3</span><span class="tag todo">queued</span></div>
+          <div class="pbar"><i></i></div>
+          <div class="pmeta"><span>Book 1 of 3 — transcribing…</span><span>64%</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>How it works</h2>
+      <div class="steps">
+        <div class="step"><div><h4>Drop in your files</h4>
+          <p>Put audio/video (to transcribe) or text (to speak) into a folder.</p></div></div>
+        <div class="step"><div><h4>Press start</h4>
+          <p>Pick a quality level and click go. Watch the live progress bar and log.</p></div></div>
+        <div class="step"><div><h4>Collect the results</h4>
+          <p>Transcripts (or spoken audio) appear in the output folder, ready to use.</p></div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Formats it understands</h2>
+      <div class="fmts">
+        <span class="chip">.aax</span><span class="chip">.aaxc</span><span class="chip">.m4b</span>
+        <span class="chip">.mp3</span><span class="chip">.m4a</span><span class="chip">.aac</span>
+        <span class="chip">.wav</span><span class="chip">.flac</span><span class="chip">.ogg</span>
+        <span class="chip">.opus</span><span class="chip">.wma</span><span class="chip">.aiff</span>
+        <span class="chip">.mp4</span><span class="chip">.mkv</span><span class="chip">.mov</span>
+        <span class="chip">.avi</span><span class="chip">.webm</span><span class="chip">.wmv</span>
+        <span class="chip">…and more</span>
+      </div>
+    </section>
+
+    <section>
+      <div class="priv">
+        <p class="big">Your audio, your machine, your business.</p>
+        <p>Soundsmith does everything locally — no accounts, no uploads, no subscriptions.
+          Powered by open-source engines (Whisper for listening, Piper for speaking).</p>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    Soundsmith &middot; a personal, local speech &harr; text tool &middot; built for tinkering
+  </footer>
+</body>
+</html>

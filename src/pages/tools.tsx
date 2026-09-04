@@ -9,6 +9,7 @@ import {
   Cpu,
   Layers,
   Camera,
+  AudioLines,
   Github,
 } from "lucide-react";
 import BackButton from "@/components/BackButton";
@@ -24,11 +25,23 @@ interface Tool {
   github?: string;
   /** Guide page for downloadable scripts (Open Guide button; downloads live on the guide) */
   guide?: string;
+  /** Standalone showcase / overview page for a local tool (Open Showcase button) */
+  page?: string;
   icon: React.ReactNode;
   tags: string[];
 }
 
 const tools: Tool[] = [
+  {
+    id: "soundsmith",
+    title: "Soundsmith",
+    subtitle: "Offline Speech-to-Text & Text-to-Speech (Local App)",
+    description:
+      "A local speech and text workshop that runs entirely on your own computer. Transcribe any audio or video (audiobooks, podcasts, lectures, interviews) into clean, timestamped text with Whisper, then turn text files back into natural spoken audio with Piper. It handles 30+ audio and video formats including .aax audiobooks, uses your GPU when available, processes multi-hour files in chunks, and resumes cleanly if interrupted. Runs from a one-click browser dashboard or the command line: no accounts, no uploads, nothing sent to the cloud.",
+    page: "/tools/soundsmith.html",
+    icon: <AudioLines className="w-6 h-6 text-ins-gold" />,
+    tags: ["Speech-to-Text", "Text-to-Speech", "Whisper", "Piper", "Offline", "Python"],
+  },
   {
     id: "media-sorter",
     title: "Media Sorter",
@@ -89,16 +102,6 @@ const tools: Tool[] = [
     file: "/tools/magnet-array-designer.html",
     icon: <Layers className="w-6 h-6 text-ins-gold" />,
     tags: ["Magnetics", "Engineering", "Physics"],
-  },
-  {
-    id: "depth-lens",
-    title: "Depth Lens v1.5",
-    subtitle: "Text Depth Meter (Legacy)",
-    description:
-      "The original depth scoring tool — measures vocabulary entropy, Gini coefficient, and word-scramble resilience. Note its known limitations: the score saturates at 158 and virtually all well-written text eventually reaches 'Prodigy-grade Depth', making it a poor discriminator. It rewards rare vocabulary over genuine argument structure. Kept here for reference; CrystalScope supersedes it.",
-    file: "/tools/depth-lens.html",
-    icon: <Activity className="w-6 h-6 text-ins-dim" />,
-    tags: ["Legacy", "Text Analysis", "CDM"],
   },
 ];
 
@@ -169,6 +172,17 @@ const ToolCard: React.FC<{ tool: Tool }> = ({ tool }) => {
           >
             <ExternalLink className="w-4 h-4" />
             Guide &amp; Download
+          </a>
+        )}
+        {tool.page && (
+          <a
+            href={tool.page}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ins-btn ins-btn-gold"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Open Showcase
           </a>
         )}
         {tool.file && (
