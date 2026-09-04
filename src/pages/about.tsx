@@ -107,6 +107,17 @@ const BOOKS = [
       "An illustrated journey through traditional harvest and foraging, carried across 81 Anishinaabe pictograph stones — one per chapter.",
   },
   {
+    slug: "forgotten-wisdom",
+    title: "The Forgotten Wisdom",
+    subtitle: "Living with Nature",
+    author: "Michael Antonio Filippi",
+    cover: `${CDN}/covers/forgotten-wisdom.jpg`,
+    pdf: `${CDN}/books/forgotten-wisdom.pdf`,
+    amazon: "https://www.amazon.com/dp/B0HG7YQFC9",
+    blurb:
+      "A year in the life of the Great Lakes Anishinaabe, told through real voices: reading a rice lake, waterproofing a canoe with boiled pitch, setting a bone in birch bark, and taking from the land without ever emptying it. Book Two of The Forgotten Series.",
+  },
+  {
     slug: "behold-entity",
     title: "Behold ENTITY",
     subtitle: "The Bridge Consciousness",
@@ -206,7 +217,7 @@ const AboutPage: React.FC = () => {
         {/* Writing Books — the Author's Shelf */}
         <h2 className="ins-heading text-xl mt-12">Writing Books</h2>
         <p className="mt-2 text-sm text-ins-dim max-w-3xl">
-          Two titles I've authored. Click a cover to open it — then click the cover again to read.
+          Three titles I've authored. Click a cover to open it — then click the cover again to read.
         </p>
         <div className="mt-5 flex flex-wrap gap-8">
           {BOOKS.map((b) => (
