@@ -38,6 +38,7 @@ const tools: Tool[] = [
     subtitle: "Offline Speech-to-Text & Text-to-Speech (Local App)",
     description:
       "A local speech and text workshop that runs entirely on your own computer. Transcribe any audio or video (audiobooks, podcasts, lectures, interviews) into clean, timestamped text with Whisper, then turn text files back into natural spoken audio with Piper. It handles 30+ audio and video formats including .aax audiobooks, uses your GPU when available, processes multi-hour files in chunks, and resumes cleanly if interrupted. Runs from a one-click browser dashboard or the command line: no accounts, no uploads, nothing sent to the cloud.",
+    github: "https://github.com/mikeat7/soundsmith",
     page: "/tools/soundsmith.html",
     icon: <AudioLines className="w-6 h-6 text-ins-gold" />,
     tags: ["Speech-to-Text", "Text-to-Speech", "Whisper", "Piper", "Offline", "Python"],
